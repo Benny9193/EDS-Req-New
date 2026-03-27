@@ -79,7 +79,9 @@
       "mcp__Claude_Preview__preview_start",
       "Read(//c/tools/**)",
       "Bash(netsh interface:*)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(C:/Python314/python.exe C:/EDS/regen_data_dictionary.py)",
+      "Bash(C:/Python314/python.exe -c \":*)"
     ]
   }
 }
