@@ -189,7 +189,7 @@ async def chat(request: ChatRequest):
         logger.error("Chat failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Chat encountered an error: {str(e)}",
+            detail="Chat encountered an error",
         )
 
 
@@ -260,7 +260,7 @@ async def chat_stream(request: ChatRequest):
         logger.error("Failed to create agent for stream: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Chat stream setup failed: {str(e)}",
+            detail="Chat stream setup failed",
         )
 
     async def event_generator():
