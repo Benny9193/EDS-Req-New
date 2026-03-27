@@ -8,8 +8,6 @@ import re
 import logging
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import validator, constr
-
 from ..database import execute_query, execute_single
 from ..models import Product, ProductListResponse, ProductStatus
 from ..cache import get_cache, CACHE_TTL_SHORT
@@ -269,7 +267,8 @@ async def get_products(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error("Failed to fetch products: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to fetch products")
 
 
 @router.get("/search/autocomplete")
@@ -335,7 +334,7 @@ async def autocomplete_search(
         return result
 
     except Exception as e:
-        logger.error(f"Autocomplete search error: {e}")
+        logger.error("Autocomplete search error: %s", e)
         raise HTTPException(status_code=500, detail="Search failed")
 
 
@@ -387,7 +386,7 @@ async def get_product(product_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get product error: {e}")
+        logger.error("Get product error: %s", e)
         raise HTTPException(status_code=500, detail="Failed to retrieve product")
 
 
@@ -462,26 +461,10 @@ async def get_related_products(
         """
 
         rows = execute_query(related_query, [limit] + params)
-
-        return [
-            Product(
-                id=row['id'],
-                name=row['name'],
-                description=row['description'],
-                vendor=row['vendor'],
-                vendor_item_code=row['vendor_item_code'],
-                category=row['category'],
-                image=row['image'],
-                status=row['status'],
-                unit_of_measure=row['unit_of_measure'],
-                unit_price=float(row['unit_price']) if row['unit_price'] else 0.0,
-                tags=[]
-            )
-            for row in rows
-        ]
+        return [map_row_to_product(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Get related products error: {e}")
+        logger.error("Get related products error: %s", e)
         return []
 
 
@@ -529,7 +512,7 @@ async def get_product_images(product_ids: List[str]) -> dict:
         return images
 
     except Exception as e:
-        logger.error(f"Get product images error: {e}")
+        logger.error("Get product images error: %s", e)
         raise HTTPException(status_code=500, detail="Failed to retrieve images")
 
 
@@ -647,7 +630,7 @@ async def _try_es_search(
         )
 
     except Exception as e:
-        logger.warning(f"ES search failed, falling back to SQL: {e}")
+        logger.warning("ES search failed, falling back to SQL: %s", e)
         return None
 
 
@@ -743,5 +726,5 @@ async def _try_es_autocomplete(q: str, limit: int):
         return deduped
 
     except Exception as e:
-        logger.warning(f"ES autocomplete failed, falling back to SQL: {e}")
+        logger.warning("ES autocomplete failed, falling back to SQL: %s", e)
         return None
