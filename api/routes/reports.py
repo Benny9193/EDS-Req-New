@@ -28,6 +28,7 @@ import logging
 
 from api.database import execute_query, execute_single
 from api.cache import get_cache, CACHE_TTL_MEDIUM
+from api.middleware import SESSION_TIMEOUT_HOURS
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def _get_cached_or_query(district_id: int, date_start: str, date_end: str,
     key = _cache_key(district_id, date_start, date_end, section)
     cached = _cache.get_sync(key)
     if cached is not None:
-        logger.debug(f"Reports cache hit: {section} for district {district_id}")
+        logger.debug("Reports cache hit: %s for district %s", section, district_id)
         return cached
     result = query_fn(district_id, date_start, date_end)
     _cache.set_sync(key, result, REPORTS_CACHE_TTL)
@@ -82,12 +83,12 @@ def invalidate_reports_cache(district_id: int = None):
         keys_to_delete = [k for k in cache._cache if k.startswith(f"reports:{district_id}:")]
         for key in keys_to_delete:
             cache._cache.pop(key, None)
-        logger.debug(f"Invalidated {len(keys_to_delete)} reports cache entries for district {district_id}")
+        logger.debug("Invalidated %d reports cache entries for district %s", len(keys_to_delete), district_id)
     else:
         keys_to_delete = [k for k in cache._cache if k.startswith("reports:")]
         for key in keys_to_delete:
             cache._cache.pop(key, None)
-        logger.debug(f"Invalidated all {len(keys_to_delete)} reports cache entries")
+        logger.debug("Invalidated all %d reports cache entries", len(keys_to_delete))
 
 
 # ===========================================
@@ -122,8 +123,8 @@ def _get_session_user(session_id: str, demo_approval_level: int = 1) -> dict:
         LEFT JOIN Users u ON s.UserId = u.UserId
         WHERE s.SessionId = ?
         AND s.SessionEnd IS NULL
-        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < 8
-    """, (sid,))
+        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < ?
+    """, (sid, SESSION_TIMEOUT_HOURS))
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
     return user
@@ -214,7 +215,7 @@ async def get_reports_summary(
             "date_range": {"start": date_start, "end": date_end},
         }
     except Exception as e:
-        logger.error(f"Reports query error: {e}", exc_info=True)
+        logger.error("Reports query error: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to load reports data")
 
 
@@ -266,7 +267,7 @@ def _add_comparison_metrics(summary: dict, district_id: int, period: str) -> dic
         else:
             summary["orders_vs_last"] = None
     except Exception as e:
-        logger.debug(f"Comparison metrics failed: {e}")
+        logger.debug("Comparison metrics failed: %s", e)
         summary.setdefault("vs_last_period", None)
         summary.setdefault("orders_vs_last", None)
 
@@ -658,7 +659,7 @@ async def vendor_drilldown(
             "total_items": len(rows),
         }
     except Exception as e:
-        logger.error(f"Vendor drilldown error: {e}", exc_info=True)
+        logger.error("Vendor drilldown error: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to load vendor drilldown data")
 
 
@@ -731,7 +732,7 @@ async def category_drilldown(
             "total_items": len(rows),
         }
     except Exception as e:
-        logger.error(f"Category drilldown error: {e}", exc_info=True)
+        logger.error("Category drilldown error: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to load category drilldown data")
 
 
