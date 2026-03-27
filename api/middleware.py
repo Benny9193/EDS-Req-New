@@ -113,6 +113,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.requests_per_minute = requests_per_minute
         self.window_seconds = 60
         self._requests: dict[str, list[float]] = defaultdict(list)
+        self._behind_proxy = os.getenv("EDS_BEHIND_PROXY", "").lower() in ("true", "1", "yes")
 
     def _get_client_ip(self, request: Request) -> str:
         """
@@ -120,7 +121,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         Only trusts X-Forwarded-For when EDS_BEHIND_PROXY is set,
         otherwise uses the direct connection IP.
         """
-        if os.getenv("EDS_BEHIND_PROXY", "").lower() in ("true", "1", "yes"):
+        if self._behind_proxy:
             forwarded = request.headers.get("x-forwarded-for")
             if forwarded:
                 # Take the first (client) IP from the chain
@@ -174,36 +175,30 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all responses."""
 
+    # Content Security Policy (built once, reused per-request)
+    # - unsafe-inline/unsafe-eval required by Alpine.js and Tailwind CDN
+    # - cdn.tailwindcss.com for Tailwind CSS CDN build
+    # - cdn.jsdelivr.net for Alpine.js
+    # - cdnjs.cloudflare.com for Font Awesome
+    _CSP = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+        "https://cdn.jsdelivr.net https://cdn.tailwindcss.com; "
+        "style-src 'self' 'unsafe-inline' "
+        "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com "
+        "https://fonts.googleapis.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self'"
+    )
+
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 
-        # Content Security Policy
-        # - unsafe-inline/unsafe-eval required by Alpine.js and Tailwind CDN
-        # - cdn.tailwindcss.com for Tailwind CSS CDN build
-        # - cdn.jsdelivr.net for Alpine.js
-        # - cdnjs.cloudflare.com for Font Awesome
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://cdn.jsdelivr.net https://cdn.tailwindcss.com; "
-            "style-src 'self' 'unsafe-inline' "
-            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com "
-            "https://fonts.googleapis.com; "
-            "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
-            "img-src 'self' data: https:; "
-            "connect-src 'self'"
-        )
-
-        # Prevent clickjacking
+        response.headers["Content-Security-Policy"] = self._CSP
         response.headers["X-Frame-Options"] = "DENY"
-
-        # Prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
-
-        # Referrer policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-
-        # Permissions policy
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 
         return response
