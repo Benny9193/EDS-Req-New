@@ -37,13 +37,12 @@ function approvalsModule() {
                     page: this.approvalsPage,
                     page_size: this.approvalsPageSize
                 });
-                const r = await fetch('/api/requisitions/pending/list?' + params.toString());
-                if (r.ok) {
-                    const d = await r.json();
-                    this.approvalReqs = d.items || [];
-                    this.approvalsTotal = d.total || 0;
+                const result = await edsApi.get('/api/requisitions/pending/list?' + params.toString(), { silent: true });
+                if (result.ok) {
+                    this.approvalReqs = result.data.items || [];
+                    this.approvalsTotal = result.data.total || 0;
                     this.pendingApprovalCount = this.approvalsTotal;
-                } else if (r.status === 403) {
+                } else if (result.status === 403) {
                     this.approvalsError = 'You do not have approval privileges.';
                     this.approvalReqs = [];
                 } else {
@@ -64,9 +63,9 @@ function approvalsModule() {
             this.showApprovalDetail = true;
             const sid = this._getSessionId();
             try {
-                const r = await fetch('/api/requisitions/' + encodeURIComponent(req.requisition_id) + '/items?session_id=' + encodeURIComponent(sid));
-                if (r.ok) {
-                    this.approvalDetailItems = await r.json();
+                const result = await edsApi.get('/api/requisitions/' + encodeURIComponent(req.requisition_id) + '/items?session_id=' + encodeURIComponent(sid), { silent: true });
+                if (result.ok) {
+                    this.approvalDetailItems = result.data;
                 }
             } catch (e) { console.error('Approval detail fetch error:', e); }
             finally { this.approvalDetailLoading = false; }
