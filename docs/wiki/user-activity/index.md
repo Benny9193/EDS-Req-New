@@ -60,7 +60,7 @@ Primary traffic sources identified from DPA:
 
 | Program | Description |
 |---------|-------------|
-| Java JDBC | Primary application |
+| Lucee CFML (JDBC) | Primary application |
 | Node.js | API layer |
 | Python | Integration scripts |
 | .NET SQLClient | Reporting |

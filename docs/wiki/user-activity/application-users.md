@@ -18,7 +18,7 @@ EDS uses several database accounts for application connectivity. Understanding t
 |----------|-------|
 | **Purpose** | Primary web application account |
 | **Monthly Usage** | 214+ database hours |
-| **Connection Type** | JDBC connection pool |
+| **Connection Type** | JDBC connection pool (via Lucee CFML engine) |
 | **Typical Queries** | Requisitions, POs, lookups |
 
 **Characteristics:**
