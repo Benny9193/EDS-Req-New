@@ -25,7 +25,7 @@ The EDS database is a large SQL Server 2017 database supporting K-12 school dist
 
 | Metric | Value |
 |--------|-------|
-| Total Size | ~1.2 TB |
+| Total Size | ~1.4 TB |
 | Largest Table | CrossRefs (150M+ rows) |
 | Transaction Tables | 30M+ rows |
 | Active Records | ~50M across core tables |
