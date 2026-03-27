@@ -42,7 +42,16 @@ nul
 /agent
 
 # Large data files
-nasco_items_data.pkl
+*.pkl
+
+# Ad-hoc scripts (one-off investigations, fixes, reports)
+scripts/adhoc/
+
+# Generated output artifacts
+output/*.txt
+output/*.xml
+output/*.json
+output/*.xlsx
 
 # Sub-repos
 EDS-Req-New/
