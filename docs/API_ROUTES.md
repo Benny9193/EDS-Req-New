@@ -38,7 +38,7 @@ The backend connects to two SQL Server databases:
 - **EDS** — production catalog (Items, Vendors, Categories, CrossRefs, Requisitions, Sessions)
 - **dpa_EDSAdmin** — monitoring and performance data (used by scripts, not the API)
 
-An Elasticsearch cluster at `20.122.81.233:9200` provides optional full-text search over the `pricing_consolidated_53` index. When ES is healthy, search endpoints use it automatically; they fall back to SQL on failure.
+An Elasticsearch cluster at `20.122.81.233:9200` provides optional full-text search over the `pricing_consolidated_60` index. When ES is healthy, search endpoints use it automatically; they fall back to SQL on failure.
 
 ---
 
@@ -342,7 +342,7 @@ Get a paginated, filterable list of products.
 
 **Behavior notes:**
 
-- When `query` is provided and ES is enabled, the request is routed to Elasticsearch against the `pricing_consolidated_53` index using `multi_match` with fuzzy matching across `shortDescription`, `itemCode`, `vendorName`, and related fields.
+- When `query` is provided and ES is enabled, the request is routed to Elasticsearch against the `pricing_consolidated_60` index using `multi_match` with fuzzy matching across `shortDescription`, `itemCode`, `vendorName`, and related fields.
 - On ES failure or when ES is disabled, falls back to SQL with a prefix-first LIKE strategy (`description%`, `% description%`) to maximize index usage.
 - The unfiltered product count is cached for 5 minutes under the key `product_total_count`.
 - Only items with `Active = 1`, a non-empty description, and `ListPrice > 0` are returned.
@@ -676,7 +676,7 @@ Get product categories that have at least one item under the specified bid.
 Router prefix: `/search` — registered at `/api/search`.
 Source: `api/routes/search.py`
 
-This module exposes dedicated Elasticsearch search endpoints with full facet support. The underlying index is the existing `pricing_consolidated_53` index produced by the EDSIQ Java indexer. It uses camelCase field names (e.g., `shortDescription`, `bidHeaderId`, `vendorName`) rather than the API's snake_case conventions. Field mapping is handled internally.
+This module exposes dedicated Elasticsearch search endpoints with full facet support. The underlying index is the existing `pricing_consolidated_60` index produced by the EDSIQ ColdFusion indexer. It uses camelCase field names (e.g., `shortDescription`, `bidHeaderId`, `vendorName`) rather than the API's snake_case conventions. Field mapping is handled internally.
 
 > **Note:** This module requires ES to be enabled (`ES_ENABLED=true`). Both endpoints return HTTP 503 if ES is unavailable.
 
@@ -2025,7 +2025,7 @@ Get the current Elasticsearch index status and the result of the last reindex op
 | `DB_PASSWORD` | — | SQL Server password |
 | `ES_URL` | `http://20.122.81.233:9200` | Elasticsearch cluster URL |
 | `ES_ENABLED` | `true` | Enable/disable Elasticsearch integration |
-| `ES_INDEX` | `pricing_consolidated_53` | ES index name |
+| `ES_INDEX` | `pricing_consolidated_60` | ES index name |
 | `ANTHROPIC_API_KEY` | — | Claude API key (enables AI features) |
 | `LLM_PROVIDER` | `claude` (with key) or `ollama` | LLM provider for AI endpoints |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |

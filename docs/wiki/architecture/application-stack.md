@@ -16,10 +16,10 @@ The EDS application stack consists of multiple services running on Kubernetes, c
 
 | Property | Value |
 |----------|-------|
-| Language | Java |
-| Framework | Spring Boot |
-| Database Access | JDBC |
-| Connection Pool | HikariCP |
+| Language | CFML (ColdFusion Markup Language) |
+| Framework | CFWheels (MVC) on Lucee CFML engine |
+| Database Access | CFQUERY / ORM |
+| Web Server | NGINX → Lucee/Tomcat |
 | Sessions | Redis |
 
 **Key Features:**

@@ -387,14 +387,15 @@ Routes are registered with `/api` prefix. Health endpoints: `GET /api/health`, `
 **Frontend page serving**: A single generic catch-all handler (`/{full_path:path}`) serves all HTML pages. Clean URLs (`/checkout`) and `.html` URLs (`/checkout.html`) resolve to the same file. Route aliases are defined in `_ROUTE_ALIASES` dict. Directory traversal is prevented via `Path.resolve()` + `is_relative_to()`.
 
 ### Frontend (`/frontend/`)
-Single-page Alpine.js application with store-based state management:
-- **alpine-requisition.html** - Main app entry point
+Alpine.js application with modular JS architecture:
+- **index.html** - Main app entry point (requisition/catalog interface)
 - **login.html** - Authentication page
-- **js/stores/** - Alpine stores: auth, cart, products, ui, savedLists, orderHistory
-- **js/api.js** - API client with fetch wrapper
-- **css/** - Tailwind-based component styles
+- **checkout.html** - Cart checkout flow
+- **product-detail.html** - Product detail view
+- **js/** - Flat directory with 18 modules: `app.js` (Alpine init), `api-client.js` (fetch wrapper), `auth.js`, `cart.js`, `browse.js`, `checkout.js`, `orders.js`, `approvals.js`, `saved-lists.js`, `dashboard.js`, `reports.js`, `ui.js`, `autocomplete.js`, `product-helpers.js`, `product-detail.js`, `config.js`, `auth-guard.js`, `login.js`
+- **css/** - Component styles using CSS custom properties
 
-EDS brand colors defined in Tailwind config: `eds-primary: #1c1a83`, `eds-secondary: #4a4890`, `eds-accent: #b70c0d`
+EDS brand colors defined via CSS custom properties: `eds-primary: #1c1a83`, `eds-secondary: #4a4890`, `eds-accent: #b70c0d`
 
 ### Monitoring Scripts (`/scripts/`)
 Standalone Python scripts for database administration:
@@ -522,7 +523,7 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 
 ### Application Docs
 - [`FRONTEND_ARCHITECTURE.md`](/docs/FRONTEND_ARCHITECTURE.md) - Complete frontend architecture guide (Alpine.js, modules, state management, auth, CSS)
-- [`API_ROUTES.md`](/docs/API_ROUTES.md) - Complete API routes reference (90+ endpoints across 14 route modules)
+- [`API_ROUTES.md`](/docs/API_ROUTES.md) - Complete API routes reference (~65 endpoints across 14 route modules)
 - [`UNIVERSAL_REQUISITION.md`](/docs/UNIVERSAL_REQUISITION.md) - Requisition interface user & developer guide
 - [`API_REFERENCE.md`](/docs/API_REFERENCE.md) - Python monitoring tools API reference (db_utils, config, logging)
 - [`MONITORING_SCRIPTS_REFERENCE.md`](/docs/MONITORING_SCRIPTS_REFERENCE.md) - Complete reference for all 58 monitoring scripts, CLI entry points, configuration, output files, and workflows

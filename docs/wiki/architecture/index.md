@@ -70,7 +70,7 @@ This section documents the technical architecture of the EDS system, including t
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Web App | Java (Spring Boot) | Main application |
+| Web App | ColdFusion (Lucee/CFWheels) | Main application |
 | API | Node.js | REST API services |
 | Jobs | Java | Background processing |
 | Hosting | Kubernetes (AKS) | Container orchestration |

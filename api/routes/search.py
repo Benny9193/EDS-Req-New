@@ -68,8 +68,8 @@ class AutocompleteItem(BaseModel):
 # ===========================================
 # FIELD MAPPING — existing ES index fields
 # ===========================================
-# The pricing_consolidated_51 index uses camelCase fields from the
-# existing EDSIQ Java indexer. Map them to our API Product model.
+# The pricing_consolidated_60 index uses camelCase fields from the
+# existing EDSIQ ColdFusion indexer. Map them to our API Product model.
 
 def _hit_to_product(src: dict, bid_id_list: List[int] = None) -> Product:
     """Convert an ES hit _source to our Product model."""
