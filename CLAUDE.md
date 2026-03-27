@@ -318,6 +318,11 @@ EDS (Educational Data Services) is a multi-component system consisting of:
 # Install dependencies
 pip install -e ".[api,dev]"
 
+# Install extras: dashboard (Streamlit), export (openpyxl), gui (nicegui),
+#   agent (Claude/Ollama/ChromaDB), e2e (Playwright), build (PyInstaller),
+#   all (everything)
+pip install -e ".[all]"
+
 # Run API server (development)
 uvicorn api.main:app --reload --port 8000
 
@@ -351,8 +356,13 @@ pytest -m e2e
 capture-baseline                    # Capture performance metrics
 analyze-performance --days 30       # Analyze issues
 extract-indexes --min-saving 80     # Find missing indexes
+generate-index-scripts              # Generate index creation SQL
+deploy-indexes-test                 # Deploy indexes to test
+deploy-indexes-prod                 # Deploy indexes to production
+validate-indexes                    # Validate index performance
 investigate-blocking --date 2025-01-09
 generate-report                     # Comprehensive report
+generate-dashboard                  # Alert dashboard (Streamlit)
 ```
 
 ### DBA Agent
@@ -360,6 +370,7 @@ generate-report                     # Comprehensive report
 python -m agent chat                # Interactive chat
 eds-agent ask "What tables exist?"  # Single question
 eds-agent sql "Top 10 vendors"      # Generate SQL
+eds-agent-gui                       # Web-based GUI (nicegui)
 ```
 
 ## Architecture
@@ -429,6 +440,17 @@ EDS_BEHIND_PROXY=false       # Trust X-Forwarded-For header for real client IP
 EDS_DEBUG=false              # Enable /api/debug/connection endpoint
 ```
 
+## Environment Variables (AI & Search)
+
+```
+LLM_PROVIDER=ollama          # AI backend: "claude", "ollama", or "openai" (auto-detects if omitted)
+ANTHROPIC_API_KEY=            # Claude API key (required when LLM_PROVIDER=claude)
+OLLAMA_HOST=http://localhost:11434  # Ollama server URL
+ES_ENABLED=true              # Enable/disable Elasticsearch integration
+ES_URL=http://20.122.81.233:9200   # EDS-ES VM (Azure, eastus2)
+ES_INDEX=pricing_consolidated_60    # Production pricing index
+```
+
 ## Authentication Flow
 
 Login uses `sp_FA_AttemptLogin` stored procedure:
@@ -446,19 +468,36 @@ Session timeouts (defined in `api/middleware.py`):
 
 ```
 tests/
-├── conftest.py              # Global fixtures
+├── conftest.py                  # Global fixtures
+├── test_config.py               # Config/YAML tests
+├── test_db_utils.py             # DB utility tests
+├── test_deploy_indexes.py       # Index deployment tests
+├── test_investigate_blocking.py # Blocking investigation tests
+├── test_recursive_procedures.py # Recursive SP tests
 ├── api/
-│   ├── conftest.py          # TestClient fixture with mocked DB
-│   ├── test_health.py       # Health/status endpoints, CORS headers
-│   ├── test_products.py     # Product search, filter, pagination
-│   ├── test_categories.py   # Category listing
-│   ├── test_vendors.py      # Vendor listing
-│   ├── test_middleware.py   # Security headers, rate limiting, auth dependency (22 tests)
-│   ├── test_auth.py         # Login, session validation, logout, touch (14 tests)
-│   └── test_requisitions.py # Submit, list, update, cancel, approve, reject (32 tests)
-├── e2e/                     # Playwright browser tests
+│   ├── conftest.py              # TestClient fixture with mocked DB
+│   ├── test_health.py           # Health/status endpoints, CORS headers
+│   ├── test_products.py         # Product search, filter, pagination
+│   ├── test_categories.py       # Category listing
+│   ├── test_vendors.py          # Vendor listing
+│   ├── test_middleware.py       # Security headers, rate limiting, auth dependency
+│   ├── test_auth.py             # Login, session validation, logout, touch
+│   ├── test_requisitions.py     # Submit, list, update, cancel, approve, reject
+│   ├── test_ai_search.py        # AI-powered search endpoints
+│   ├── test_ai_chat.py          # AI chat endpoints
+│   ├── test_dashboard.py        # Dashboard endpoints
+│   └── test_reports.py          # Report endpoints
+├── e2e/                         # Playwright browser tests
 │   ├── conftest.py
-│   └── test_*.py
+│   ├── screenshot_utils.py
+│   ├── test_login_workflow.py
+│   ├── test_product_browsing.py
+│   ├── test_cart_workflow.py
+│   ├── test_checkout_workflow.py
+│   ├── test_approval_workflow.py
+│   ├── test_requisition_listing.py
+│   ├── test_critical_flows.py
+│   └── test_visual_regression.py
 ```
 
 **Mocking patterns**:
@@ -478,7 +517,7 @@ Services: frontend (nginx:alpine, port 80), api (python:3.11-slim, port 8000), e
 
 ## Kubernetes Infrastructure
 
-Two AKS clusters in East US 2 (Kubernetes 1.32.10), both with mixed Linux/Windows node pools:
+Two AKS clusters in East US 2 (Kubernetes 1.32.11), both with mixed Linux/Windows node pools:
 - **eds-aks-prod** (eds-prod-rg) - 13 nodes (8 Linux, 5 Windows), production workloads
 - **eds-aks-uat** (eds-uat-rg) - 12 nodes (7 Linux, 5 Windows), UAT/staging workloads
 
@@ -493,11 +532,12 @@ kubens eds-web-app             # Switch namespace
 
 ## Key Files
 
-- `/pyproject.toml` - Dependencies, entry points, pytest config
+- `/pyproject.toml` - Dependencies (8 optional extras), 13 CLI entry points, pytest config
 - `/config.yaml` - Thresholds, analysis settings, output directories
-- `/.env` - Database credentials and middleware config (copy from .env.example)
-- `/docker-compose.yml` - Multi-service orchestration
+- `/.env` - Database credentials, AI/search config, middleware settings (copy from `.env.example`)
+- `/docker-compose.yml` - 3 services: frontend, api, elasticsearch
 - `/api/middleware.py` - Auth dependency, rate limiter, CSP/security headers
+- `/api/search.py` - Elasticsearch client (ES 7.15.2 production)
 
 ## Documentation
 
