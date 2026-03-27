@@ -116,7 +116,7 @@ An internal product record representing something that can be purchased.
 ### J-K
 
 **JDBC**
-Java Database Connectivity - the API used by the EDS application to connect to SQL Server.
+Java Database Connectivity - the database driver layer used by the Lucee CFML engine to connect to SQL Server.
 
 **Job**
 A scheduled background task that runs automatically.

@@ -63,7 +63,7 @@ Requisition → Approval → PO → Vendor → Fulfillment
 
 | Layer | Technology |
 |-------|------------|
-| Web App | Java (JDBC) |
+| Web App | ColdFusion (Lucee/CFWheels) |
 | API | Node.js |
 | Database | SQL Server 2017 |
 | Infrastructure | Azure / Kubernetes |
