@@ -1,0 +1,25 @@
+{
+  "session_id": "2737c08a",
+  "created_at": "2026-02-06T12:48:02.392184",
+  "updated_at": "2026-02-06T12:48:31.274865",
+  "title": "Session 2737c08a",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What categories of products do you have?",
+      "timestamp": "2026-02-06T12:48:02.403988",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "We have **75 categories** of products available in our catalog. Here are some examples:\n\n- **Apparel**: 6 products\n- **Athletic Equipment Reconditioning**: 106 products\n- **Athletic Supplies**: 280,054 products\n- **Audio Visual Supplies**: 21,159 products\n- **Automotive Supplies**: 1,909 products\n\nAnd many more! If you're looking for something specific, feel free to ask and I can help narrow it down.",
+      "timestamp": "2026-02-06T12:48:31.274865",
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "provider": "claude",
+  "model": null,
+  "total_tokens": 0,
+  "message_count": 2
+}

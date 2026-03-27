@@ -1,0 +1,76 @@
+# SQL Server Performance Monitoring - Configuration
+# Edit values here to customize thresholds and settings
+
+# Database connection settings
+database:
+  name: dpa_EDSAdmin
+  timeout: 30  # Connection timeout in seconds
+
+# Alert thresholds
+thresholds:
+  # Missing index recommendations
+  missing_index:
+    critical: 95      # >= this % is critical priority
+    high: 80          # >= this % is high priority
+    medium: 50        # >= this % is medium priority
+    min_executions: 100  # Minimum query executions to consider
+
+  # Blocking events
+  blocking:
+    critical_seconds: 3600   # >= 1 hour = critical
+    high_seconds: 300        # >= 5 minutes = high
+    medium_seconds: 60       # >= 1 minute = medium
+
+  # I/O latency (milliseconds)
+  io_latency:
+    critical_ms: 200   # >= this is critical
+    high_ms: 100       # >= this is high
+    medium_ms: 50      # >= this is medium
+
+  # Slow queries (buffer gets)
+  slow_query:
+    critical_buffer_gets: 10000000   # 10M+ buffer gets
+    high_buffer_gets: 1000000        # 1M+ buffer gets
+    min_buffer_gets: 100000          # Minimum to report
+
+# Analysis defaults
+analysis:
+  # Default lookback periods
+  missing_indexes_days: 30
+  slow_queries_days: 7
+  blocking_days: 30
+  io_issues_hours: 24
+
+  # Result limits
+  top_results: 50
+  report_top: 10
+
+# Dashboard settings
+dashboard:
+  refresh_interval: 30  # Auto-refresh interval in seconds
+  health_score:
+    # Points deducted for each issue category
+    critical_index_penalty: 20
+    high_index_penalty: 10
+    blocking_penalty: 15
+    io_latency_penalty: 10
+    slow_query_penalty: 5
+
+# Output settings
+output:
+  directory: output/performance
+  exports_directory: output/exports
+  log_directory: logs
+
+# Alert notification settings (for SQL Agent jobs)
+alerts:
+  email: dba-team@company.com  # Update with your team email
+  mail_profile: Default        # Database mail profile name
+  enabled: true
+
+# Logging settings
+logging:
+  level: INFO       # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_file_size_mb: 10
+  backup_count: 5

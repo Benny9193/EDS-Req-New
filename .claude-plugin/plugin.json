@@ -1,0 +1,40 @@
+{
+  "name": "eds-dba-tools",
+  "version": "2.1.0",
+  "description": "EDS Database Assistant - Generate Excel reports, run SQL queries, search docs, inspect schemas, run monitoring scripts, and get database insights from natural language",
+  "author": {
+    "name": "EDS Team"
+  },
+  "keywords": ["database", "sql-server", "reports", "excel", "dba", "monitoring", "schema", "mcp"],
+  "commands": [
+    "./commands/report.md",
+    "./commands/report-preview.md",
+    "./commands/sql.md",
+    "./commands/docs.md",
+    "./commands/schema.md",
+    "./commands/run.md",
+    "./commands/ask.md",
+    "./commands/status.md"
+  ],
+  "agents": [
+    "./agents/eds-dba.md"
+  ],
+  "mcpServers": {
+    "eds-dba": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/eds_dba_server.py"],
+      "cwd": "${PROJECT_ROOT}",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    "eds-reports": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-servers/eds_reports_server.py"],
+      "cwd": "${PROJECT_ROOT}",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

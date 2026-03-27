@@ -1,0 +1,25 @@
+{
+  "session_id": "913d65d2",
+  "created_at": "2026-02-06T11:29:41.411808",
+  "updated_at": "2026-02-06T11:29:50.781675",
+  "title": "Session 913d65d2",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What art supplies do you have?",
+      "timestamp": "2026-02-06T11:29:41.413308",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "I'm a DBA assistant, not an art supply expert. I can help with database-related tasks, but I don't have information about physical art supplies.\n\nIf you'd like to ask a question related to the EDS database or its contents, I'll be happy to assist! For example, if you're looking for data on art supplies used in a specific project, I might be able to help with that.",
+      "timestamp": "2026-02-06T11:29:50.781675",
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "provider": "claude",
+  "model": null,
+  "total_tokens": 0,
+  "message_count": 2
+}

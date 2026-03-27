@@ -1,0 +1,115 @@
+# EDS Universal Requisition - Docker Compose
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose up -d --build      # Rebuild and start
+#   docker-compose logs -f            # View logs
+#   docker-compose down               # Stop all services
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # Frontend - Static files served by nginx
+  # ===========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: eds-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-/api}
+      - BUDGET_LIMIT=${BUDGET_LIMIT:-5000}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - eds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================
+  # API - FastAPI backend
+  # ===========================================
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: eds-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      # Database configuration
+      - DB_SERVER=${DB_SERVER:-localhost}
+      - DB_DATABASE=${DB_DATABASE:-EDS}
+      - DB_USERNAME=${DB_USERNAME:-}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_DRIVER=${DB_DRIVER:-ODBC Driver 18 for SQL Server}
+      - DB_TRUST_CERT=${DB_TRUST_CERT:-yes}
+      # Connection pool settings
+      - DB_POOL_MIN=${DB_POOL_MIN:-2}
+      - DB_POOL_MAX=${DB_POOL_MAX:-10}
+      - DB_CONNECTION_TIMEOUT=${DB_CONNECTION_TIMEOUT:-30}
+      # Application settings
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # Elasticsearch
+      - ES_URL=${ES_URL:-http://elasticsearch:9200}
+      - ES_ENABLED=${ES_ENABLED:-true}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - eds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ===========================================
+  # Elasticsearch - Product search engine
+  # ===========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: eds-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=eds-search
+    ports:
+      - "${ES_PORT:-9200}:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - eds-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  eds-network:
+    driver: bridge
+    name: eds-network
+
+volumes:
+  es-data:
+    driver: local
+
+# Optional: Named volumes for persistent data
+# volumes:
+#   eds-logs:
+#     driver: local

@@ -1,0 +1,191 @@
+SQLHash,TotalExecutions,TotalDiskReads,TotalBufferGets,TotalRowsReturned,AvgBufferGetsPerExec,AvgDiskReadsPerExec,SQLPreview
+3977744925,724,64238907,27506736236,685,37992729.61,88727.77,"insert DMSVendorBidDocuments (VendorCode, DistrictVisible, BidHeaderId, BidNbr, DocType, ExpirationDate, DocumentNumber, DocId, PagesCaptured, FileName)
+select v.VendorCode, v.DistrictVisible, v.BidH"
+5432150664,722,299135728,21531867748,48,29822531.51,414315.41,"insert DMSVendorBidDocuments (VendorCode, DistrictVisible, BidHeaderId, BidNbr, DocType, ExpirationDate, DocumentNumber, DocId, PagesCaptured, FileName)
+select v.VendorCode, v.DistrictVisible, v.BidH"
+4730038114,722,1824272,21076600704,288,29191967.73,2526.69,"insert DMSBidDocuments (BidHeaderId, BidNbr, DocType, DocId, DistrictVisible, PagesCaptured, FileName)
+select v.BidHeaderId, v.BidNbr, v.DocType, v.DocId, v.DistrictVisible, v.PagesCaptured, v.FileNa"
+3967956687,2891,16750739,16998577569,780502317,5879826.21,5794.1,"-- insert new vendors
+insert registrations (active, vendorid, code, password, email, name, address1, address2, address3, city, state, zipcode, phone, fax, contact)
+select vendors.active, vendors.ven"
+3967956687,2891,16750739,16998577569,780502317,5879826.21,5794.1,"egcalendar.bscid = BidScheduleCats.BSCId
+ where regcalendar.regcalendarid is null
+ group by registrations.registrationid, BidScheduleCats.BSCId--, bidcalendar.calendarid
+ order by registrations.reg"
+3967956687,2891,16750739,16998577569,780502317,5879826.21,5794.1,"endorcontactid = VendorContacts.VendorContactId
+ where regusers.reguserId is null
+
+--Deactive Deleted Contacts 
+update regusers
+   set active = 0
+--select * 
+  from regusers
+  left outer join "
+2375636372,13,178256,7481049634,303,575465356.46,13712.0,"(@P1 int)
+            WITH VendorStats AS (
+                SELECT
+                    v.VendorId,
+                    v.Name AS VendorName,
+                    v.City,
+                    v.State,
+  "
+2641967533,5253,144916,4105308421,7467327,781516.93,27.59,"(@P0 int)SELECT VendorCategory.CategoryId, ISNULL((select top 1 v.VendorId from Vendors v where v.Name = Vendors.name and v.Active = 1 order by v.VendorId),0) VendorId, (select top 1 v.DistrictId from"
+4053813290,88,12180585,3757085392,47,42694152.18,138415.74,"P104 , @P105 , @P106 , @P107 , @P108 , @P109 , @P110 , @P111 , @P112 , @P113 , @P114 , @P115 , @P116 , @P117 , @P118 , @P119 , @P120 , @P121 , @P122 , @P123 , @P124 , @P125 , @P126 , @P127 , @P128 , @"
+4053813290,88,12180585,3757085392,47,42694152.18,138415.74,",0) when 0 then case ItemMustBeBid when 1 then '*** Items Not Bid ***' else '** No Bid **' end else '*** Missing Vendor Name ***' end ) +
+				isnull(SortSeq,'') Sort_Vendor
+				, '<img class=""searchTh"
+4053813290,88,12180585,3757085392,47,42694152.18,138415.74,"k-icon-green.png"" title=""This Item requires additional freight. Freight cost has been entered."" width=""16"" height=""16"" />'
+					when ShippingUpdateRequired = 1 and AdditionalShipping = 1 then ' <img c"
+4053813290,88,12180585,3757085392,47,42694152.18,138415.74,"(@P0 int,@P1 int,@P2 int,@P3 int,@P4 int,@P5 int,@P6 int,@P7 int,@P8 int,@P9 int,@P10 int,@P11 int,@P12 int,@P13 int,@P14 int,@P15 int,@P16 int,@P17 int,@P18 int,@P19 int,@P20 int,@P21 int,@P22 int,@P"
+2670341665,362180,1692830,3714731264,1772106,10256.59,4.67,"(@idList varchar(8000))select rq.RequisitionId,
+       rq.ItemId,
+       rq.ItemCode,
+       rq.VendorItemCode,
+       rq.ImageURL,
+       rq.LongDescription          as ItemDescription,
+       rq.Man"
+3604302390,631673,6133603,3695301799,894489,5850.02,9.71,"char,cast(ShippingCost as money),1) + char(10) +
+					'-----------------------' + char(10) +
+					'Grand Total:' + replicate('&nbsp;',(10 - (cast(Len(convert(varchar,cast((BidPrice * Quantity) + Shipp"
+3604302390,631673,6133603,3695301799,894489,5850.02,9.71," case when AdditionalShipping = 1 then 'req-ticker-info' else '' end + '"" style=""white-space:nowrap;' + case when ShippingUpdateRequired = 1 then 'color:var(--error-color) !important;' else '' end + '"
+3604302390,631673,6133603,3695301799,894489,5850.02,9.71,"(@P0 int,@P1 int,@P2 nvarchar(4000),@P3 int,@P4 int,@P5 nvarchar(4000))SELECT DetailId, ItemId, Quantity, LastYearsQuantity, Description, UnitCode, BidPrice, /*Extended,*/ LastAlteredSessionId, Vendor"
+4445064848,9370,206518,2407982466,3489033,256988.52,22.04,"(@P0 int,@P1 int)select --*
+						ISNULL(R.accountcode,'') AS AccountCode,R.accountid,R.allocationamount,R.allocationavailable,R.approvallevel,R.attention,R.budgetamount,R.budgetid,R.categoryid,R.cate"
+2710779324,1302070,5309,2252187237,211352067,1729.7,0.0,"CREATE   procedure [dbo].[usp_SetItemAIData] @CrossRefId int, @ProductNames varchar(4000), @TypeAheads varchar(4000), @ShortDescription varchar(4000), @FullDescription varchar(4000), @UNSPSC varchar(2"
+2157027286,29,77105516,2214057776,1935287,76346819.86,2658810.9,"CREATE   procedure [dbo].[usp_GetItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter table CrossRefs
+add 	
+HashKey			varbinary(64) null,
+ProductNames	nvarchar(4000) null,
+TypeAheads		nvarcha"
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"eaderId = @pBidHeaderId
+		  join Items on Items.ItemId = CrossRefs.ItemId
+		  join Units on Units.UnitId = Items.UnitId
+		  left outer join BidItems on BidItems.CrossRefId = CrossRefs.CrossRefId
+	"
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"      when 'C' then 1 
+                     when '' then 2 
+                     else 3
+				  end
+				, Items.UnitId, Units.Code, trim(case when coalesce(trim(CrossRefs.UniqueItemNumber),'') = '' "
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"dType,1,1),'') 
+                     when 'A' then 0 
+                     when 'C' then 1 
+                     when '' then 2 
+                     else 3
+				  end
+				, Items.UnitId, Units.C"
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"rders, sum(coalesce(Detail.Quantity,0)) TotalQuantity
+	  into #OrderCounts
+	  from Detail 
+	  join Requisitions on Requisitions.RequisitionId = Detail.RequisitionId 
+	                   and Requis"
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"--alter table SearchData_Test.dbo.PricingConsolidated add TotalQuantity int null
+--exec usp_SetPricing 9336
+--exec [dbo].[usp_SearchItemsByReqHKDS] 50484832,541,0,'9736890',0,0
+--exec [dbo].[usp_Se"
+4563780534,150,27678571,2211987503,37385485,14746583.35,184523.81,"Id,0)
+			or coalesce(PricingConsolidated.ItemId,0) != coalesce(it.ItemId,0)
+			or coalesce(PricingConsolidated.VendorId,0) != coalesce(it.VendorId,0)
+			or coalesce(PricingConsolidated.BidItemId,0)"
+6311722593,18405,73717,2152079903,3191441,116929.09,4.01,"(@P0 int)select --*
+						ISNULL(R.accountcode,'') AS AccountCode,R.accountid,R.allocationamount,R.allocationavailable,R.approvallevel,R.attention,R.budgetamount,R.budgetid,R.categoryid,R.categoryname"
+3478943573,82185,1782370,1919789222,26220196,23359.36,21.69,"derId = bl.BidHeaderId
+  join Bids on Bids.BidHeaderId = BidHeaders.BidHeaderId
+           and Bids.Active = 1
+           and Bids.VendorId != 7691
+  join BidItems on BidItems.BidId = Bids.BidId
+"
+3478943573,82185,1782370,1919789222,26220196,23359.36,21.69,"
+
+CREATE procedure [dbo].[sp_MPIHeadings] @RequisitionId int as
+set nocount on
+declare @BidHeaderId int, @DistrictId int, @CategoryId int
+declare @BidsList table (RequisitionId int, BidHeaderId i"
+4633455156,12947,8791356,1393223598,1804049,107609.76,679.03,"(@P0 int)select --*
+						ISNULL(R.accountcode,'') AS AccountCode,R.accountid,R.allocationamount,R.allocationavailable,R.approvallevel,R.attention,R.budgetamount,R.budgetid,R.categoryid,R.categoryname"
+5779021728,115237,10815595,1333606449,1214176,11572.73,93.86," style=""white-space:nowrap;' + case when ShippingUpdateRequired = 1 then 'color:var(--error-color) !important;' else '' end + '"" title=""' + case when AdditionalShipping = 1 then case when ShippingUpda"
+5779021728,115237,10815595,1333606449,1214176,11572.73,93.86,"char(10) +
+					'-----------------------' + char(10) +
+					'Grand Total:' + replicate('&nbsp;',(10 - (cast(Len(convert(varchar,cast((BidPrice * Quantity) + ShippingCost as money),1)) as float)*0.8)))"
+5779021728,115237,10815595,1333606449,1214176,11572.73,93.86,"(@P0 int,@P1 int,@P2 int,@P3 int)SELECT DetailId, ItemId, Quantity, LastYearsQuantity, Description, UnitCode, BidPrice, /*Extended,*/ LastAlteredSessionId, VendorName, VendorCode, CatalogName, AltDesc"
+2996251983,5462,8920958,1258990144,1588759,230499.84,1633.28,"(@P0 int,@P1 int)select --*
+						ISNULL(R.accountcode,'') AS AccountCode,R.accountid,R.allocationamount,R.allocationavailable,R.approvallevel,R.attention,R.budgetamount,R.budgetid,R.categoryid,R.cate"
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"d.CatalogPrice,
+         GrossPrice = BestBid.GrossPrice,
+         DiscountRate = BestBid.DiscountRate,
+         CatalogPage = BestBid.Page,
+         PricePlanId = BestBid.PricePlanId,
+         A"
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"updlock,rowlock)
+    join Detail on Detail.DetailId = inserted.DetailId
+    join Items on Items.ItemId = Detail.ItemId
+--	          and coalesce(Items.DistrictId,0) != 0
+    join Requisitions on R"
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"d,
+         CatalogPage = CrossRefs.Page,
+         PricePlanId = BidHeaders.PricePlanId,
+         AwardId = Awards.AwardId,
+         VendorId = Bids.VendorId,
+         VendorItemCode = CrossRefs."
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"ds.VendorId,
+         VendorItemCode = case coalesce(rtrim(Items.VendorPartNumber),'') when '' then 'N/A' else Items.VendorPartNumber end,
+         Alternate = null,
+         BidItemId = null,
+   "
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"CREATE TRIGGER [dbo].[trig_DetailUpdate] on [dbo].[Detail] 
+after INSERT, UPDATE not for replication
+AS
+set nocount on
+declare @BidsList table (RequisitionId int, BidHeaderId int null)
+declare @C"
+5007297860,172402,1383,1040663580,17342,6036.26,0.01,"ions.RequisitionId
+
+  -- Remap items with new Id's
+  Update Detail
+     set ItemId = MappedItems.NewItemId,
+         OriginalItemId = coalesce(Detail.OriginalItemId,MappedItems.OrigItemId),
+    "
+3653786764,2891,166117,1012106869,545,350088.85,57.46,"egcalendar.bscid = BidScheduleCats.BSCId
+ where regcalendar.regcalendarid is null
+ group by registrations.registrationid, BidScheduleCats.BSCId--, bidcalendar.calendarid
+ order by registrations.reg"
+3653786764,2891,166117,1012106869,545,350088.85,57.46,"endorcontactid = VendorContacts.VendorContactId
+ where regusers.reguserId is null
+
+--Deactive Deleted Contacts 
+update regusers
+   set active = 0
+--select * 
+  from regusers
+  left outer join "
+3653786764,2891,166117,1012106869,545,350088.85,57.46,"-- insert new vendors
+insert registrations (active, vendorid, code, password, email, name, address1, address2, address3, city, state, zipcode, phone, fax, contact)
+select vendors.active, vendors.ven"
+3958497114,1,32,1009822362,0,1009822362.0,32.0,"SELECT  A.VENDORID, A.CODE, A.NAME, A.USEGROSSPRICES, B.VENDORCONTACTID, B.VENDORID, B.ACTIVE, B.EMAIL, B.BIDCONTACT, B.POCONTACT, B.FULLNAME FROM dbo.Vendors A, dbo.VendorContacts B WHERE ( Isnull(A."
+3253755176,201544,250350,973198328,108537,4828.71,1.24,"+' + convert(varchar,cast(ShippingCost as money),1) + char(10) +
+					'-----------------------' + char(10) +
+					'Grand Total:' + replicate('&nbsp;',(10 - (cast(Len(convert(varchar,cast((BidPrice * Q"
+3253755176,201544,250350,973198328,108537,4828.71,1.24,"(@P0 int,@P1 int,@P2 int,@P3 nvarchar(4000),@P4 int,@P5 int,@P6 int,@P7 nvarchar(4000))SELECT DetailId, ItemId, Quantity, LastYearsQuantity, Description, UnitCode, BidPrice, /*Extended,*/ LastAlteredS"
+3253755176,201544,250350,973198328,108537,4828.71,1.24,"				, '<div class=""' + case when AdditionalShipping = 1 then 'req-ticker-info' else '' end + '"" style=""white-space:nowrap;' + case when ShippingUpdateRequired = 1 then 'color:var(--error-color) !impor"
+5931132573,722,3390392,958346479,61,1327349.69,4695.83,"insert DMSBidDocuments (BidHeaderId, BidNbr, DocType, DocId, DistrictVisible, PagesCaptured, FileName)
+select v.BidHeaderId, v.BidNbr, v.DocType, v.DocId, v.DistrictVisible, v.PagesCaptured, v.FileNa"
+3023044856,30,41974283,886248567,0,29541618.9,1399142.77,"declare @BidHeaderId int
+
+-- Find Bids needing Price Update
+declare ub cursor for
+select BidHeaders.BidHeaderId
+  from BidHeaders
+  join Bids on Bids.BidHeaderId = BidHeaders.BidHeaderId
+      "
+3023044856,30,41974283,886248567,0,29541618.9,1399142.77,"a on PricingAddenda.ItemId = Items.ItemId and PricingAddenda.CrossRefId = CrossRefs.CrossRefId
+  where Items.DistrictId > 0
+    and (LastBid.DateCreated > dateadd(year,-4,getdate())
+	     or CrossR"
+6116961778,1,2962805,726393093,1,726393093.0,2962805.0,"
+            SELECT
+                COUNT(DISTINCT s.[ItemId]) AS total_distinct,
+                COUNT(DISTINCT CASE WHEN t.[ItemId] IS NOT NULL THEN s.[ItemId] END) AS matched
+            FROM [dbo]"

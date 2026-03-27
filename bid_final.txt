@@ -1,0 +1,202 @@
+Connected.
+
+================================================================================
+1. ALL DETAIL ROWS FOR REQ 60076856
+================================================================================
+DetailId	ItemId	ItemCode	Descr	BidHeaderId	BidPrice	Quantity	VendorId	VendorName	AwardId	CatalogId
+1534203930	8625899	GR22C609	CLEANER/DEGREASER: SIMPLE GREEN, NONTOXIC, BIODEGRADABLE, NO	None	10.9200	2	2198	Staples Inc dba Staples Contract & Commercial LLC	2418933	2018382
+1534395373	9003261	GR4KZ22	H0638 Depressed Center Wheel T27 4x1/4x5/8 AO	0	2.7200	1	3842	United Sales USA Corp.	2418934	None
+1535015262	942396429	USAGOJ095712CT	SOAP,NTRL ORG PUMIC,12,WH	13576	71.2900	1	3842	United Sales USA Corp.	2417219	2018104
+1535015557	1062158477	USASJN9102	Kresto Heritage Heavy Duty Hand Cleaner, Fresh Scent, 1 gal 	13576	143.8700	1	3842	United Sales USA Corp.	2417219	2018104
+1535015581	942424747	USAZPEZUMPP128EA	CLEANER,PINE MULTI PURPOS	13576	11.2300	2	3842	United Sales USA Corp.	2417219	2018104
+
+================================================================================
+2. ITEMS ON BID 13576 - PRICES IN ALL 3 BIDS
+================================================================================
+  No Prices found in 13575-13577 for these items.
+
+================================================================================
+3. ITEMS ON BID 13576 - BidItems + Bids LOOKUP (trigger path)
+================================================================================
+  No BidItems/Bids found for these items in 13575-13577.
+
+================================================================================
+4. TRIGGER - KEY SECTIONS
+================================================================================
+  --- Lines 130-250 (bid data / pricing logic) ---
+  L130:          BidPrice = BestBid.BidPrice,
+  L131:          CatalogPrice = BestBid.CatalogPrice,
+  L132:          GrossPrice = BestBid.GrossPrice,
+  L133:          DiscountRate = BestBid.DiscountRate,
+  L134:          CatalogPage = BestBid.Page,
+  L135:          PricePlanId = BestBid.PricePlanId,
+  L136:          AwardId = BestBid.AwardId,
+  L137:          VendorId = BestBid.VendorId,
+  L138:          VendorItemCode = BestBid.VendorItemCode,
+  L139:          Alternate = BestBid.Alternate,
+  L140:          BidItemId = BestBid.BidItemId,
+  L141:          CrossRefId = BestBid.CrossRefId,
+  L142:          ItemMustBeBid = 0
+  L143:     from inserted with (updlock,rowlock)
+  L144:     join Detail on Detail.DetailId = inserted.DetailId
+  L145:     join Requisitions on Requisitions.RequisitionId = coalesce(inserted.RequisitionId, Detail.RequisitionId)
+  L146:     join Category on Category.CategoryId = Requisitions.CategoryId
+  L147:                  and Category.Type in (1,2,4)
+  L148:     join Budgets on Budgets.BudgetId = Requisitions.BudgetId
+  L149: 	outer apply (select top 1 CrossRefs.CatalogId,
+  L150: 	                    round(BidItems.Price - round(BidItems.Price * isnull(Bids.BidDiscountRate,0) / 100,2),2) BidPrice,
+  L151: 						CrossRefs.CatalogPrice,
+  L152: 						round(BidItems.Price,2) GrossPrice,
+  L153: 						isnull(Bids.BidDiscountRate,0) DiscountRate,
+  L154: 						CrossRefs.Page,
+  L155: 						BidHeaders.PricePlanId,
+  L156: 						Awards.AwardId,
+  L157: 						Bids.VendorId,
+  L158: 						BidItems.VendorItemCode,
+  L159: 						BidItems.Alternate,
+  L160: 						BidItems.BidItemId,
+  L161: 						BidItems.CrossRefId
+  L162: 				   from BidItems
+  L163: 				   join Bids on Bids.BidId = BidItems.BidId
+  L164: 				            and Bids.Active = 1
+  L165: 				   join BidHeaders on BidHeaders.BidHeaderId = Bids.BidHeaderId
+  L166: 				                  and BidHeaders.BidHeaderId = Bids.BidHeaderId
+  L167: 								  and BidHeaders.BidHeaderId in (select case coalesce(Detail.BidHeaderId,0)
+  L168: 				                                                          when 0 then bl.BidHeaderId
+  L169: 																		  else Detail.BidHeaderId
+  L170: 																		end
+  L171: 																   from @BidsList bl
+  L172: 																  where bl.RequisitionId = Requisitions.RequisitionId
+  L173: 																  group by case coalesce(Detail.BidHeaderId,0)
+  L174: 																             when 0 then bl.BidHeaderId
+  L175: 																			 else Detail.BidHeaderId
+  L176: 																		   end)
+  L177: 				   join Awards on Awards.BidId = Bids.BidId
+  L178: 			       left outer join CrossRefs on CrossRefs.CrossRefId = BidItems.CrossRefId
+  L179: 				  where BidItems.ItemId = coalesce(Detail.ItemId, inserted.ItemId)
+  L180: 				  order by case when isnull(Bids.VendorId,0) in (0,7691) then 1 else 0 end, round(BidItems.Price - round(BidItems.Price * isnull(Bids.BidDiscountRate,0) / 100,2),2)) BestBid
+  L181:    where Detail.ItemMustBeBid is null
+  L182:      and BestBid.BidItemId is not null
+  L183:      and not exists(select RequisitionId from @FrozenReqs f where f.RequisitionId = Requisitions.RequisitionId)
+  L184: 
+  L185:   -- Set Catalog Prices for Catalog Items
+  L186: --  insert DebugMsgs (Msg) values ((select Detail.DetailId, Detail.CatalogId, Detail.BidItemId, Detail.BidPrice, Detail.ItemMustBeBid from inserted join Detail on Detail.DetailId = inserted.DetailId for xml auto))
+  L187:   Update Detail
+  L188:      set CatalogId = CrossRefs.CatalogId,
+  L189:          BidPrice = round(case isnull(Crossrefs.DoNotDiscount,0) when 0 then CrossRefs.GrossPrice - round(CrossRefs.GrossPrice * isnull(BidsCatalogList.DiscountRate,0) / 100,2) else Crossrefs.GrossPrice end,2),
+  L190:          CatalogPrice = CrossRefs.CatalogPrice,
+  L191:          GrossPrice = round(CrossRefs.GrossPrice,2),
+  L192:          DiscountRate = case isnull(Crossrefs.DoNotDiscount,0) when 0 then isnull(BidsCatalogList.DiscountRate,0) else 0 end,
+  L193:          CatalogPage = CrossRefs.Page,
+  L194:          PricePlanId = BidHeaders.PricePlanId,
+  L195:          AwardId = Awards.AwardId,
+  L196:          VendorId = Bids.VendorId,
+  L197:          VendorItemCode = CrossRefs.VendorItemCode,
+  L198:          Alternate = null,
+  L199:          BidItemId = null,
+  L200:          CrossRefId = CrossRefs.CrossRefId,
+  L201:          AdditionalShipping = isnull(CrossRefs.AdditionalShipping,0),
+  L202:          ItemMustBeBid = 0,
+  L203: 		 BidHeaderId = case when BidHeaders.BidHeaderId != Requisitions.BidHeaderId then BidHeaders.BidHeaderId else null end
+  L204:     from inserted with (updlock,rowlock)
+  L205:     join Detail on Detail.DetailId = inserted.DetailId
+  L206:     join Requisitions on Requisitions.RequisitionId = Detail.RequisitionId
+  L207:     join Category on Category.CategoryId = Requisitions.CategoryId
+  L208:                  and Category.Type in (1,2,4)
+  L209:     join Budgets on Budgets.BudgetId = Requisitions.BudgetId
+  L210:     join CrossRefs on CrossRefs.ItemId = coalesce(Detail.ItemId, inserted.ItemId)
+  L211:                   and CrossRefs.CrossRefId =
+  L212:       (select top 1 xr.CrossRefId
+  L213:          from CrossRefs xr with (nolock)
+  L214:          join Catalog cat on Cat.CatalogId = xr.CatalogId
+  L215:          join BidsCatalogList bcl on bcl.CatalogId = Cat.CatalogId
+  L216:          join Bids b on b.BidId = bcl.BidId
+  L217:                     and b.Active = 1
+  L218:          join BidHeaders bh on bh.BidHeaderId = b.BidHeaderId
+  L219:          join @BidsList bl on bl.RequisitionId = Requisitions.RequisitionId
+  L220:                           and bl.BidHeaderId = bh.BidHeaderId
+  L221:         where xr.ItemId = coalesce(Detail.ItemId, inserted.ItemId)
+  L222:           and xr.Active = 1
+  L223:         order by case isnull(xr.DoNotDiscount,0) when 0 then xr.GrossPrice - round(xr.GrossPrice * isnull(bcl.DiscountRate,0) / 100,2) else xr.GrossPrice end, xr.CatalogYear desc, xr.CrossRefId
+  L224:        )
+  L225:     join BidsCatalogList on BidsCatalogList.BidCatalogId =
+  L226:       (select top 1 bcl.BidCatalogId
+  L227:          from CrossRefs xr with (nolock)
+  L228:          join Catalog cat on cat.CatalogId = xr.CatalogId
+  L229:          join BidsCatalogList bcl on bcl.CatalogId = cat.CatalogId
+  L230:          join Bids b on b.BidId = bcl.BidId
+  L231:                     and b.Active = 1
+  L232:          join BidHeaders bh on bh.BidHeaderId = b.BidHeaderId
+  L233:          join @BidsList bl on bl.RequisitionId = Requisitions.RequisitionId
+  L234:                           and bl.BidHeaderId = bh.BidHeaderId
+  L235:         where xr.ItemId = coalesce(Detail.ItemId, inserted.ItemId)
+  L236:           and xr.Active = 1
+  L237:         order by case isnull(xr.DoNotDiscount,0) when 0 then xr.GrossPrice - round(xr.GrossPrice * isnull(bcl.DiscountRate,0) / 100,2) else xr.GrossPrice end, xr.CatalogYear desc, xr.CrossRefId
+  L238:        )
+  L239:     join Bids on Bids.BidId = BidsCatalogList.BidId
+  L240:     join BidHeaders on BidHeaders.BidHeaderId = Bids.BidHeaderId
+  L241:     join Awards on Awards.BidId = Bids.BidId
+  L242:    where Detail.ItemMustBeBid is null
+  L243:      and not exists(select RequisitionId from @FrozenReqs f where f.RequisitionId = Requisitions.RequisitionId)
+  L244: 
+  L245:   -- Set MSRP Pricing
+  L246:   Update Detail
+  L247:      set CatalogId = CrossRefs.CatalogId,
+  L248:          BidPrice = coalesce(round(Items.ListPrice - round(Items.ListPrice * isnull(BidManufacturers.DiscountRate,0) / 100,2),2),0),
+  L249:          CatalogPrice = coalesce(Items.ListPrice,0),
+
+================================================================================
+5. vw_RequisitionShippingCosts - GROUP BY / FROM section
+================================================================================
+  L1: --select * from vw_RequisitionShippingCosts where RequisitionId = 59157267
+  L4: select Requisitions.RequisitionId, BidData.BidHeaderId, Vendors.VendorId, coalesce(Vendors.DisplayAs,Vendors.Name,'') VendorName,
+  L7: 						when BidData.FreeHandlingStart is null or BidData.FreeHandlingEnd is null then 0
+  L8: 						when coalesce(ap.ApprovalDate,GETDATE()) between BidData.FreeHandlingStart and BidData.FreeHandlingEnd then 0
+  L9: 						when getdate() < BidData.FreeHandlingEnd and isnull(Requisitions.OrderType,1) = 1 then 0 -- Early Annual Orders as per Gerard will NOT have shipping added DCH 1/11/16
+  L11: 							   when sum(isnull(Detail.Quantity,0) * isnull(Detail.BidPrice,0)) < BidData.FreeHandlingAmount then BidData.AdditionalHandlingAmount
+  L15:          isnull(BidData.FreeHandlingAmount,0) FreeHandlingAmount, BidData.FreeHandlingStart, BidData.FreeHandlingEnd,
+  L16:          isnull(BidData.AdditionalHandlingAmount,0) AdditionalHandlingAmount,
+  L19: 						when BidData.FreeHandlingStart is null or BidData.FreeHandlingEnd is null then 0
+  L20: 						when coalesce(ap.ApprovalDate,GETDATE()) between BidData.FreeHandlingStart and BidData.FreeHandlingEnd then 0
+  L21: 						when getdate() < BidData.FreeHandlingEnd and isnull(Requisitions.OrderType,1) = 1 then 0 -- Early Annual Orders as per Gerard will NOT have shipping added DCH 1/11/16
+  L23: 							   when sum(isnull(Detail.Quantity,0) * isnull(Detail.BidPrice,0)) < BidData.FreeHandlingAmount then BidData.AdditionalHandlingAmount
+  L35: 		 isnull(case isnull(rtrim(BidData.Description),'')
+  L37: 				  else isnull(rtrim(ltrim(BidData.Description)),'') + char(13) + char(10)
+  L39: 				case isnull(rtrim(BidData.VendorBidNumber),'')
+  L40: 				  when '' then 'Bid Date: ' + isnull(convert(varchar(16),BidData.BidAwardDate,101),'')
+  L41: 				  else 'Bid Number: ' + isnull(rtrim(BidData.VendorBidNumber),'')
+  L45:   from Detail with (nolock)
+  L46:   join Requisitions on Requisitions.RequisitionId = Detail.RequisitionId
+  L47:   join Budgets on Budgets.BudgetId = Requisitions.BudgetId
+  L48:   join District on District.DistrictId = Budgets.DistrictId
+  L49:   join Vendors on Vendors.VendorId = case ISNULL(Detail.VendorId,0) when 0 then 7691 else Detail.VendorId end
+  L50:   outer apply (Select top 1 Approvals.ApprovalId, Approvals.ApprovalDate from Approvals where Approvals.RequisitionId = Requisitions.RequisitionId and Approvals.StatusId in (6, 35, 45, 49) order by Approvals.ApprovalDate desc)ap
+  L51:   outer apply (select Bids.BidHeaderId from BidItems join Bids on Bids.BidId = BidItems.BidId where BidItems.BidItemId = Detail.BidItemId) DetailBid
+  L52:   outer apply (select distinct BidHeaders.BidHeaderId, BidHeaders.BidAwardDate, BidHeaders.Description, Bids.FreeHandlingStart, Bids.FreeHandlingEnd, Bids.FreeHandlingAmount, Bids.AdditionalHandlingAmount, Bids.VendorBidNumber
+  L53:                  from BidHeaders
+  L54: 				 join Bids on Bids.BidHeaderId = BidHeaders.BidHeaderId
+  L57: 				where BidHeaders.BidHeaderId = case
+  L59: 												   case isnull(Detail.BidHeaderId,0)
+  L60: 												     when 0 then isnull(Requisitions.BidHeaderId,0)
+  L61: 													 else Detail.BidHeaderId
+  L64: 												   DetailBid.BidHeaderId
+  L65: 											   end) BidData
+  L66:   left outer join DistrictVendor on DistrictVendor.DistrictId = District.DistrictId
+  L69:  group by Requisitions.RequisitionId, Requisitions.OrderType, BidData.BidHeaderId, Vendors.VendorId, coalesce(Vendors.DisplayAs,Vendors.Name,''), BidData.FreeHandlingStart,
+  L70:           BidData.FreeHandlingEnd, BidData.FreeHandlingAmount, BidData.AdditionalHandlingAmount, isnull(District.MinimumPOAmount,0), Budgets.BudgetId,
+  L75: 		 isnull(case isnull(rtrim(BidData.Description),'')
+  L77: 				  else isnull(rtrim(ltrim(BidData.Description)),'') + char(13) + char(10)
+  L79: 				case isnull(rtrim(BidData.VendorBidNumber),'')
+  L80: 				  when '' then 'Bid Date: ' + isnull(convert(varchar(16),BidData.BidAwardDate,101),'')
+  L81: 				  else 'Bid Number: ' + isnull(rtrim(BidData.VendorBidNumber),'')
+
+================================================================================
+6. NULL-BID ITEM (DetailId=1534395373) - PRICING LOOKUP
+================================================================================
+  DetailId=1534395373, ItemId=9003261, ItemCode=GR4KZ22
+  BidHeaderId=0, BidPrice=2.7200, VendorId=3842
+  AwardId=2418934, CatalogId=None
+
+  Prices (top 10 most recent bids):
+
+Done.

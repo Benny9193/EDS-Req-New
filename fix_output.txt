@@ -1,0 +1,11 @@
+BEFORE: DetailId=1534395373, BidHeaderId=None, BidPrice=2.7200, Qty=1, Extended=2.72
+UPDATE applied: 1 row(s) affected
+AFTER:  DetailId=1534395373, BidHeaderId=13576, BidPrice=None, Qty=1, Extended=0.00
+
+=== New vendor grouping for req 60076856 ===
+VendorName	BidHeaderId	ItemCount	SubTotal
+** No Bid **	13576	1	0.00
+Staples Inc	None	1	21.84
+United Sales USA Corp.	13576	1	71.29
+
+Done.

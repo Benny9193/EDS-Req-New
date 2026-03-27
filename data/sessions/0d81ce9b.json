@@ -1,0 +1,25 @@
+{
+  "session_id": "0d81ce9b",
+  "created_at": "2026-02-06T12:16:09.635496",
+  "updated_at": "2026-02-06T12:16:13.030187",
+  "title": "Session 0d81ce9b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-02-06T12:16:09.637491",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Welcome to the EDS Shopping Assistant! How can I help you find what you need today? Are you looking for supplies for your classroom, school office, or something else?",
+      "timestamp": "2026-02-06T12:16:13.030187",
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "provider": "claude",
+  "model": null,
+  "total_tokens": 0,
+  "message_count": 2
+}

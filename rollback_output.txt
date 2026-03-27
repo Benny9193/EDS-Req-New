@@ -1,0 +1,22 @@
+=== Rolling back DetailId=1534395373 to original state ===
+Original: BidHeaderId=NULL, BidPrice=2.72, VendorId=3842
+
+Trigger trig_DetailUpdate DISABLED
+UPDATE applied: 1 row(s)
+Trigger trig_DetailUpdate ENABLED
+
+=== Restored state ===
+  DetailId: 1534395373
+  BidHeaderId: None
+  BidPrice: 2.7200
+  Quantity: 1
+  ExtendedPrice: 2.72
+  VendorId: 3842
+
+=== Current vendor grouping for req 60076856 ===
+VendorName	BidHeaderId	ItemCount	SubTotal
+Staples Inc	None	1	21.84
+United Sales USA Corp.	None	1	2.72
+United Sales USA Corp.	13576	1	71.29
+
+Rollback complete.

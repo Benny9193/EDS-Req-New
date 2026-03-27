@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - EDS Universal Requisition</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="css/design-system.css">
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+
+        body { background: var(--bg-body); min-height: 100vh; }
+
+        .detail-header {
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .detail-header-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .detail-main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .product-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .product-image-area {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 320px;
+        }
+
+        .product-image-area i { font-size: 5rem; color: var(--color-primary-200); }
+
+        .product-info-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .product-vendor-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            background: var(--bg-body);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+        }
+
+        .product-title {
+            font-family: var(--font-display);
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: var(--leading-tight);
+        }
+
+        .product-sku {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        .product-price {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--color-primary-500);
+        }
+
+        .product-price .unit {
+            font-size: var(--text-sm);
+            font-weight: 400;
+            color: var(--text-tertiary);
+        }
+
+        .add-to-cart-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .qty-input {
+            width: 80px;
+            padding: 0.625rem;
+            border: 1.5px solid var(--border-default);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-size: var(--text-md);
+            font-weight: 600;
+            font-family: inherit;
+        }
+
+        .qty-input:focus {
+            outline: none;
+            border-color: var(--color-primary-500);
+            box-shadow: 0 0 0 3px rgba(28, 26, 131, 0.1);
+        }
+
+        .btn-add-cart {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            background: var(--color-primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: var(--text-md);
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn-add-cart:hover { background: var(--color-primary-600); }
+        .btn-add-cart.added { background: var(--color-success-500); }
+
+        .product-details-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .detail-item label {
+            display: block;
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.125rem;
+        }
+
+        .detail-item span {
+            font-size: var(--text-sm);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .back-link {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--color-primary-500); }
+
+        .breadcrumb-bar {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0.75rem 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+        }
+        .breadcrumb-bar a {
+            color: var(--color-primary-500);
+            text-decoration: none;
+        }
+        .breadcrumb-bar a:hover { text-decoration: underline; }
+        .breadcrumb-sep { color: var(--color-neutral-300); }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius-md);
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--color-success-500);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .product-layout { grid-template-columns: 1fr; }
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body x-data="productDetail()" x-init="init()" x-cloak>
+
+    <!-- Header -->
+    <header class="detail-header">
+        <div class="detail-header-inner">
+            <a href="/v7/" class="checkout-brand" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit;">
+                <div style="width: 36px; height: 36px; background: var(--color-primary-500); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: var(--text-sm);">EDS</div>
+                <span style="font-family: var(--font-display); font-weight: 600;">Product Detail</span>
+            </a>
+            <a @click.prevent="goBack()" href="/v7/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Browsing</a>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-bar">
+        <a href="/v7/">Home</a>
+        <span class="breadcrumb-sep"><i class="fas fa-chevron-right" style="font-size:0.5rem;"></i></span>
+        <a @click.prevent="goBack()" href="/v7/" style="cursor:pointer;">Browse Products</a>
+        <span class="breadcrumb-sep"><i class="fas fa-chevron-right" style="font-size:0.5rem;"></i></span>
+        <span x-text="product ? (product.Description || product.name || 'Product').substring(0, 50) : 'Loading...'"></span>
+    </nav>
+
+    <main class="detail-main">
+        <!-- Loading -->
+        <template x-if="loading">
+            <div class="product-layout">
+                <div class="skeleton" style="height: 320px;"></div>
+                <div>
+                    <div class="skeleton" style="height: 20px; width: 120px; margin-bottom: 0.75rem;"></div>
+                    <div class="skeleton" style="height: 28px; width: 80%; margin-bottom: 0.75rem;"></div>
+                    <div class="skeleton" style="height: 36px; width: 100px; margin-bottom: 1rem;"></div>
+                    <div class="skeleton" style="height: 44px; width: 100%;"></div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Product Not Found -->
+        <template x-if="!loading && !product">
+            <div style="text-align: center; padding: 4rem;">
+                <i class="fas fa-search" style="font-size: 3rem; color: var(--text-tertiary); margin-bottom: 1rem;"></i>
+                <h2 style="font-size: var(--text-xl); font-weight: 600; margin-bottom: 0.5rem;">Product Not Found</h2>
+                <p style="color: var(--text-tertiary); margin-bottom: 1.5rem;">The product you're looking for doesn't exist or has been removed.</p>
+                <a @click.prevent="goBack()" href="/v7/" class="btn-add-cart" style="display: inline-flex; width: auto;">Back to Browsing</a>
+            </div>
+        </template>
+
+        <!-- Product Detail -->
+        <template x-if="!loading && product">
+            <div>
+                <div class="product-layout">
+                    <div class="product-image-area">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="product-info-area">
+                        <div class="product-vendor-badge">
+                            <i class="fas fa-store"></i>
+                            <span x-text="product.VendorName || 'Unknown Vendor'"></span>
+                        </div>
+                        <h1 class="product-title" x-text="product.Description || product.name"></h1>
+                        <div class="product-sku" x-text="'SKU: ' + (product.ItemNumber || product.CatalogNumber || 'N/A')"></div>
+                        <div class="product-price">
+                            <span x-text="formatPrice(product.Price || product.price)"></span>
+                            <span class="unit">/ each</span>
+                        </div>
+
+                        <!-- Category -->
+                        <div x-show="product.CategoryName || product.category" style="display: flex; align-items: center; gap: 0.375rem; font-size: var(--text-sm); color: var(--text-secondary);">
+                            <i class="fas fa-tag" style="color: var(--color-primary-300);"></i>
+                            <span x-text="product.CategoryName || product.category"></span>
+                        </div>
+
+                        <!-- Add to Cart -->
+                        <div class="add-to-cart-row">
+                            <input type="number" x-model.number="quantity" min="1" max="999" class="qty-input">
+                            <button class="btn-add-cart" :class="{ 'added': justAdded }" @click="addToCart()">
+                                <i :class="justAdded ? 'fas fa-check' : 'fas fa-cart-plus'"></i>
+                                <span x-text="justAdded ? 'Added!' : 'Add to Cart'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Table -->
+                <div class="product-details-section">
+                    <h3 style="font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; margin-bottom: 1rem;">Product Details</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Item Number</label>
+                            <span x-text="product.ItemNumber || 'N/A'"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Catalog Number</label>
+                            <span x-text="product.CatalogNumber || 'N/A'"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Vendor</label>
+                            <span x-text="product.VendorName || 'N/A'"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Category</label>
+                            <span x-text="product.CategoryName || 'N/A'"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Unit of Measure</label>
+                            <span x-text="product.UnitOfMeasure || product.UOM || 'Each'"></span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Pack Size</label>
+                            <span x-text="product.PackSize || product.PackQuantity || 'N/A'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <!-- Toast -->
+    <div x-show="toastMessage" x-transition class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span x-text="toastMessage"></span>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/product-helpers.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/product-detail.js"></script>
+</body>
+</html>

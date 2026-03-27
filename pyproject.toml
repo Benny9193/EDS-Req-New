@@ -1,0 +1,154 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sql-server-monitoring"
+version = "1.0.0"
+description = "SQL Server Performance Monitoring Tools for dpa_EDSAdmin"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "DBA Team"}
+]
+keywords = [
+    "sql-server",
+    "database",
+    "performance",
+    "monitoring",
+    "dba",
+    "indexes",
+    "blocking"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "pyodbc>=4.0.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.0.0",
+]
+export = [
+    "openpyxl>=3.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.25.0",           # For FastAPI testing
+]
+e2e = [
+    "playwright>=1.40.0",      # Browser automation for E2E tests
+    "pytest-playwright>=0.4.0",
+]
+# EDS DBA Agent dependencies
+agent = [
+    "anthropic>=0.40.0",        # Claude API
+    "openai>=1.50.0",           # OpenAI API
+    "ollama>=0.4.0",            # Local Ollama
+    "chromadb>=0.5.0",          # Vector store
+    "sentence-transformers>=3.0.0",  # Local embeddings
+    "click>=8.0.0",             # CLI framework
+    "rich>=13.0.0",             # Rich terminal output
+    "prompt-toolkit>=3.0.0",    # Interactive input
+    "mcp>=1.0.0",               # Model Context Protocol server
+]
+# GUI dependencies
+gui = [
+    "nicegui>=2.0.0",           # Web-based GUI
+    "pywebview>=5.0.0",         # Native window support
+]
+# API dependencies (Universal Requisition backend)
+api = [
+    "fastapi>=0.109.0",         # Web framework
+    "uvicorn[standard]>=0.27.0", # ASGI server
+    "pydantic>=2.0.0",          # Data validation
+    "ollama>=0.4.0",            # Ollama LLM provider (for AI chat without API key)
+    "elasticsearch[async]>=8.12.0",  # Elasticsearch client for product search
+]
+# Build dependencies
+build = [
+    "pyinstaller>=6.0.0",       # Executable builder
+]
+all = [
+    "sql-server-monitoring[dashboard,export,dev,e2e,agent,gui,build,api]",
+]
+
+[project.urls]
+Documentation = "docs/API_REFERENCE.md"
+Repository = "https://github.com/company/sql-server-monitoring"
+
+[project.scripts]
+# Original monitoring scripts
+capture-baseline = "scripts.capture_performance_baseline:main"
+analyze-performance = "scripts.analyze_performance_issues:main"
+extract-indexes = "scripts.extract_missing_indexes:main"
+generate-index-scripts = "scripts.generate_index_scripts:main"
+deploy-indexes-test = "scripts.deploy_indexes_test:main"
+deploy-indexes-prod = "scripts.deploy_indexes_production:main"
+investigate-blocking = "scripts.investigate_blocking_event:main"
+validate-indexes = "scripts.validate_index_performance:main"
+generate-report = "scripts.generate_final_performance_report:main"
+generate-dashboard = "scripts.generate_alert_dashboard:main"
+# EDS DBA Agent
+eds-agent = "agent.main:main"
+eds-agent-gui = "agent.gui.app:run_app"
+# Universal Requisition API
+eds-api = "api.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scripts*", "agent*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests that require database connection",
+    "e2e: marks end-to-end tests that require browser (deselect with '-m \"not e2e\"')",
+]
+
+[tool.coverage.run]
+source = ["scripts", "api"]
+omit = [
+    "scripts/__init__.py",
+    "api/__init__.py",
+    "tests/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

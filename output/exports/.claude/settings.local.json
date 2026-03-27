@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(done)",
+      "Bash(cat:*)",
+      "Bash(python scripts/discover_all_databases.py:*)",
+      "Bash(python scripts/batch_explore_databases.py:*)",
+      "Bash(python scripts/find_cross_database_relationships.py:*)",
+      "Bash(python scripts/generate_database_documentation.py:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(du:*)",
+      "Bash(timeout 30 python:*)",
+      "Bash(timeout 60 python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

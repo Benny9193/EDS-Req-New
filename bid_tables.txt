@@ -1,0 +1,895 @@
+=== TABLES/VIEWS with 'Bid' in name ===
+  BASE TABLE    BidAnswers
+  BASE TABLE    BidAnswersJournal
+  BASE TABLE    BidCalendar
+  BASE TABLE    BidderCheckList
+  BASE TABLE    BidderCheckListPkgDetail
+  BASE TABLE    BidderCheckListPkgHeader
+  BASE TABLE    BidDocument
+  BASE TABLE    BidDocumentTypes
+  BASE TABLE    BidHeaderCheckList
+  BASE TABLE    BidHeaderCheckList
+  BASE TABLE    BidHeaderDetail
+  BASE TABLE    BidHeaderDetail
+  BASE TABLE    BidHeaderDetail_Orig
+  BASE TABLE    BidHeaderDocument
+  BASE TABLE    BidHeaderDocument
+  BASE TABLE    BidHeaderDocuments
+  BASE TABLE    BidHeaderDocuments
+  BASE TABLE    BidHeaders
+  BASE TABLE    BidHeaders
+  BASE TABLE    BidImportCatalogList
+  BASE TABLE    BidImportCounties
+  BASE TABLE    BidImports
+  BASE TABLE    BidImports
+  BASE TABLE    BidItems
+  BASE TABLE    BidItems_Old
+  BASE TABLE    BidManagers
+  BASE TABLE    BidManufacturers
+  BASE TABLE    BidMappedItems
+  BASE TABLE    BidMappedItems
+  BASE TABLE    BidMgrConfiguration
+  BASE TABLE    BidMgrTagFile
+  BASE TABLE    BidMSRPResultPrices
+  BASE TABLE    BidMSRPResults
+  BASE TABLE    BidMSRPResults
+  BASE TABLE    BidMSRPResultsProductLines
+  BASE TABLE    BidPackage
+  BASE TABLE    BidPackageDocument
+  BASE TABLE    BidProductLinePrices
+  BASE TABLE    BidProductLines
+  BASE TABLE    BidQuestions
+  BASE TABLE    BidReawards
+  BASE TABLE    BidReawards
+  BASE TABLE    BidRequestItemMergeActions
+  BASE TABLE    BidRequestItemMergeActions_Orig
+  BASE TABLE    BidRequestItemMergeActions_Saved_101521
+  BASE TABLE    BidRequestItems
+  BASE TABLE    BidRequestItems
+  BASE TABLE    BidRequestItems_Orig
+  BASE TABLE    BidRequestManufacturer
+  BASE TABLE    BidRequestManufacturer
+  BASE TABLE    BidRequestOptions
+  BASE TABLE    BidRequestOptions
+  BASE TABLE    BidRequestPriceRanges
+  BASE TABLE    BidRequestPriceRanges
+  BASE TABLE    BidRequestProductLines
+  BASE TABLE    BidResponses
+  BASE TABLE    BidResultChanges
+  BASE TABLE    BidResults
+  BASE TABLE    BidResults
+  BASE TABLE    BidResults_Orig
+  BASE TABLE    BidResultsChangeLog
+  BASE TABLE    Bids
+  BASE TABLE    Bids
+  BASE TABLE    BidsCatalogList
+  BASE TABLE    BidTradeCounties
+  BASE TABLE    BidTrades
+  BASE TABLE    BidTrades
+  BASE TABLE    BidTypes
+  BASE TABLE    DMSBidDocuments
+  BASE TABLE    DMSBidDocuments
+  BASE TABLE    DMSVendorBidDocuments
+  BASE TABLE    DMSVendorBidDocuments
+  BASE TABLE    z4zbBidFix
+  VIEW          BidAnalysisDetail
+  VIEW          BidAnalysisDetailReq
+  VIEW          BidHeadersView
+  VIEW          bidinfolookup
+  VIEW          BidItemsView
+  VIEW          BidItemView
+  VIEW          BidMgrBidRankingMSRPView
+  VIEW          BidMgrBidRequestAndWriteInMSRPView
+  VIEW          BidMgrBidRequestDetail
+  VIEW          BidMgrBidRequestMSRPView
+  VIEW          BidMgrBidResultsMSRPView
+  VIEW          BidMgrBidTradeCountiesView
+  VIEW          BidMgrBidTradeCountyTotals
+  VIEW          BidMgrBidTradeLowBidder
+  VIEW          BidMgrMSRP2ResultsView
+  VIEW          BidMgrMSRP2VendorReportView
+  VIEW          BidMgrMSRP2VendorReportViewTemp
+  VIEW          BidMgrMSRPVendorBidsView
+  VIEW          BidMgrView
+  VIEW          BidMgrView2
+  VIEW          BidMgrWeightView
+  VIEW          BidProjectAveragePO
+  VIEW          BidRequestDetail
+  VIEW          BidRequestDetail1
+  VIEW          BidRequestDetail2
+  VIEW          BidRequestItemsCrossRefsView
+  VIEW          BidRequestItemsView
+  VIEW          BidRequestItemsView1
+  VIEW          BidRequestItemsView1Original
+  VIEW          BidRequestItemsWeightView
+  VIEW          BidResultsView
+  VIEW          BidsView
+  VIEW          ItemsBidHeaderView
+  VIEW          VendorBidLookup
+  VIEW          vw_ActiveBids
+  VIEW          vw_AvailableReqBids
+  VIEW          vw_AVBidsVendorsCategoriesBySession
+  VIEW          vw_AwardedBidResults
+  VIEW          vw_AwardedVendorsAllCurrentAndFutureBids
+  VIEW          vw_AwardedVendorsAllCurrentBids
+  VIEW          vw_BidAnalysisDetail
+  VIEW          vw_BidAnalysisVendorSummary
+  VIEW          vw_BidAnalysisVendorSummaryByDistrict
+  VIEW          vw_BidAnalysisVendorSummaryTest
+  VIEW          vw_BidAncillaryBySession
+  VIEW          vw_BidAnswers
+  VIEW          vw_BidComplianceBySession
+  VIEW          vw_BidContactsVendorList
+  VIEW          vw_BidDescriptions
+  VIEW          vw_BidDocumentsList
+  VIEW          vw_BidDocumentTypeNames
+  VIEW          vw_BidDuplicateIdentifiers
+  VIEW          vw_BidGrouper
+  VIEW          vw_BidHeadersList
+  VIEW          vw_BidImportMostRecentContactInfo
+  VIEW          vw_BidItemDescription
+  VIEW          vw_BidItemLongDescription
+  VIEW          vw_BidLeadComplianceBySession
+  VIEW          vw_BidLines
+  VIEW          vw_BidManufacturerPartNumbers
+  VIEW          vw_BidMgrBidderDocs
+  VIEW          vw_BidMSRPManufacturerProductLinePrices
+  VIEW          vw_BidMSRPRankedManufacturerProductLines
+  VIEW          vw_BidMSRPRankedManufacturerProductLinesOrdered
+  VIEW          vw_BidMSRPRankedManufacturerProductLinesOrderedNew
+  VIEW          vw_BidMSRPRankedManufacturerProductLinesOrderedSaved
+  VIEW          vw_BidMSRPRankedManufacturers
+  VIEW          vw_BidMSRPResultsPriceRanges
+  VIEW          vw_BidMSRPResultsPrices
+  VIEW          vw_BidPricing
+  VIEW          vw_BidProductLinePrices
+  VIEW          vw_BidProjectAveragePO
+  VIEW          vw_BidRequestItemMergeDetail
+  VIEW          vw_BidRequestItemMergeHeader
+  VIEW          vw_BidRequestItemsBidMgr
+  VIEW          vw_BidResults
+  VIEW          vw_BidsByVendor
+  VIEW          vw_BidTabReadyNotifications
+  VIEW          vw_BidTrades
+  VIEW          vw_BidTradesBySession
+  VIEW          vw_BidTradesBySession_Test
+  VIEW          vw_BidTradesVendorDetailForReports
+  VIEW          vw_BidTradesVendors
+  VIEW          vw_BidTradesVendorsAnswers
+  VIEW          vw_BidTradesVendorsAnswersBySession
+  VIEW          vw_BidTradesVendorsBySession
+  VIEW          vw_BidTradesVendorsForReports
+  VIEW          vw_BidType
+  VIEW          vw_BidUPCs
+  VIEW          vw_BidVendor
+  VIEW          vw_BidVendorItemCodes
+  VIEW          vw_BidVendorList
+  VIEW          vw_BidVendorsBySession
+  VIEW          vw_BidVendorsSinceLastYear
+  VIEW          vw_BidYears
+  VIEW          vw_BrowseDistrictBidHeaders
+  VIEW          vw_CatalogsAttachedToBids
+  VIEW          vw_DetailOnBid
+  VIEW          vw_DistrictCounties_BidMgr
+  VIEW          vw_Districts_Assoc_With_Bid
+  VIEW          vw_DistrictStates_BidMgr
+  VIEW          vw_DMSBidDocuments
+  VIEW          vw_DMSBidDocuments_View
+  VIEW          vw_DMSVendorBidDocuments
+  VIEW          vw_DMSVendorBidDocuments_04232018
+  VIEW          vw_DMSVendorBidDocuments_View
+  VIEW          vw_DMSVendorBidDocuments_ViewTest
+  VIEW          vw_DMSVendorBidDocumentsTest
+  VIEW          vw_HeadingsByBid
+  VIEW          vw_HeadingsKeywordsByBid
+  VIEW          vw_ItemsByBid
+  VIEW          vw_KeywordsByBid
+  VIEW          vw_LastBidAwardDate
+  VIEW          vw_MSRPBidReqManufacturer
+  VIEW          vw_MSRPBidReqManufacturerWriteIn
+  VIEW          vw_MSRPBidReqProdLineAndOption
+  VIEW          vw_MSRPBidReqProdLineAndOptionWriteIn
+  VIEW          vw_MSRPBidReqProductLine
+  VIEW          vw_MSRPBidResultsManufRev2
+  VIEW          vw_MSRPBidResultsProdLines
+  VIEW          vw_MSRPVendorsBidHeaderBySession
+  VIEW          vw_OverrideVendorBidders
+  VIEW          vw_PLBidItems
+  VIEW          vw_POHeaderBidImports
+  VIEW          vw_ReqBidReview
+  VIEW          vw_Reqs_Assoc_With_Bid
+  VIEW          vw_RptExpireDateBidDocs
+  VIEW          vw_RptExpireDateBidDocsAndMore
+  VIEW          vw_RptMissingURLsByBidAndVendor
+  VIEW          vw_Users_Assoc_With_Bid
+  VIEW          vw_VendorBidDocumentsList
+  VIEW          vw_VendorBidInfoStats
+  VIEW          vw_VendorBlast_AwardedByBid
+  VIEW          vw_VendorBlast_RegisteredByBid
+  VIEW          vw_VendorBlast_SubmittedByBid
+  VIEW          vw_VendorCategoryBids
+  VIEW          vw_VendorCategoryBids_Cats
+  VIEW          vw_VendorCategoryBids_Vendors
+  VIEW          vw_VendorsByBid
+
+=== TABLES/VIEWS with 'bid' in name (sys.objects) ===
+  DEFAULT_CONSTRAINT              DF__BidAnswer__DateM__5427E451
+  DEFAULT_CONSTRAINT              DF__BidHeader__DateA__3DB76E9C
+  DEFAULT_CONSTRAINT              DF__BidHeader__DateA__444BED46
+  DEFAULT_CONSTRAINT              DF__BidHeaderDet__id__64ABC911
+  DEFAULT_CONSTRAINT              DF__BidImport__DateM__7F124256
+  DEFAULT_CONSTRAINT              DF__BidManufa__Modif__70868DE2
+  DEFAULT_CONSTRAINT              DF__BidMapped__BidMa__29CEBDF3
+  DEFAULT_CONSTRAINT              DF__BidMapped__MapDa__2AC2E22C
+  DEFAULT_CONSTRAINT              DF__BidMSRPRe__Modif__6BC1D8C5
+  DEFAULT_CONSTRAINT              DF__BidProduc__Modif__211E56FE
+  DEFAULT_CONSTRAINT              DF__BidProduc__Modif__7F7FCE16
+  DEFAULT_CONSTRAINT              DF_BidHeaders_DateCreated
+  DEFAULT_CONSTRAINT              DF_BidHeaders_PriceVarianceLevel
+  DEFAULT_CONSTRAINT              DF_DMSBidDocuments_Id
+  DEFAULT_CONSTRAINT              DF_DMSVendorBidDocuments_Id
+  FOREIGN_KEY_CONSTRAINT          FK_BidAnswersJournal_BidAnswers
+  FOREIGN_KEY_CONSTRAINT          FK_BidQuestions_BidTrades
+  FOREIGN_KEY_CONSTRAINT          FK_BidRequestManufacturer_BidHeaders
+  FOREIGN_KEY_CONSTRAINT          FK_prices_BidItems
+  PRIMARY_KEY_CONSTRAINT          PK__BidAnswe__7B1D995A4E6F0AFB
+  PRIMARY_KEY_CONSTRAINT          PK__BidAnswe__8AD205EB523F9BDF
+  PRIMARY_KEY_CONSTRAINT          PK__BidCalendar__6458BCB9
+  PRIMARY_KEY_CONSTRAINT          PK__BidDocum__DBABDC6F43326279
+  PRIMARY_KEY_CONSTRAINT          PK__BidHeaderDocumen__5C8290C7
+  PRIMARY_KEY_CONSTRAINT          PK__BidImpor__C2DF818B7D29F9E4
+  PRIMARY_KEY_CONSTRAINT          PK__BidImportCatalog__0D3AD6BB
+  PRIMARY_KEY_CONSTRAINT          PK__BidManag__D819B22B2B5AD8E8
+  PRIMARY_KEY_CONSTRAINT          PK__BidManuf__8D2BDD186E9E4570
+  PRIMARY_KEY_CONSTRAINT          PK__BidMappe__6B5A9CC727E67581
+  PRIMARY_KEY_CONSTRAINT          PK__BidMSRPR__0E57068669D99053
+  PRIMARY_KEY_CONSTRAINT          PK__BidMSRPR__6BDB670123093B9D
+  PRIMARY_KEY_CONSTRAINT          PK__BidProdu__B50DDCA01F360E8C
+  PRIMARY_KEY_CONSTRAINT          PK__BidProductLinePrices
+  PRIMARY_KEY_CONSTRAINT          PK__BidQuest__25F2DBFE1BE38B2E
+  PRIMARY_KEY_CONSTRAINT          PK__BidReawa__14AE8FDE4B2C318A
+  PRIMARY_KEY_CONSTRAINT          PK__BidReque__9B394ED17D189CDF
+  PRIMARY_KEY_CONSTRAINT          PK__BidReque__D2B2584279480BFB
+  PRIMARY_KEY_CONSTRAINT          PK__BidRespo__4C059DB21FB41C12
+  PRIMARY_KEY_CONSTRAINT          PK__BidResultChanges__31783731
+  PRIMARY_KEY_CONSTRAINT          PK__BidResultsChange__247341CE
+  PRIMARY_KEY_CONSTRAINT          PK__BidsCatalogList__5A254709
+  PRIMARY_KEY_CONSTRAINT          PK__BidTrade__0909D2D914426966
+  PRIMARY_KEY_CONSTRAINT          PK__BidTrade__3200D0811071D882
+  PRIMARY_KEY_CONSTRAINT          PK__BidTypes__332B7579
+  PRIMARY_KEY_CONSTRAINT          PK_BidderCheckList
+  PRIMARY_KEY_CONSTRAINT          PK_BidderCheckListPkgDetail
+  PRIMARY_KEY_CONSTRAINT          PK_BidDocument
+  PRIMARY_KEY_CONSTRAINT          PK_BidDocumentPackage
+  PRIMARY_KEY_CONSTRAINT          PK_BidHeaderCheckList
+  PRIMARY_KEY_CONSTRAINT          PK_BidHeaderDetail
+  PRIMARY_KEY_CONSTRAINT          PK_BidHeaderDetail_Orig
+  PRIMARY_KEY_CONSTRAINT          PK_BidHeaderDocumentLinks
+  PRIMARY_KEY_CONSTRAINT          PK_BidHeaders_1
+  PRIMARY_KEY_CONSTRAINT          PK_BidImports
+  PRIMARY_KEY_CONSTRAINT          PK_BidItems
+  PRIMARY_KEY_CONSTRAINT          PK_BidItems2
+  PRIMARY_KEY_CONSTRAINT          PK_BidMgrConfiguration
+  PRIMARY_KEY_CONSTRAINT          PK_BidMgrTagFile
+  PRIMARY_KEY_CONSTRAINT          PK_BidMSRPResultsProductLine
+  PRIMARY_KEY_CONSTRAINT          PK_BidPackageDocument
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestItemMergeHistory
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestItemMergeHistory_Orig
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestItems
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestItems_Orig
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestManufacturer
+  PRIMARY_KEY_CONSTRAINT          PK_BidRequestPriceRanges
+  PRIMARY_KEY_CONSTRAINT          PK_BidResults
+  PRIMARY_KEY_CONSTRAINT          PK_BidResults_Rebuilt_Orig
+  PRIMARY_KEY_CONSTRAINT          PK_Bids
+  PRIMARY_KEY_CONSTRAINT          PK_Bids_1
+  PRIMARY_KEY_CONSTRAINT          PK_DMSBidDocuments
+  PRIMARY_KEY_CONSTRAINT          PK_DMSVendorBidDocuments
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetail
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetailItem
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetailReq
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetailReqComb
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetailRSId
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisDetailTest
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisVendorSummary
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidAnalysisVendorSummaryByDistrict
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidItemWinner
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidItemWinnerReq
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidProjectAveragePO
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidProjectAveragePODistrict
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidProjectAveragePOReq
+  SQL_INLINE_TABLE_VALUED_FUNCTION  uf_BidProjectAveragePORSId
+  SQL_SCALAR_FUNCTION             uf_BidItemDescription
+  SQL_SCALAR_FUNCTION             uf_IsBid
+  SQL_SCALAR_FUNCTION             uf_VendorBidContactAddress
+  SQL_SCALAR_FUNCTION             uf_VendorBidContacts
+  SQL_SCALAR_FUNCTION             uf_VendorBidNumbers
+  SQL_STORED_PROCEDURE            bid2xls
+  SQL_STORED_PROCEDURE            bid2xlsTest
+  SQL_STORED_PROCEDURE            sp_AwardBid
+  SQL_STORED_PROCEDURE            sp_AwardBidHeader
+  SQL_STORED_PROCEDURE            sp_AwardBidHeaderSingleItem
+  SQL_STORED_PROCEDURE            sp_BidCompare
+  SQL_STORED_PROCEDURE            sp_BidCompareDiscount
+  SQL_STORED_PROCEDURE            sp_BidCompareSame
+  SQL_STORED_PROCEDURE            sp_BidCompareSummary
+  SQL_STORED_PROCEDURE            sp_BidCopy
+  SQL_STORED_PROCEDURE            sp_BidCopyChangePP
+  SQL_STORED_PROCEDURE            sp_BidCopyWithIncrease
+  SQL_STORED_PROCEDURE            sp_CopyBidImport
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers2Bid
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers2BidBackup
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers2BidBackup-2014-10-29
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers2BidUsingCursorSave
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers2BidUsingCursorSave2
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers3Bid
+  SQL_STORED_PROCEDURE            sp_CopyMSRPVers4Bid
+  SQL_STORED_PROCEDURE            sp_CreateBidFromRequest
+  SQL_STORED_PROCEDURE            sp_CreateBidHeaderDetail
+  SQL_STORED_PROCEDURE            sp_CreateBidHeaderItems
+  SQL_STORED_PROCEDURE            sp_CreateNewBidHeader
+  SQL_STORED_PROCEDURE            sp_CreateQuoteRequestPrebid
+  SQL_STORED_PROCEDURE            sp_CreateTextBookBidRequest
+  SQL_STORED_PROCEDURE            sp_DeleteNoBids
+  SQL_STORED_PROCEDURE            sp_ExportMSRPBid
+  SQL_STORED_PROCEDURE            sp_ImportVendorsBid
+  SQL_STORED_PROCEDURE            sp_MergeBidImports
+  SQL_STORED_PROCEDURE            sp_MergeBids
+  SQL_STORED_PROCEDURE            sp_UnawardBidHeader
+  SQL_STORED_PROCEDURE            sp_ValidateBidImport
+  SQL_STORED_PROCEDURE            usp_BidMatchRefs
+  SQL_STORED_PROCEDURE            usp_BidPageNumberUpdate
+  SQL_STORED_PROCEDURE            usp_BidRanking
+  SQL_STORED_PROCEDURE            usp_BidRequestItemMergeDetail_notused
+  SQL_STORED_PROCEDURE            usp_BidRequestItemMergeDetailDavid
+  SQL_STORED_PROCEDURE            usp_BidRequestItemMergeDetailDavidTest_notused
+  SQL_STORED_PROCEDURE            usp_BidRequestItemMergeDetailTempKevin_notused
+  SQL_STORED_PROCEDURE            usp_BidRequestMergeActions
+  SQL_STORED_PROCEDURE            usp_BidRequestMergeActionsUNDO-wait
+  SQL_STORED_PROCEDURE            usp_ChangeBidHeaderNumber
+  SQL_STORED_PROCEDURE            usp_GetBidItemAIData
+  SQL_STORED_PROCEDURE            usp_GetBidItemsNeedingAIUpdate
+  SQL_STORED_PROCEDURE            usp_RestoreBidHeaderNumber
+  SQL_STORED_PROCEDURE            usp_SetBidItemAIData
+  SQL_TABLE_VALUED_FUNCTION       uf_AwardLetterBid
+  SQL_TABLE_VALUED_FUNCTION       uf_AwardLetterBid_Orig
+  SQL_TABLE_VALUED_FUNCTION       uf_AwardLetterBid1
+  SQL_TABLE_VALUED_FUNCTION       uf_BidMSRPRankedManufacturerProductLinesOrdered
+  SQL_TABLE_VALUED_FUNCTION       uf_BidSummary
+  SQL_TABLE_VALUED_FUNCTION       uf_BidSummaryVendors
+  SQL_TABLE_VALUED_FUNCTION       uf_DistrictSummaryBid
+  SQL_TABLE_VALUED_FUNCTION       uf_DistrictSummaryBidHeader
+  SQL_TABLE_VALUED_FUNCTION       uf_DistrictSummaryVendorsBid
+  SQL_TABLE_VALUED_FUNCTION       uf_ExportMSRPBid
+  SQL_TRIGGER                     BidAnswers_trig
+  SQL_TRIGGER                     trig_BidHeadersDateCreated
+  SQL_TRIGGER                     trig_BidImportUpdate
+  SQL_TRIGGER                     trig_BidItemsUpdate
+  SQL_TRIGGER                     trig_BidItemsUpdate_old
+  SQL_TRIGGER                     trig_BidMSRPResults
+  SQL_TRIGGER                     trig_BidRequestItems
+  SQL_TRIGGER                     trig_BidRequestManufacturer
+  SQL_TRIGGER                     trig_BidResultsUpdate
+  SQL_TRIGGER                     trig_BidsUpdate
+  SQL_TRIGGER                     trig_DMSVendorBidDocuments
+  SQL_TRIGGER                     vw_BidAnswers_Update
+  TYPE_TABLE                      TT_utv_BidsList_486076C7
+  UNIQUE_CONSTRAINT               IX_BidHeaders
+  UNIQUE_CONSTRAINT               UQ__BidHeade__3213E83E12D014FD
+  USER_TABLE                      BidAnswers
+  USER_TABLE                      BidAnswersJournal
+  USER_TABLE                      BidCalendar
+  USER_TABLE                      BidderCheckList
+  USER_TABLE                      BidderCheckListPkgDetail
+  USER_TABLE                      BidderCheckListPkgHeader
+  USER_TABLE                      BidDocument
+  USER_TABLE                      BidDocumentTypes
+  USER_TABLE                      BidHeaderCheckList
+  USER_TABLE                      BidHeaderCheckList
+  USER_TABLE                      BidHeaderDetail
+  USER_TABLE                      BidHeaderDetail
+  USER_TABLE                      BidHeaderDetail_Orig
+  USER_TABLE                      BidHeaderDocument
+  USER_TABLE                      BidHeaderDocument
+  USER_TABLE                      BidHeaderDocuments
+  USER_TABLE                      BidHeaderDocuments
+  USER_TABLE                      BidHeaders
+  USER_TABLE                      BidHeaders
+  USER_TABLE                      BidImportCatalogList
+  USER_TABLE                      BidImportCounties
+  USER_TABLE                      BidImports
+  USER_TABLE                      BidImports
+  USER_TABLE                      BidItems
+  USER_TABLE                      BidItems_Old
+  USER_TABLE                      BidManagers
+  USER_TABLE                      BidManufacturers
+  USER_TABLE                      BidMappedItems
+  USER_TABLE                      BidMappedItems
+  USER_TABLE                      BidMgrConfiguration
+  USER_TABLE                      BidMgrTagFile
+  USER_TABLE                      BidMSRPResultPrices
+  USER_TABLE                      BidMSRPResults
+  USER_TABLE                      BidMSRPResults
+  USER_TABLE                      BidMSRPResultsProductLines
+  USER_TABLE                      BidPackage
+  USER_TABLE                      BidPackageDocument
+  USER_TABLE                      BidProductLinePrices
+  USER_TABLE                      BidProductLines
+  USER_TABLE                      BidQuestions
+  USER_TABLE                      BidReawards
+  USER_TABLE                      BidReawards
+  USER_TABLE                      BidRequestItemMergeActions
+  USER_TABLE                      BidRequestItemMergeActions_Orig
+  USER_TABLE                      BidRequestItemMergeActions_Saved_101521
+  USER_TABLE                      BidRequestItems
+  USER_TABLE                      BidRequestItems
+  USER_TABLE                      BidRequestItems_Orig
+  USER_TABLE                      BidRequestManufacturer
+  USER_TABLE                      BidRequestManufacturer
+  USER_TABLE                      BidRequestOptions
+  USER_TABLE                      BidRequestOptions
+  USER_TABLE                      BidRequestPriceRanges
+  USER_TABLE                      BidRequestPriceRanges
+  USER_TABLE                      BidRequestProductLines
+  USER_TABLE                      BidResponses
+  USER_TABLE                      BidResultChanges
+  USER_TABLE                      BidResults
+  USER_TABLE                      BidResults
+  USER_TABLE                      BidResults_Orig
+  USER_TABLE                      BidResultsChangeLog
+  USER_TABLE                      Bids
+  USER_TABLE                      Bids
+  USER_TABLE                      BidsCatalogList
+  USER_TABLE                      BidTradeCounties
+  USER_TABLE                      BidTrades
+  USER_TABLE                      BidTrades
+  USER_TABLE                      BidTypes
+  USER_TABLE                      DMSBidDocuments
+  USER_TABLE                      DMSBidDocuments
+  USER_TABLE                      DMSVendorBidDocuments
+  USER_TABLE                      DMSVendorBidDocuments
+  USER_TABLE                      z4zbBidFix
+  VIEW                            BidAnalysisDetail
+  VIEW                            BidAnalysisDetailReq
+  VIEW                            BidHeadersView
+  VIEW                            bidinfolookup
+  VIEW                            BidItemsView
+  VIEW                            BidItemView
+  VIEW                            BidMgrBidRankingMSRPView
+  VIEW                            BidMgrBidRequestAndWriteInMSRPView
+  VIEW                            BidMgrBidRequestDetail
+  VIEW                            BidMgrBidRequestMSRPView
+  VIEW                            BidMgrBidResultsMSRPView
+  VIEW                            BidMgrBidTradeCountiesView
+  VIEW                            BidMgrBidTradeCountyTotals
+  VIEW                            BidMgrBidTradeLowBidder
+  VIEW                            BidMgrMSRP2ResultsView
+  VIEW                            BidMgrMSRP2VendorReportView
+  VIEW                            BidMgrMSRP2VendorReportViewTemp
+  VIEW                            BidMgrMSRPVendorBidsView
+  VIEW                            BidMgrView
+  VIEW                            BidMgrView2
+  VIEW                            BidMgrWeightView
+  VIEW                            BidProjectAveragePO
+  VIEW                            BidRequestDetail
+  VIEW                            BidRequestDetail1
+  VIEW                            BidRequestDetail2
+  VIEW                            BidRequestItemsCrossRefsView
+  VIEW                            BidRequestItemsView
+  VIEW                            BidRequestItemsView1
+  VIEW                            BidRequestItemsView1Original
+  VIEW                            BidRequestItemsWeightView
+  VIEW                            BidResultsView
+  VIEW                            BidsView
+  VIEW                            ItemsBidHeaderView
+  VIEW                            VendorBidLookup
+  VIEW                            vw_ActiveBids
+  VIEW                            vw_AvailableReqBids
+  VIEW                            vw_AVBidsVendorsCategoriesBySession
+  VIEW                            vw_AwardedBidResults
+  VIEW                            vw_AwardedVendorsAllCurrentAndFutureBids
+  VIEW                            vw_AwardedVendorsAllCurrentBids
+  VIEW                            vw_BidAnalysisDetail
+  VIEW                            vw_BidAnalysisVendorSummary
+  VIEW                            vw_BidAnalysisVendorSummaryByDistrict
+  VIEW                            vw_BidAnalysisVendorSummaryTest
+  VIEW                            vw_BidAncillaryBySession
+  VIEW                            vw_BidAnswers
+  VIEW                            vw_BidComplianceBySession
+  VIEW                            vw_BidContactsVendorList
+  VIEW                            vw_BidDescriptions
+  VIEW                            vw_BidDocumentsList
+  VIEW                            vw_BidDocumentTypeNames
+  VIEW                            vw_BidDuplicateIdentifiers
+  VIEW                            vw_BidGrouper
+  VIEW                            vw_BidHeadersList
+  VIEW                            vw_BidImportMostRecentContactInfo
+  VIEW                            vw_BidItemDescription
+  VIEW                            vw_BidItemLongDescription
+  VIEW                            vw_BidLeadComplianceBySession
+  VIEW                            vw_BidLines
+  VIEW                            vw_BidManufacturerPartNumbers
+  VIEW                            vw_BidMgrBidderDocs
+  VIEW                            vw_BidMSRPManufacturerProductLinePrices
+  VIEW                            vw_BidMSRPRankedManufacturerProductLines
+  VIEW                            vw_BidMSRPRankedManufacturerProductLinesOrdered
+  VIEW                            vw_BidMSRPRankedManufacturerProductLinesOrderedNew
+  VIEW                            vw_BidMSRPRankedManufacturerProductLinesOrderedSaved
+  VIEW                            vw_BidMSRPRankedManufacturers
+  VIEW                            vw_BidMSRPResultsPriceRanges
+  VIEW                            vw_BidMSRPResultsPrices
+  VIEW                            vw_BidPricing
+  VIEW                            vw_BidProductLinePrices
+  VIEW                            vw_BidProjectAveragePO
+  VIEW                            vw_BidRequestItemMergeDetail
+  VIEW                            vw_BidRequestItemMergeHeader
+  VIEW                            vw_BidRequestItemsBidMgr
+  VIEW                            vw_BidResults
+  VIEW                            vw_BidsByVendor
+  VIEW                            vw_BidTabReadyNotifications
+  VIEW                            vw_BidTrades
+  VIEW                            vw_BidTradesBySession
+  VIEW                            vw_BidTradesBySession_Test
+  VIEW                            vw_BidTradesVendorDetailForReports
+  VIEW                            vw_BidTradesVendors
+  VIEW                            vw_BidTradesVendorsAnswers
+  VIEW                            vw_BidTradesVendorsAnswersBySession
+  VIEW                            vw_BidTradesVendorsBySession
+  VIEW                            vw_BidTradesVendorsForReports
+  VIEW                            vw_BidType
+  VIEW                            vw_BidUPCs
+  VIEW                            vw_BidVendor
+  VIEW                            vw_BidVendorItemCodes
+  VIEW                            vw_BidVendorList
+  VIEW                            vw_BidVendorsBySession
+  VIEW                            vw_BidVendorsSinceLastYear
+  VIEW                            vw_BidYears
+  VIEW                            vw_BrowseDistrictBidHeaders
+  VIEW                            vw_CatalogsAttachedToBids
+  VIEW                            vw_DetailOnBid
+  VIEW                            vw_DistrictCounties_BidMgr
+  VIEW                            vw_Districts_Assoc_With_Bid
+  VIEW                            vw_DistrictStates_BidMgr
+  VIEW                            vw_DMSBidDocuments
+  VIEW                            vw_DMSBidDocuments_View
+  VIEW                            vw_DMSVendorBidDocuments
+  VIEW                            vw_DMSVendorBidDocuments_04232018
+  VIEW                            vw_DMSVendorBidDocuments_View
+  VIEW                            vw_DMSVendorBidDocuments_ViewTest
+  VIEW                            vw_DMSVendorBidDocumentsTest
+  VIEW                            vw_HeadingsByBid
+  VIEW                            vw_HeadingsKeywordsByBid
+  VIEW                            vw_ItemsByBid
+  VIEW                            vw_KeywordsByBid
+  VIEW                            vw_LastBidAwardDate
+  VIEW                            vw_MSRPBidReqManufacturer
+  VIEW                            vw_MSRPBidReqManufacturerWriteIn
+  VIEW                            vw_MSRPBidReqProdLineAndOption
+  VIEW                            vw_MSRPBidReqProdLineAndOptionWriteIn
+  VIEW                            vw_MSRPBidReqProductLine
+  VIEW                            vw_MSRPBidResultsManufRev2
+  VIEW                            vw_MSRPBidResultsProdLines
+  VIEW                            vw_MSRPVendorsBidHeaderBySession
+  VIEW                            vw_OverrideVendorBidders
+  VIEW                            vw_PLBidItems
+  VIEW                            vw_POHeaderBidImports
+  VIEW                            vw_ReqBidReview
+  VIEW                            vw_Reqs_Assoc_With_Bid
+  VIEW                            vw_RptExpireDateBidDocs
+  VIEW                            vw_RptExpireDateBidDocsAndMore
+  VIEW                            vw_RptMissingURLsByBidAndVendor
+  VIEW                            vw_Users_Assoc_With_Bid
+  VIEW                            vw_VendorBidDocumentsList
+  VIEW                            vw_VendorBidInfoStats
+  VIEW                            vw_VendorBlast_AwardedByBid
+  VIEW                            vw_VendorBlast_RegisteredByBid
+  VIEW                            vw_VendorBlast_SubmittedByBid
+  VIEW                            vw_VendorCategoryBids
+  VIEW                            vw_VendorCategoryBids_Cats
+  VIEW                            vw_VendorCategoryBids_Vendors
+  VIEW                            vw_VendorsByBid
+
+=== Columns containing 'BidHeader' ===
+  allitems                        BidHeaderId                     int
+  allitems                        BidHeaderId                     int
+  Awardings                       BidHeaderId                     int
+  Awards                          BidHeaderId                     int
+  Awards                          BidHeaderId                     int
+  BatchDetail                     BidHeaderId                     int
+  BatchDetail                     BidHeaderId                     int
+  BidAnalysisDetail               BidHeaderId                     int
+  BidAnalysisDetailReq            BidHeaderId                     int
+  BidHeaderCheckList              BidHeaderCheckListId            int
+  BidHeaderCheckList              BidHeaderId                     int
+  BidHeaderCheckList              BidHeaderCheckListId            int
+  BidHeaderCheckList              BidHeaderId                     int
+  BidHeaderDetail                 BidHeaderDetailId               bigint
+  BidHeaderDetail                 BidHeaderId                     int
+  BidHeaderDetail                 BidHeaderKey                    int
+  BidHeaderDetail                 BidHeaderDetailId               bigint
+  BidHeaderDetail                 BidHeaderId                     int
+  BidHeaderDetail                 BidHeaderKey                    int
+  BidHeaderDetail_Orig            BidHeaderDetailId               bigint
+  BidHeaderDetail_Orig            BidHeaderId                     int
+  BidHeaderDetail_Orig            BidHeaderKey                    int
+  BidHeaderDocument               BidHeaderDocumentId             int
+  BidHeaderDocument               BidHeaderId                     int
+  BidHeaderDocument               BidHeaderDocumentId             int
+  BidHeaderDocument               BidHeaderId                     int
+  BidHeaderDocuments              BidHeaderDocumentId             int
+  BidHeaderDocuments              BidHeaderId                     int
+  BidHeaderDocuments              BidHeaderDocumentId             int
+  BidHeaderDocuments              BidHeaderId                     int
+  BidHeaders                      BidHeaderId                     int
+  BidHeaders                      ParentBidHeaderId               int
+  BidHeaders                      BidHeaderKey                    int
+  BidHeaders                      BidHeaderId                     int
+  BidHeadersView                  BidHeaderId                     int
+  BidImports                      BidHeaderId                     int
+  BidImports                      BidHeaderKey                    int
+  BidImports                      BidHeaderId                     int
+  BidImports                      BidHeaderKey                    int
+  bidinfolookup                   BidHeaderId                     varchar
+  bidinfolookup                   BidHeaderKey                    int
+  BidItemView                     BidHeaderId                     int
+  BidMappedItems                  BidHeaderId                     int
+  BidMappedItems                  BidHeaderId                     int
+  BidMgrBidRankingMSRPView        BidHeaderId                     int
+  BidMgrBidRequestAndWriteInMSRPView  BidHeaderId                     int
+  BidMgrBidRequestDetail          BidHeaderId                     int
+  BidMgrBidRequestMSRPView        BidHeaderId                     int
+  BidMgrBidResultsMSRPView        BidHeaderId                     int
+  BidMgrBidTradeCountyTotals      BidHeaderId                     int
+  BidMgrBidTradeLowBidder         BidHeaderId                     int
+  BidMgrMSRP2ResultsView          BidHeaderId                     int
+  BidMgrMSRP2VendorReportView     BidHeaderId                     int
+  BidMgrMSRP2VendorReportViewTemp  BidHeaderId                     int
+  BidMgrMSRPVendorBidsView        BidHeaderId                     int
+  BidMgrView                      BidHeaderId                     int
+  BidMgrView2                     BidHeaderId                     int
+  BidMgrWeightView                BidHeaderId                     int
+  BidMSRPResults                  BidHeaderId                     int
+  BidMSRPResults                  BidHeaderKey                    int
+  BidMSRPResults                  BidHeaderId                     int
+  BidMSRPResults                  BidHeaderKey                    int
+  BidProjectAveragePO             BidHeaderId                     int
+  BidReawards                     BidHeaderId                     int
+  BidReawards                     BidHeaderId                     int
+  BidRequestDetail                BidHeaderId                     int
+  BidRequestDetail1               BidHeaderId                     int
+  BidRequestDetail2               BidHeaderId                     int
+  BidRequestItems                 BidHeaderId                     int
+  BidRequestItems                 BidHeaderKey                    int
+  BidRequestItems                 BidHeaderId                     int
+  BidRequestItems                 BidHeaderKey                    int
+  BidRequestItems_Orig            BidHeaderId                     int
+  BidRequestItems_Orig            BidHeaderKey                    int
+  BidRequestItemsCrossRefsView    BidHeaderId                     int
+  BidRequestItemsView             BidHeaderId                     int
+  BidRequestItemsView1            BidHeaderId                     int
+  BidRequestItemsView1Original    BidHeaderId                     int
+  BidRequestItemsWeightView       BidHeaderId                     int
+  BidRequestManufacturer          BidHeaderId                     int
+  BidRequestManufacturer          BidHeaderKey                    int
+  BidRequestManufacturer          BidHeaderId                     int
+  BidRequestManufacturer          BidHeaderKey                    int
+  BidRequestOptions               BidHeaderId                     int
+  BidRequestOptions               BidHeaderId                     int
+  BidRequestPriceRanges           BidHeaderId                     int
+  BidRequestPriceRanges           BidHeaderId                     int
+  BidResults                      BidHeaderId                     int
+  BidResults                      BidHeaderKey                    int
+  BidResults                      BidHeaderId                     int
+  BidResults                      BidHeaderKey                    int
+  BidResults_Orig                 BidHeaderId                     int
+  BidResults_Orig                 BidHeaderKey                    int
+  BidResultsView                  BidHeaderId                     int
+  Bids                            BidHeaderId                     int
+  Bids                            BidHeaderId                     int
+  BidsView                        BidHeaderId                     int
+  BidTrades                       BidHeaderId                     int
+  BidTrades                       BidHeaderId                     int
+  dchtest                         AwardsBidHeaderId               int
+  Detail                          BidHeaderId                     int
+  Detail                          BidHeaderId                     int
+  DetailHold                      BidHeaderId                     int
+  DetailHold                      BidHeaderId                     int
+  DetailMatch                     BidHeaderId                     int
+  DetailMatch                     BidHeaderId                     int
+  DetailView                      BidHeaderId                     int
+  DMSBidDocuments                 BidHeaderId                     int
+  DMSBidDocuments                 BidHeaderId                     int
+  DMSVendorBidDocuments           BidHeaderId                     int
+  DMSVendorBidDocuments           BidHeaderId                     int
+  FreezeItems                     BidHeaderId                     int
+  FreezeItems                     BidHeaderId                     int
+  ItemContractPrices              BidHeaderId                     int
+  ItemContractPrices              BidHeaderId                     int
+  ItemsBidHeaderView              BidHeaderId                     int
+  OrderBooks                      BidHeaderId                     int
+  OrderBooks                      BidHeaderId                     int
+  OrderBookView                   BidHeaderId                     int
+  OrderBookView                   BidHeaderId                     int
+  pa_ReqList                      BidHeaderId                     int
+  PODetail                        BidHeaderId                     int
+  POHeader                        AwardsBidHeaderId               int
+  POHeader_Test                   AwardsBidHeaderId               int
+  POHeaderSummary                 AwardsBidHeaderId               int
+  POHeaderSummary_04232018        AwardsBidHeaderId               int
+  POHeaderTest                    AwardsBidHeaderId               int
+  POPrintTaggedPOFile             AwardsBidHeaderId               int
+  POTempDetails                   BidHeaderID                     int
+  POTempDetails                   BidHeaderID                     int
+  Prices                          BidHeaderId                     int
+  Prices                          BidHeaderId                     int
+  PricingConsolidatedOrderCounts  BidHeaderId                     int
+  PricingConsolidatedOrderCounts  BidHeaderId                     int
+  PricingMap                      BidHeaderId                     int
+  PricingMap                      BidHeaderId                     int
+  PricingUpdate                   BidHeaderId                     int
+  PricingUpdate                   BidHeaderId                     int
+  RequisitionChangeLog            OrigBidHeaderId                 int
+  RequisitionChangeLog            NewBidHeaderId                  int
+  RequisitionChangeLog            OrigBidHeaderId                 int
+  RequisitionChangeLog            NewBidHeaderId                  int
+  Requisitions                    BidHeaderId                     int
+  Requisitions                    BidHeaderId                     int
+  rs_DistrictSummary              BidHeaderId                     int
+  rs_DistrictSummaryAwardLetter   BidHeaderId                     int
+  rs_DistrictSummaryVendors       BidHeaderId                     int
+  SaxDups                         BidHeaderId                     int
+  SearchItemsHeadingsView         BidHeaderId                     int
+  SearchItemsKeywordsView         BidHeaderId                     int
+  SearchItemsView                 BidHeaderId                     int
+  TMAwards                        BidHeaderId                     int
+  TMAwards                        BidHeaderId                     int
+  VendorDocRequest                BidHeaderId                     int
+  VendorDocRequest                BidHeaderId                     int
+  VendorDocRequestDetail          BidHeaderId                     int
+  VendorDocRequestDetail          BidHeaderCheckListId            int
+  VendorDocRequestDetail          BidHeaderId                     int
+  VendorDocRequestDetail          BidHeaderCheckListId            int
+  VendorQuery                     BidHeaderId                     int
+  VendorQuery                     BidHeaderId                     int
+  VendorQueryDetail               BidHeaderId                     int
+  VendorQueryDetail               BidHeaderId                     int
+  VendorQueryMSRP                 BidHeaderId                     int
+  VendorQueryMSRP                 BidHeaderId                     int
+  VendorQueryMSRPDetail           BidHeaderId                     int
+  VendorQueryMSRPDetail           BidHeaderId                     int
+  VendorQueryTandM                BidHeaderId                     int
+  VendorQueryTandM                BidHeaderId                     int
+  VendorQueryTandMDetail          BidHeaderId                     int
+  VendorQueryTandMDetail          BidHeaderId                     int
+  vw_ActiveBids                   BidHeaderId                     int
+  vw_ActiveCatalogs               BidHeaderId                     int
+  vw_AvailableReqBids             BidHeaderId                     int
+  vw_AVBidsVendorsCategoriesBySession  BidHeaderId                     int
+  vw_AVVendorsExport              BidHeaderId                     int
+  vw_AwardedBidResults            BidHeaderId                     int
+  vw_AwardedVendorsAllCurrentAndFutureBids  BidHeaderId                     int
+  vw_AwardedVendorsAllCurrentBids  BidHeaderId                     int
+  vw_BidAnalysisDetail            BidHeaderId                     int
+  vw_BidAnalysisVendorSummary     BidHeaderId                     int
+  vw_BidAnalysisVendorSummaryByDistrict  BidHeaderId                     int
+  vw_BidAnalysisVendorSummaryTest  BidHeaderId                     int
+  vw_BidAncillaryBySession        BidHeaderId                     int
+  vw_BidComplianceBySession       BidHeaderId                     int
+  vw_BidContactsVendorList        BidHeaderId                     int
+  vw_BidDescriptions              BidHeaderId                     int
+  vw_BidDuplicateIdentifiers      BidHeaderId                     int
+  vw_BidGrouper                   MainBidHeaderId                 int
+  vw_BidGrouper                   AltBidHeaderId                  int
+  vw_BidHeadersList               BidHeaderId                     int
+  vw_BidHeadersList               ParentBidHeaderId               int
+  vw_BidItemDescription           BidHeaderId                     int
+  vw_BidItemLongDescription       BidHeaderId                     int
+  vw_BidLeadComplianceBySession   BidHeaderId                     int
+  vw_BidLines                     BidHeaderId                     int
+  vw_BidManufacturerPartNumbers   BidHeaderId                     int
+  vw_BidMgrBidderDocs             BidHeaderId                     int
+  vw_BidMgrBidderDocs             BidHeaderCheckListId            int
+  vw_BidMSRPRankedManufacturerProductLines  BidHeaderId                     int
+  vw_BidMSRPRankedManufacturerProductLinesOrdered  BidHeaderId                     int
+  vw_BidMSRPRankedManufacturerProductLinesOrderedNew  BidHeaderId                     int
+  vw_BidMSRPRankedManufacturerProductLinesOrderedSaved  BidHeaderId                     int
+  vw_BidMSRPRankedManufacturers   BidHeaderId                     int
+  vw_BidMSRPResultsPriceRanges    BidHeaderId                     int
+  vw_BidMSRPResultsPrices         BidHeaderId                     int
+  vw_BidPricing                   BidHeaderId                     int
+  vw_BidProjectAveragePO          BidHeaderId                     int
+  vw_BidRequestItemMergeDetail    BidHeaderId                     int
+  vw_BidRequestItemMergeHeader    BidHeaderId                     int
+  vw_BidRequestItemsBidMgr        BidHeaderId                     int
+  vw_BidResults                   BidHeaderId                     int
+  vw_BidsByVendor                 BidHeaderId                     int
+  vw_BidTrades                    BidHeaderId                     int
+  vw_BidTradesBySession           BidHeaderId                     int
+  vw_BidTradesBySession_Test      BidHeaderId                     int
+  vw_BidTradesVendorDetailForReports  BidHeaderId                     int
+  vw_BidTradesVendors             BidHeaderId                     int
+  vw_BidTradesVendorsBySession    BidHeaderId                     int
+  vw_BidTradesVendorsForReports   BidHeaderId                     int
+  vw_BidType                      BidHeaderId                     int
+  vw_BidUPCs                      BidHeaderId                     int
+  vw_BidVendor                    BidHeaderId                     int
+  vw_BidVendorItemCodes           BidHeaderId                     int
+  vw_BidVendorList                BidHeaderId                     int
+  vw_BidVendorsBySession          BidHeaderId                     int
+  vw_BidVendorsSinceLastYear      BidHeaderId                     int
+  vw_CatalogImporter1Dtl          BidHeaderId                     int
+  vw_CatalogImporter1Dtl          BidHeaderActive                 tinyint
+  vw_CatalogPricing               BidHeaderId                     int
+  vw_CatalogRefsItemTest          BidHeaderId                     int
+  vw_DetailOnBid                  BidHeaderId                     int
+  vw_Districts_Assoc_With_Bid     BidHeaderId                     int
+  vw_DMSBidDocuments              BidHeaderId                     int
+  vw_DMSBidDocuments_View         BidHeaderId                     varchar
+  vw_DMSVendorBidDocuments        BidHeaderId                     int
+  vw_DMSVendorBidDocuments_04232018  BidHeaderId                     int
+  vw_DMSVendorBidDocuments_View   BidHeaderId                     varchar
+  vw_DMSVendorBidDocuments_ViewTest  BidHeaderId                     varchar
+  vw_DMSVendorBidDocumentsTest    BidHeaderId                     int
+  vw_HeadingsByBid                BidHeaderId                     int
+  vw_HeadingsKeywordsByBid        BidHeaderId                     int
+  vw_ItemPricing                  BidHeaderId                     int
+  vw_ItemsByBid                   BidHeaderId                     int
+  vw_KeywordsByBid                BidHeaderId                     int
+  vw_LastBidAwardDate             BidHeaderId                     int
+  vw_LatestCrossRef               BidHeaderId                     int
+  vw_LowestPrice                  BidHeaderId                     int
+  vw_MSRPBidReqManufacturer       BidHeaderId                     int
+  vw_MSRPBidReqManufacturerWriteIn  BidHeaderId                     int
+  vw_MSRPBidReqProdLineAndOption  BidHeaderId                     int
+  vw_MSRPBidReqProdLineAndOptionWriteIn  BidHeaderId                     int
+  vw_MSRPBidResultsManufRev2      BidHeaderId                     int
+  vw_MSRPCategoriesBySession      BidHeaderId                     varchar
+  vw_MSRPManufacturersBySession   BidHeaderId                     int
+  vw_MSRPMPLVendorsCategoriesBySession  BidHeaderId                     int
+  vw_MSRPMPLVendorsCategoriesReport  BidHeaderId                     int
+  vw_MSRPMPLVendorsCategoriesReportBC  BidHeaderId                     int
+  vw_MSRPProductLineExceptions    BidHeaderId                     int
+  vw_MSRPVendorsAndManufacturersByReq  BidHeaderId                     int
+  vw_MSRPVendorsBidHeaderBySession  BidHeaderId                     int
+  vw_MSRPVendorsCategoriesBySession  BidHeaderId                     int
+  vw_OverrideReferences           BidHeaderId                     int
+  vw_PLBidItems                   BidHeaderId                     int
+  vw_PLCatalog                    BidHeaderId                     int
+  vw_POStatus                     AwardsBidHeaderId               int
+  vw_POStatus_Test                AwardsBidHeaderId               int
+  vw_RefList                      BidHeaderId                     int
+  vw_ReqBidReview                 BidHeaderId                     int
+  vw_ReqDetail                    BidHeaderId                     int
+  vw_ReqDetail_BK20241205         BidHeaderId                     int
+  vw_ReqDetail_BK20241227         BidHeaderId                     int
+  vw_ReqDetailPrint               BidHeaderId                     int
+  vw_ReqDetailPrintTest           BidHeaderId                     int
+  vw_ReqDetailSummary             BidHeaderId                     int
+  vw_Reqs_Assoc_With_Bid          BidHeaderId                     int
+  vw_Requisitions                 BidHeaderId                     int
+  vw_RequisitionShippingCosts     BidHeaderId                     int
+  vw_RequisitionShippingCostsTest  BidHeaderId                     int
+  vw_RptExpireDateBidDocs         BidHeaderId                     int
+  vw_RptExpireDateBidDocsAndMore  BidHeaderId                     int
+  vw_RptMarkedReadyEmailBlastStats  BidHeaderId                     int
+  vw_RptMissingURLsByBidAndVendor  bidheaderid                     int
+  vw_SearchDescription            BidHeaderId                     int
+  vw_SearchItemsKeywords          BidHeaderId                     int
+  vw_TMAwardedVendors             BidHeaderId                     int
+  vw_TMLineItems                  BidHeaderId                     int
+  vw_TMTradesAwardedVendors       BidHeaderId                     int
+  vw_TMTradesSummary              BidHeaderId                     int
+  vw_TMVendorsForReports          BidHeaderId                     int
+  vw_Users_Assoc_With_Bid         BidHeaderId                     int
+  vw_VendorBidInfoStats           BidHeaderId                     int
+  vw_VendorBlast                  BidHeaderId                     int
+  vw_VendorBlast_AwardedByBid     BidHeaderId                     int
+  vw_VendorBlast_RegisteredByBid  BidHeaderId                     int
+  vw_VendorBlast_SubmittedByBid   BidHeaderId                     int
+  vw_VendorCategoryBids           BidHeaderId                     int
+  vw_VendorQueryMSRPStatus        BidHeaderId                     int
+  vw_VendorQueryTandMStatus       BidHeaderId                     int
+  vw_VendorsByBid                 BidHeaderId                     int
+  vw_WinningMSRPEntryPrices       BidHeaderId                     int
+
+Done.

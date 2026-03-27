@@ -1,0 +1,167 @@
+# EDS DBA Agent Configuration
+# ============================
+# This file configures the AI agent for database assistance.
+# Environment variables can override most settings.
+
+# LLM Provider Configuration
+llm:
+  # Default provider to use (claude, openai, ollama)
+  # Override with LLM_PROVIDER env var; defaults to "ollama" for zero-config setup
+  default_provider: ollama
+
+  providers:
+    claude:
+      model: claude-sonnet-4-20250514
+      temperature: 0.0
+      max_tokens: 4096
+      # api_key loaded from ANTHROPIC_API_KEY env var
+
+    openai:
+      model: gpt-4o
+      temperature: 0.0
+      max_tokens: 4096
+      # api_key loaded from OPENAI_API_KEY env var
+
+    ollama:
+      model: qwen2.5:14b
+      host: http://localhost:11434
+      temperature: 0.0
+      max_tokens: 4096
+
+# RAG (Retrieval Augmented Generation) Configuration
+rag:
+  # Embedding model configuration
+  embeddings:
+    provider: local  # "local" or "openai"
+    model: sentence-transformers/all-MiniLM-L6-v2
+    # For OpenAI: model: text-embedding-3-small
+    device: cpu  # "cpu" or "cuda"
+    batch_size: 32
+
+  # Document chunking settings
+  chunking:
+    max_chunk_size: 1500      # Maximum tokens per chunk
+    chunk_overlap: 200        # Overlap between chunks for context
+    min_chunk_size: 100       # Minimum chunk size to keep
+
+  # Retrieval settings
+  retrieval:
+    default_results: 5        # Default number of results to return
+    max_results: 20           # Maximum results allowed
+    rerank: true              # Enable cross-encoder reranking
+    hybrid_search: true       # Use both semantic and keyword search
+
+  # Vector store configuration
+  vector_store:
+    type: chromadb
+    path: data/vectordb
+    collection: eds_documentation
+
+# Memory and Session Configuration
+memory:
+  # Session storage
+  sessions_dir: data/sessions
+  max_sessions: 100           # Max sessions to keep
+
+  # Conversation settings
+  max_conversation_turns: 50  # Max turns before summarization
+  summarize_after_turns: 30   # Trigger summarization at this point
+
+  # Learned context database
+  learned_context_db: data/memory/knowledge.sqlite
+
+  # Context window management
+  context_budget: 100000      # Tokens reserved for context
+  doc_budget: 15000           # Tokens for retrieved docs
+  history_budget: 6000        # Tokens for conversation history
+
+# Security Configuration
+security:
+  # Query execution mode
+  read_only_mode: false       # If true, block all write operations
+  require_confirmation_for_writes: true
+
+  # Allowed databases for queries
+  allowed_databases:
+    - EDS
+    - dpa_EDSAdmin
+
+  # Blocked operations (always blocked regardless of mode)
+  blocked_operations:
+    - DROP DATABASE
+    - xp_cmdshell
+    - sp_configure
+    - OPENROWSET
+    - BULK INSERT
+
+  # Query limits
+  max_query_results: 1000     # Maximum rows to return
+  query_timeout: 30           # Query timeout in seconds
+
+# Tool Configuration
+tools:
+  # Existing scripts directory
+  scripts_dir: scripts
+
+  # Script execution settings
+  script_timeout: 300         # Script timeout in seconds
+
+  # Enabled tool categories
+  enabled_categories:
+    - sql                     # SQL execution
+    - analysis               # Performance analysis
+    - documentation          # Doc search
+    - monitoring             # Proactive monitoring
+    - script                 # Script execution
+
+# Audit Logging Configuration
+audit:
+  enabled: true
+  log_dir: data/audit
+
+  # What to log
+  log_sql_queries: true
+  log_llm_calls: true
+  log_tool_executions: true
+  log_doc_retrievals: true
+
+  # Retention
+  retention_days: 90
+  max_log_size_mb: 100
+
+# CLI Configuration
+cli:
+  # History settings
+  history_file: ~/.eds_agent_history
+  max_history_entries: 1000
+
+  # Output formatting
+  default_output_format: rich  # "rich", "plain", "json"
+
+  # Colors and styling
+  theme: default              # CLI theme
+
+# Monitoring Configuration (for proactive monitoring)
+monitoring:
+  enabled: false              # Enable background monitoring
+  check_interval_minutes: 15  # How often to check
+
+  # Alert thresholds (when to notify)
+  alert_thresholds:
+    missing_index_critical: 95
+    blocking_seconds: 300
+    io_latency_ms: 100
+    slow_query_buffer_gets: 1000000
+
+# Documentation paths
+documentation:
+  docs_dir: docs
+  files:
+    - EDS_DATA_DICTIONARY.md
+    - EDS_STORED_PROCEDURES.md
+    - EDS_VIEWS.md
+    - EDS_INDEXES.md
+    - EDS_BUSINESS_DOMAINS.md
+    - EDS_SP_DEPENDENCIES.md
+    - EDS_ERD.md
+    - API_REFERENCE.md

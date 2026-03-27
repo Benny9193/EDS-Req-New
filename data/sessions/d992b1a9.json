@@ -1,0 +1,25 @@
+{
+  "session_id": "d992b1a9",
+  "created_at": "2026-02-06T12:21:34.177768",
+  "updated_at": "2026-02-06T12:21:40.075620",
+  "title": "Session d992b1a9",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2026-02-06T12:21:34.179268",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! I see you're looking for some information on categories. We have a wide range of categories to choose from, including Apparel, Athletic Supplies, Audio Visual Supplies, and many more. If you'd like to explore any of these categories or find specific products, just let me know!\n\nWould you like to browse through the categories or search for something specific?",
+      "timestamp": "2026-02-06T12:21:40.075620",
+      "metadata": {}
+    }
+  ],
+  "metadata": {},
+  "provider": "claude",
+  "model": null,
+  "total_tokens": 0,
+  "message_count": 2
+}

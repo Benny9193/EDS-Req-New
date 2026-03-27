@@ -1,0 +1,7 @@
+{"timestamp": "2026-02-05T18:10:00.942288", "event_type": "session_start", "session_id": "5e617ff9", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:11:25.069343", "event_type": "session_start", "session_id": "8b0a5149", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:13:49.404299", "event_type": "session_start", "session_id": "779b2343", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:21:40.143739", "event_type": "session_start", "session_id": "89fa6dcd", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:25:17.251456", "event_type": "session_start", "session_id": "540aeb4e", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:33:12.946896", "event_type": "session_start", "session_id": "a59f5ff9", "data": {"resumed": false}}
+{"timestamp": "2026-02-05T18:39:43.460393", "event_type": "session_start", "session_id": "b3a4ad28", "data": {"resumed": false}}

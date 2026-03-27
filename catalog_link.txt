@@ -1,0 +1,158 @@
+Connected.
+
+================================================================================
+1. BidsCatalogList FOR CatalogId=2018104 (United Sales catalog)
+================================================================================
+BidCatalogId	CatalogId	BidId	DiscountRate	BidHeaderId	VendorId	Active	VendorName
+12883409	2018104	2541584	0.00000	12822	3842	1	United Sales USA Corp.
+12883412	2018104	2541589	0.00000	12823	3842	1	United Sales USA Corp.
+12883415	2018104	2541594	0.00000	12824	3842	1	United Sales USA Corp.
+12883422	2018104	2541607	0.00000	12866	3842	0	United Sales USA Corp.
+12884422	2018104	2543367	0.00000	12866	3842	0	United Sales USA Corp.
+12885425	2018104	2545569	0.00000	12866	3842	0	United Sales USA Corp.
+12885649	2018104	2545832	0.00000	12866	3842	1	United Sales USA Corp.
+12884980	2018104	2544987	0.00000	12866	3842	0	United Sales USA Corp.
+12885434	2018104	2545584	0.00000	12867	3842	1	United Sales USA Corp.
+12884222	2018104	2542846	0.00000	12867	3842	0	United Sales USA Corp.
+12883431	2018104	2541622	0.00000	12867	3842	0	United Sales USA Corp.
+12883514	2018104	2541725	0.00000	12867	3842	0	United Sales USA Corp.
+12883701	2018104	2542008	0.00000	12867	3842	0	United Sales USA Corp.
+12883708	2018104	2542022	0.00000	12868	3842	0	United Sales USA Corp.
+12883438	2018104	2541636	0.00000	12868	3842	0	United Sales USA Corp.
+12884229	2018104	2542860	0.00000	12868	3842	0	United Sales USA Corp.
+12884677	2018104	2544165	0.00000	12868	3842	0	United Sales USA Corp.
+12884788	2018104	2544516	0.00000	12868	3842	0	United Sales USA Corp.
+12885441	2018104	2545598	0.00000	12868	3842	1	United Sales USA Corp.
+12884988	2018104	2545003	0.00000	12868	3842	0	United Sales USA Corp.
+12884041	2018104	2542653	0.00000	12868	3842	0	United Sales USA Corp.
+12885566	2018104	2545731	0.00000	13070	3842	1	United Sales USA Corp.
+12884277	2018104	2542909	0.00000	13070	3842	0	United Sales USA Corp.
+12883496	2018104	2541699	0.00000	13070	3842	0	United Sales USA Corp.
+12883798	2018104	2542139	0.00000	13070	3842	0	United Sales USA Corp.
+12886175	2018104	2547400	0.00000	13330	3842	0	United Sales USA Corp.
+12886951	2018104	2548504	0.00000	13330	3842	0	United Sales USA Corp.
+12887087	2018104	2548718	0.00000	13330	3842	1	United Sales USA Corp.
+12887089	2018104	2548723	0.00000	13331	3842	1	United Sales USA Corp.
+12886954	2018104	2548511	0.00000	13331	3842	0	United Sales USA Corp.
+12886178	2018104	2547407	0.00000	13331	3842	0	United Sales USA Corp.
+12886181	2018104	2547414	0.00000	13332	3842	0	United Sales USA Corp.
+12886957	2018104	2548518	0.00000	13332	3842	0	United Sales USA Corp.
+12887091	2018104	2548728	0.00000	13332	3842	1	United Sales USA Corp.
+12887097	2018104	2548742	0.00000	13363	3842	0	United Sales USA Corp.
+12887212	2018104	2548890	0.00000	13363	3842	0	United Sales USA Corp.
+12887265	2018104	2548966	0.00000	13363	3842	0	United Sales USA Corp.
+12887028	2018104	2548613	0.00000	13363	3842	0	United Sales USA Corp.
+12886882	2018104	2548410	0.00000	13363	3842	0	United Sales USA Corp.
+12888156	2018104	2550064	0.00000	13363	3842	0	United Sales USA Corp.
+12888462	2018104	2550430	0.00000	13363	3842	1	United Sales USA Corp.
+12886204	2018104	2547453	0.00000	13363	3842	0	United Sales USA Corp.
+12886583	2018104	2547957	0.00000	13363	3842	0	United Sales USA Corp.
+12886768	2018104	2548222	0.00000	13363	3842	0	United Sales USA Corp.
+12886786	2018104	2548257	0.00000	13363	3842	0	United Sales USA Corp.
+12886793	2018104	2548270	0.00000	13364	3842	0	United Sales USA Corp.
+12886590	2018104	2547970	0.00000	13364	3842	0	United Sales USA Corp.
+12886211	2018104	2547466	0.00000	13364	3842	0	United Sales USA Corp.
+12888469	2018104	2550443	0.00000	13364	3842	1	United Sales USA Corp.
+12887339	2018104	2549079	0.00000	13364	3842	0	United Sales USA Corp.
+12886889	2018104	2548423	0.00000	13364	3842	0	United Sales USA Corp.
+12887035	2018104	2548626	0.00000	13364	3842	0	United Sales USA Corp.
+12887219	2018104	2548903	0.00000	13364	3842	0	United Sales USA Corp.
+12887330	2018104	2549066	0.00000	13365	3842	0	United Sales USA Corp.
+12887042	2018104	2548638	0.00000	13365	3842	0	United Sales USA Corp.
+12886896	2018104	2548435	0.00000	13365	3842	0	United Sales USA Corp.
+12887346	2018104	2549091	0.00000	13365	3842	0	United Sales USA Corp.
+12888476	2018104	2550455	0.00000	13365	3842	1	United Sales USA Corp.
+12886218	2018104	2547478	0.00000	13365	3842	0	United Sales USA Corp.
+12886597	2018104	2547982	0.00000	13365	3842	0	United Sales USA Corp.
+12886800	2018104	2548282	0.00000	13365	3842	0	United Sales USA Corp.
+12885760	2018104	2546376	0.00000	13456	3842	1	United Sales USA Corp.
+12885989	2018104	2546635	0.00000	13498	3842	1	United Sales USA Corp.
+12886007	2018104	2546662	0.00000	13502	3842	1	United Sales USA Corp.
+12886742	2018104	2548173	0.00000	13575	3842	0	United Sales USA Corp.
+12888499	2018104	2550491	0.00000	13575	3842	1	United Sales USA Corp.
+12887355	2018104	2549104	0.00000	13575	3842	0	United Sales USA Corp.
+12887254	2018104	2548947	0.00000	13575	3842	0	United Sales USA Corp.
+12887108	2018104	2548759	0.00000	13576	3842	1	United Sales USA Corp.
+12886747	2018104	2548181	0.00000	13576	3842	0	United Sales USA Corp.
+
+================================================================================
+2. REQUISITION 60076856 - BidHeaderId and Category
+================================================================================
+  RequisitionId=60076856, BidHeaderId=13575, CategoryId=12
+  Category: Custodial provides the facilities department with standard custodial, janitorial, and maintenance supplies. (Type=1)
+
+================================================================================
+3. TRIGGER - @BidsList POPULATION (first 130 lines)
+================================================================================
+  L4: declare @BidsList table (RequisitionId int, BidHeaderId int null)
+  L5: declare @CatPrices table (sysid int identity(1,1) not null primary key, DetailId int, BidHeaderId int, BidId int, CrossRefId int, CatalogYear char(4), NetPrice money, DiscountRate decimal(9,5))
+  L6: declare @FrozenReqs table (RequisitionId int not null primary key)
+  L17: if update(ItemId) or update(BidHeaderId) or update(Reproc)
+  L19:   -- Build Base List of Bids for each Requisition
+  L20:   insert @BidsList (RequisitionId, BidHeaderId)
+  L21:     select Requisitions.RequisitionId, Requisitions.BidHeaderId
+  L24:       join Requisitions on Requisitions.RequisitionId = isnull(inserted.RequisitionId, Detail.RequisitionId)
+  L25:      group by Requisitions.RequisitionId, Requisitions.BidHeaderId
+  L31: 	insert @BidsList (RequisitionId, BidHeaderId)
+  L32: 	  select Requisitions.RequisitionId, BidHeaders.BidHeaderId
+  L33: 		from Requisitions with (nolock)
+  L34: 		join @BidsList bl on bl.RequisitionId = Requisitions.RequisitionId
+  L35: 		join Budgets on Budgets.BudgetId = Requisitions.BudgetId
+  L36: 		join Category on Category.CategoryId = Requisitions.CategoryId
+  L37: 		join BidHeaders on BidHeaders.CategoryId = Requisitions.CategoryId
+  L39: 		               and BidHeaders.ParentBidHeaderId = bl.BidHeaderId
+  L42: 		join PPCategory on PPCategory.PricePlanId = BidHeaders.PricePlanId
+  L43: 				       and PPCategory.CategoryId = BidHeaders.CategoryId
+  L46: 		left outer join @BidsList ble on ble.RequisitionId = Requisitions.RequisitionId
+  L47: 		                             and ble.BidHeaderId = BidHeaders.BidHeaderId
+  L49: 	     and ble.BidHeaderId is null
+  L50: 	   group by Requisitions.RequisitionId, BidHeaders.BidHeaderId
+  L54:   insert @FrozenReqs (RequisitionId)
+  L55: 	select Requisitions.RequisitionId
+  L58:       join Requisitions on Requisitions.RequisitionId = coalesce(inserted.RequisitionId, Detail.RequisitionId)
+  L59: 	  outer apply (Select top 1 PO.POId from PO where PO.RequisitionId = Requisitions.RequisitionId) p
+  L60: 	  outer apply (Select top 1 Approvals.ApprovalId from Approvals where Approvals.RequisitionId = Requisitions.RequisitionId and Approvals.StatusId in (6,35,45,49)) ap
+  L63: 	 group by Requisitions.RequisitionId
+  L72:     join Requisitions on Requisitions.RequisitionId = coalesce(inserted.RequisitionId, Detail.RequisitionId)
+  L75:    where not exists(select RequisitionId from @FrozenReqs f where f.RequisitionId = Requisitions.RequisitionId)
+  L77:     left outer join PO on PO.RequisitionId = Requisitions.RequisitionId
+  L88:     join Requisitions on Requisitions.RequisitionId = coalesce(inserted.RequisitionId, Detail.RequisitionId)
+  L89:     join BidHeaders on BidHeaders.BidHeaderId in (select case coalesce(Detail.BidHeaderId,0) when 0 then bl.BidHeaderId else Detail.BidHeaderId end from @BidsList bl where bl.RequisitionId = Requisitions.RequisitionId group by case coalesce(Detail.BidHeaderId,0) when 0 then bl.BidHeaderId else Detail.BidHeaderId end)
+  L91:                        and BidMappedItems.BidHeaderId = BidHeaders.BidHeaderId
+  L93:    where not exists(select PO.POId from PO where PO.RequisitionId = Requisitions.RequisitionId)
+  L96:     left outer join PO on PO.RequisitionId = Requisitions.RequisitionId
+  L119:     join Requisitions on Requisitions.RequisitionId = coalesce(inserted.RequisitionId, Detail.RequisitionId)
+  L120:     join Budgets on Budgets.BudgetId = Requisitions.BudgetId
+  L121:    where not exists(select RequisitionId from @FrozenReqs f where f.RequisitionId = Requisitions.RequisitionId)
+  L123:     left outer join PO on PO.RequisitionId = Requisitions.RequisitionId
+
+================================================================================
+4. CROSS-CHECK: Does Catalog 2018104 also exist under bid 13575?
+================================================================================
+BidCatalogId	CatalogId	BidId	BidHeaderId	VendorId	Active	VendorName
+12886742	2018104	2548173	13575	3842	0	United Sales USA Corp.
+12887254	2018104	2548947	13575	3842	0	United Sales USA Corp.
+12887355	2018104	2549104	13575	3842	0	United Sales USA Corp.
+12888499	2018104	2550491	13575	3842	1	United Sales USA Corp.
+
+================================================================================
+5. BidsCatalogList FOR CatalogId=2018382 (Staples catalog)
+================================================================================
+BidCatalogId	CatalogId	BidId	BidHeaderId	VendorId	Active	VendorName
+12888466	2018382	2550442	13364	2198	1	Staples Inc dba Staples Contract & Commercial LLC
+12888474	2018382	2550454	13365	2198	1	Staples Inc dba Staples Contract & Commercial LLC
+12888496	2018382	2550490	13575	2198	1	Staples Inc dba Staples Contract & Commercial LLC
+
+================================================================================
+6. AWARD 2417219 (United Sales catalog items)
+================================================================================
+AwardId	BidId	VendorId	BidHeaderId	VendorName
+2417219	2548759	3842	13576	United Sales USA Corp.
+
+================================================================================
+7. AWARD 2418934 ($2.72 item)
+================================================================================
+AwardId	BidId	VendorId	BidHeaderId	VendorName
+2418934	2550491	3842	13575	United Sales USA Corp.
+
+Done.

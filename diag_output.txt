@@ -1,0 +1,24 @@
+=== All Detail rows for RequisitionId=60076856 ===
+DetailId	BidHeaderId	BidPrice	Quantity	ExtendedPrice	VendorName	VendorId	BidDescription
+1534203930	None	10.9200	2	21.84	Staples Inc	2198	None
+1534395373	None	2.7200	1	2.72	United Sales USA Corp.	3842	None
+1535015262	13576	71.2900	1	71.29	United Sales USA Corp.	3842	NEW YORK COOPERATIVE BID OF 10/08/2025
+CUSTODIAL LINER SUPPLIES, RECEIVED BY
+CLARKSTOWN CSD, NEW CITY, NEW YORK
+
+=== United Sales rows only ===
+DetailId	BidHeaderId	BidPrice	Quantity	ExtendedPrice	VendorName	VendorId	BidDescription
+1534395373	None	2.7200	1	2.72	United Sales USA Corp.	3842	None
+1535015262	13576	71.2900	1	71.29	United Sales USA Corp.	3842	NEW YORK COOPERATIVE BID OF 10/08/2025
+CUSTODIAL LINER SUPPLIES, RECEIVED BY
+CLARKSTOWN CSD, NEW CITY, NEW YORK
+
+=== BidHeaderId totals per vendor (mirrors vw_RequisitionShippingCosts grouping) ===
+VendorName	BidHeaderId	BidDescription	ItemCount	SubTotal
+Staples Inc	None	None	1	21.84
+United Sales USA Corp.	None	None	1	2.72
+United Sales USA Corp.	13576	NEW YORK COOPERATIVE BID OF 10/08/2025
+CUSTODIAL LINER SUPPLIES, RECEIVED BY
+CLARKSTOWN CSD, NEW CITY, NEW YORK	1	71.29
+
+Done.

@@ -1,0 +1,11 @@
+Connected.
+
+================================================================================
+1. ITEMS ON BID 13576 IN REQ 60076856 + CROSS-CHECK ALL 3 BIDS
+================================================================================
+ERROR: ('42S02', "[42S02] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid object name 'Item'. (208) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\EDS\investigate_bids3.py", line 27, in <module>
+    cursor.execute("""
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid object name 'Item'. (208) (SQLExecDirectW)")
+

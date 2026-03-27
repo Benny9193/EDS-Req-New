@@ -1,0 +1,55 @@
+Connected.
+
+================================================================================
+BEFORE: Detail rows for req 60076856
+================================================================================
+DetailId	ItemId	ItemCode	Descr	BidHeaderId	BidPrice	VendorId	VendorName	AwardId	CatalogId
+1534203930	8625899	GR22C609	CLEANER/DEGREASER: SIMPLE GREEN, NONTOXIC, BIODEGR	None	10.9200	2198	Staples Inc dba Staples Contract & Commercial LLC	2418933	2018382
+1534395373	9003261	GR4KZ22	H0638 Depressed Center Wheel T27 4x1/4x5/8 AO	0	2.7200	3842	United Sales USA Corp.	2418934	None
+1535015262	942396429	USAGOJ095712CT	SOAP,NTRL ORG PUMIC,12,WH	13576	71.2900	3842	United Sales USA Corp.	2417219	2018104
+1535015557	1062158477	USASJN9102	Kresto Heritage Heavy Duty Hand Cleaner, Fresh Sce	13576	143.8700	3842	United Sales USA Corp.	2417219	2018104
+1535015581	942424747	USAZPEZUMPP128EA	CLEANER,PINE MULTI PURPOS	13576	11.2300	3842	United Sales USA Corp.	2417219	2018104
+
+================================================================================
+BEFORE: vw_RequisitionShippingCosts for req 60076856
+================================================================================
+RequisitionId	VendorId	VendorName	BidHeaderId	Extended	ShippingCost	TotalShippingCost	POBelowMinimum	MinimumPOAmount
+60076856	2198	Staples Inc	13575	21.8400	0.0000	0.00	0	10.0000
+60076856	3842	United Sales USA Corp.	13575	2.7200	0.0000	0.00	1	10.0000
+60076856	3842	United Sales USA Corp.	13576	237.6200	0.0000	0.00	0	10.0000
+
+================================================================================
+APPLYING FIX: Disable trigger, update BidHeaderId, re-enable trigger
+================================================================================
+  Step 1: Disabling trig_DetailUpdate...
+  Trigger disabled.
+  Step 2: Updating BidHeaderId to NULL for DetailIds [1535015262, 1535015557, 1535015581]...
+  Updated 3 rows.
+  Step 3: Re-enabling trig_DetailUpdate...
+  Trigger re-enabled.
+
+================================================================================
+AFTER: Detail rows for req 60076856
+================================================================================
+DetailId	ItemId	ItemCode	Descr	BidHeaderId	BidPrice	VendorId	VendorName	AwardId	CatalogId
+1534203930	8625899	GR22C609	CLEANER/DEGREASER: SIMPLE GREEN, NONTOXIC, BIODEGR	None	10.9200	2198	Staples Inc dba Staples Contract & Commercial LLC	2418933	2018382
+1535015262	942396429	USAGOJ095712CT	SOAP,NTRL ORG PUMIC,12,WH	None	71.2900	3842	United Sales USA Corp.	2417219	2018104
+1535015557	1062158477	USASJN9102	Kresto Heritage Heavy Duty Hand Cleaner, Fresh Sce	None	143.8700	3842	United Sales USA Corp.	2417219	2018104
+1535015581	942424747	USAZPEZUMPP128EA	CLEANER,PINE MULTI PURPOS	None	11.2300	3842	United Sales USA Corp.	2417219	2018104
+1534395373	9003261	GR4KZ22	H0638 Depressed Center Wheel T27 4x1/4x5/8 AO	0	2.7200	3842	United Sales USA Corp.	2418934	None
+
+================================================================================
+AFTER: vw_RequisitionShippingCosts for req 60076856
+================================================================================
+RequisitionId	VendorId	VendorName	BidHeaderId	Extended	ShippingCost	TotalShippingCost	POBelowMinimum	MinimumPOAmount
+60076856	2198	Staples Inc	13575	21.8400	0.0000	0.00	0	10.0000
+60076856	3842	United Sales USA Corp.	13575	240.3400	0.0000	0.00	0	10.0000
+
+================================================================================
+AFTER: vw_ReqTotalsByVendor for req 60076856
+================================================================================
+VendorCode	VendorName	ItemsTotal	VendorTotal	POBelowMinimum	MinimumPOAmount
+2222	Staples Inc	21.8400	21.84	0	10.0000
+3877	United Sales USA Corp.	240.3400	240.34	0	10.0000
+
+Done. Fix applied successfully.

@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDS Universal Requisition</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="css/design-system.css">
+
+    <!-- Alpine.js + Focus plugin (for x-trap) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.14.8/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+<body x-data="app()" x-init="init()" x-cloak>
+
+<!-- ===== App Layout ===== -->
+<div class="app-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" :class="{ 'mobile-open': mobileMenuOpen }">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">EDS</div>
+            <div>
+                <div class="sidebar-brand">EDS</div>
+                <div style="font-size: var(--text-xs); color: var(--text-muted);">Requisition System</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Main</div>
+            <button class="sidebar-nav-item" :class="{ active: activeView === 'dashboard' }" @click="switchView('dashboard'); mobileMenuOpen = false">
+                <i class="fas fa-home"></i> Dashboard
+            </button>
+            <button class="sidebar-nav-item" :class="{ active: activeView === 'browse' }" @click="switchView('browse'); mobileMenuOpen = false">
+                <i class="fas fa-store"></i> Browse Products
+            </button>
+            <button class="sidebar-nav-item" :class="{ active: activeView === 'orders' }" @click="switchView('orders'); mobileMenuOpen = false">
+                <i class="fas fa-clipboard-list"></i> My Orders
+                <template x-if="orderCount > 0">
+                    <span class="badge badge-primary" style="margin-left:auto" x-text="orderCount"></span>
+                </template>
+            </button>
+
+            <div class="sidebar-section-label">Shopping</div>
+            <button class="sidebar-nav-item" :class="{ active: activeView === 'templates' }" @click="switchView('templates'); mobileMenuOpen = false">
+                <i class="fas fa-copy"></i> Template Orders
+            </button>
+            <button class="sidebar-nav-item" :class="{ active: activeView === 'savedLists' }" @click="switchView('savedLists'); mobileMenuOpen = false">
+                <i class="fas fa-bookmark"></i> Saved Lists
+                <template x-if="savedLists.length > 0">
+                    <span class="badge badge-neutral" style="margin-left:auto" x-text="savedLists.length"></span>
+                </template>
+            </button>
+
+            <!-- Admin section (approvals: admin only) -->
+            <template x-if="isAdmin">
+                <div>
+                    <div class="sidebar-section-label">Admin</div>
+                    <button class="sidebar-nav-item" :class="{ active: activeView === 'approvals' }" @click="switchView('approvals'); mobileMenuOpen = false">
+                        <i class="fas fa-check-circle"></i> Approvals
+                        <template x-if="pendingApprovalCount > 0">
+                            <span class="badge badge-accent" style="margin-left:auto" x-text="pendingApprovalCount"></span>
+                        </template>
+                    </button>
+                </div>
+            </template>
+            <!-- Reports section (admin + reports_viewer/department_head/principal) -->
+            <template x-if="canViewReports">
+                <div>
+                    <template x-if="!isAdmin"><div class="sidebar-section-label">Reports</div></template>
+                    <button class="sidebar-nav-item" :class="{ active: activeView === 'reports' }" @click="switchView('reports'); mobileMenuOpen = false">
+                        <i class="fas fa-chart-bar"></i> Reports
+                    </button>
+                </div>
+            </template>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="sidebar-nav-item" @click="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </button>
+        </div>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="main-content">
+
+        <!-- ===== Top Header ===== -->
+        <header class="top-header">
+            <div class="search-box input-icon-wrapper" style="position:relative" @click.outside="showGlobalAutocomplete = false">
+                <i class="input-icon" :class="globalAutocompleteLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
+                <input type="text" class="input" placeholder="Search products, vendors, categories..."
+                       x-model="globalSearch"
+                       @input="globalAutocomplete()"
+                       @keydown.enter="globalSearchSubmit()"
+                       @keydown.escape="showGlobalAutocomplete = false"
+                       @focus="if(globalSearch.trim().length >= 2 && globalAutocompleteSuggestions.length) showGlobalAutocomplete = true"
+                       role="combobox"
+                       aria-autocomplete="list"
+                       aria-controls="global-autocomplete-list"
+                       :aria-expanded="showGlobalAutocomplete">
+
+                <!-- Autocomplete dropdown -->
+                <div x-show="showGlobalAutocomplete" id="global-autocomplete-list" role="listbox" class="autocomplete-dropdown" x-cloak>
+                    <!-- Loading state -->
+                    <template x-if="globalAutocompleteLoading && globalAutocompleteSuggestions.length === 0">
+                        <div style="padding: var(--space-3) var(--space-4); display:flex; align-items:center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-sm);">
+                            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>
+                            <span>Searching...</span>
+                        </div>
+                    </template>
+                    <!-- Results -->
+                    <template x-for="(s, i) in globalAutocompleteSuggestions" :key="i">
+                        <div role="option" class="autocomplete-item" style="cursor:pointer;"
+                             @click="selectGlobalAutocomplete(s)">
+                            <i class="fas fa-box" style="color: var(--text-muted); font-size: var(--text-xs); flex-shrink:0;"></i>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight: var(--font-medium);" x-text="s.Description || s.name || ''"></div>
+                                <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="s.VendorName || ''"></div>
+                            </div>
+                            <div style="font-size: var(--text-xs); font-weight: var(--font-bold); color: var(--color-primary-500); flex-shrink:0; white-space:nowrap;"
+                                 x-text="s.Price ? formatPrice(s.Price) : ''"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap: var(--space-3); margin-left: auto;">
+                <!-- Cart button -->
+                <button class="btn btn-ghost btn-icon" style="position:relative" @click="cartOpen = !cartOpen">
+                    <i class="fas fa-shopping-cart"></i>
+                    <template x-if="cartCount > 0">
+                        <span style="position:absolute;top:-4px;right:-4px;background:var(--color-accent-500);color:white;font-size:10px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;" x-text="cartCount"></span>
+                    </template>
+                </button>
+
+                <!-- User menu -->
+                <div style="position:relative;" @click.outside="showUserMenu = false">
+                    <button class="flex items-center gap-2" style="cursor:pointer;background:none;border:none;font-family:inherit;padding:0;" @click="showUserMenu = !showUserMenu" @keydown.escape="showUserMenu = false">
+                        <div class="avatar avatar-sm" x-text="userInitials()"></div>
+                        <span style="font-size: var(--text-sm); font-weight: var(--font-medium);" x-text="userName()"></span>
+                        <i class="fas fa-chevron-down" style="font-size:var(--text-xs);color:var(--text-muted);"></i>
+                    </button>
+                    <div x-show="showUserMenu" x-transition style="position:absolute;top:100%;right:0;margin-top:var(--space-2);background:var(--bg-card);border:1px solid var(--border-default);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);min-width:180px;z-index:var(--z-dropdown);overflow:hidden;">
+                        <div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border-light);">
+                            <div style="font-weight:var(--font-semibold);font-size:var(--text-sm);" x-text="userName()"></div>
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);" x-text="isAdmin ? 'Administrator' : 'User'"></div>
+                        </div>
+                        <button class="sidebar-nav-item" style="margin:0;border-radius:0;" @click="switchView('orders'); showUserMenu = false">
+                            <i class="fas fa-clipboard-list"></i> My Orders
+                        </button>
+                        <button class="sidebar-nav-item" style="margin:0;border-radius:0;color:var(--color-accent-500);" @click="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== Page Content ===== -->
+        <div class="page-content">
+
+            <!-- Loading state -->
+            <template x-if="!ready">
+                <div class="empty-state">
+                    <div class="spinner" style="margin: 0 auto var(--space-4);"></div>
+                    <p>Loading...</p>
+                </div>
+            </template>
+
+            <!-- =============== DASHBOARD VIEW =============== -->
+            <template x-if="ready && activeView === 'dashboard'">
+                <div>
+                    <!-- Welcome -->
+                    <div class="mb-6">
+                        <h1 style="font-size: var(--text-2xl);">Welcome back<span x-show="getUserDisplayName()" x-text="', ' + getUserDisplayName()"></span></h1>
+                        <p style="color: var(--text-secondary); margin-top: var(--space-1);" x-text="isAdmin ? 'Here\'s your admin overview' : 'Ready to place an order?'"></p>
+                    </div>
+
+                    <!-- ===== Alert Banners ===== -->
+                    <template x-if="visibleAlerts().length > 0">
+                        <div class="dash-alerts mb-6">
+                            <template x-for="(alert, idx) in visibleAlerts()" :key="idx">
+                                <div class="dash-alert" :class="'dash-alert-' + alert.type">
+                                    <i :class="alert.icon" class="dash-alert-icon"></i>
+                                    <div class="dash-alert-body">
+                                        <div class="dash-alert-title" x-text="alert.title"></div>
+                                        <div class="dash-alert-message" x-text="alert.message"></div>
+                                    </div>
+                                    <button class="dash-alert-dismiss" @click="dismissAlert(idx)" title="Dismiss">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ===== Stats Row ===== -->
+                    <div class="stats-grid mb-6">
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-shopping-cart"></i></div>
+                            <div>
+                                <div class="stat-value" x-text="cartCount">0</div>
+                                <div class="stat-label">Items in Cart</div>
+                            </div>
+                        </div>
+                        <div class="stat-card" @click="switchView('orders')" style="cursor:pointer;">
+                            <div class="stat-icon success"><i class="fas fa-clipboard-check"></i></div>
+                            <div>
+                                <div class="stat-value" x-text="dashboardOrderCounts.total_active || orderCount">0</div>
+                                <div class="stat-label">Active Orders</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon info"><i class="fas fa-box-open"></i></div>
+                            <div>
+                                <div class="stat-value" x-text="(totalProductCount || browseTotal || products.length).toLocaleString()">0</div>
+                                <div class="stat-label">Products Available</div>
+                            </div>
+                        </div>
+                        <template x-if="isAdmin && dashboardApproverInfo">
+                            <div class="stat-card" @click="switchView('approvals')" style="cursor:pointer;">
+                                <div class="stat-icon warning"><i class="fas fa-hourglass-half"></i></div>
+                                <div>
+                                    <div class="stat-value" x-text="dashboardPendingApprovals.count">0</div>
+                                    <div class="stat-label">Pending Approvals</div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- ===== Budget, Approvals & Orders Row ===== -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-5);" class="mb-6">
+                        <!-- Budget Summary -->
+                        <template x-if="dashboardBudget && dashboardBudget.budget > 0">
+                            <div class="card" style="padding: var(--space-5);">
+                                <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
+                                    <h2 style="font-size: var(--text-lg); margin: 0;">My Budget</h2>
+                                    <span class="badge" :class="{
+                                        'badge-success': budgetStatusLabel() === 'Healthy' || budgetStatusLabel() === 'On Track',
+                                        'badge-warning': budgetStatusLabel() === 'Warning',
+                                        'badge-accent': budgetStatusLabel() === 'Critical'
+                                    }" x-text="budgetStatusLabel()"></span>
+                                </div>
+                                <!-- Progress bar -->
+                                <div class="dash-budget-bar-track">
+                                    <div class="dash-budget-bar-fill" :style="'width:' + Math.min(dashboardBudget.percent, 100) + '%; background:' + budgetBarColor()"></div>
+                                </div>
+                                <div class="flex justify-between" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2);">
+                                    <span x-text="'$' + dashboardBudget.spent.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}) + ' spent'"></span>
+                                    <span x-text="dashboardBudget.percent + '% used'"></span>
+                                </div>
+                                <!-- Budget numbers -->
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-4);">
+                                    <div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted);">Budget</div>
+                                        <div style="font-weight: var(--font-bold); font-size: var(--text-base);" x-text="'$' + dashboardBudget.budget.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted);">Spent</div>
+                                        <div style="font-weight: var(--font-bold); font-size: var(--text-base);" x-text="'$' + dashboardBudget.spent.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted);">Remaining</div>
+                                        <div style="font-weight: var(--font-bold); font-size: var(--text-base); color: var(--color-success-600);" x-text="'$' + dashboardBudget.remaining.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Pending Approvals / Approver Info -->
+                        <template x-if="isAdmin && dashboardApproverInfo">
+                            <div class="card" style="padding: var(--space-5);">
+                                <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
+                                    <h2 style="font-size: var(--text-lg); margin: 0;">Approval Queue</h2>
+                                    <button class="btn btn-ghost btn-sm" @click="switchView('approvals')">View All</button>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); text-align: center;">
+                                    <div class="dash-approval-stat">
+                                        <div class="dash-approval-stat-value" x-text="dashboardPendingApprovals.count">0</div>
+                                        <div class="dash-approval-stat-label">Pending</div>
+                                    </div>
+                                    <div class="dash-approval-stat">
+                                        <div class="dash-approval-stat-value" style="color: var(--color-accent-500);" x-text="dashboardPendingApprovals.urgent">0</div>
+                                        <div class="dash-approval-stat-label">Urgent</div>
+                                    </div>
+                                    <div class="dash-approval-stat">
+                                        <div class="dash-approval-stat-value" x-text="dashboardPendingApprovals.oldest_days > 0 ? dashboardPendingApprovals.oldest_days + 'd' : '-'">-</div>
+                                        <div class="dash-approval-stat-label">Oldest</div>
+                                    </div>
+                                </div>
+                                <template x-if="dashboardPendingApprovals.urgent > 0">
+                                    <div style="margin-top: var(--space-4); padding: var(--space-3); background: var(--color-accent-50); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--color-accent-700);">
+                                        <i class="fas fa-exclamation-triangle" style="margin-right: var(--space-2);"></i>
+                                        <span x-text="dashboardPendingApprovals.urgent + ' requisition' + (dashboardPendingApprovals.urgent !== 1 ? 's' : '') + ' waiting ' + dashboardPendingApprovals.oldest_days + '+ days'"></span>
+                                    </div>
+                                </template>
+                                <div style="margin-top: var(--space-4); font-size: var(--text-xs); color: var(--text-muted);">
+                                    <i class="fas fa-shield-alt" style="margin-right: var(--space-1);"></i>
+                                    Approval Level <span x-text="dashboardApproverInfo.level"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- My Orders card (always visible) -->
+                        <div class="card" style="padding: var(--space-5);">
+                            <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
+                                <h2 style="font-size: var(--text-lg); margin: 0;">My Orders</h2>
+                                <button class="btn btn-ghost btn-sm" @click="switchView('orders')">View All</button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3);">
+                                <div class="dash-order-stat">
+                                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold);" x-text="dashboardOrderCounts.draft || 0"></div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Drafts</div>
+                                </div>
+                                <div class="dash-order-stat">
+                                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold);" x-text="dashboardOrderCounts.submitted || 0"></div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Submitted</div>
+                                </div>
+                                <div class="dash-order-stat">
+                                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold);" x-text="dashboardOrderCounts.pending_approval || 0"></div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Pending</div>
+                                </div>
+                                <div class="dash-order-stat">
+                                    <div style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--color-success-600);" x-text="dashboardOrderCounts.approved || 0"></div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Approved</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Department Budget Card ===== -->
+                    <template x-if="dashboardDeptBudget">
+                        <div class="card mb-6" style="padding: var(--space-5);">
+                            <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
+                                <h2 style="font-size: var(--text-lg); margin: 0;">
+                                    <i class="fas fa-building" style="margin-right: var(--space-2); color: var(--text-muted);"></i>
+                                    <span x-text="dashboardDeptBudget.name + ' Department Budget'"></span>
+                                </h2>
+                                <span class="badge" :class="{
+                                    'badge-success': deptBudgetStatusLabel() === 'Healthy' || deptBudgetStatusLabel() === 'On Track',
+                                    'badge-warning': deptBudgetStatusLabel() === 'Warning',
+                                    'badge-accent': deptBudgetStatusLabel() === 'Critical'
+                                }" x-text="deptBudgetStatusLabel()"></span>
+                            </div>
+                            <!-- Progress bar -->
+                            <div class="dash-budget-bar-track">
+                                <div class="dash-budget-bar-fill" :style="'width:' + Math.min(dashboardDeptBudget.percent, 100) + '%; background:' + deptBudgetBarColor()"></div>
+                            </div>
+                            <div class="flex justify-between" style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2);">
+                                <span x-text="'$' + dashboardDeptBudget.spent.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}) + ' spent'"></span>
+                                <span x-text="dashboardDeptBudget.percent + '% used'"></span>
+                            </div>
+                            <!-- Budget numbers -->
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-4);">
+                                <div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Department Budget</div>
+                                    <div style="font-weight: var(--font-bold); font-size: var(--text-base);" x-text="'$' + dashboardDeptBudget.budget.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Dept. Spent</div>
+                                    <div style="font-weight: var(--font-bold); font-size: var(--text-base);" x-text="'$' + dashboardDeptBudget.spent.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                </div>
+                                <div>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted);">Dept. Remaining</div>
+                                    <div style="font-weight: var(--font-bold); font-size: var(--text-base); color: var(--color-success-600);" x-text="'$' + dashboardDeptBudget.remaining.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0})"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+
+                    <!-- ===== Recent Activity ===== -->
+                    <template x-if="dashboardRecentActivity.length > 0">
+                        <div class="card mb-6" style="padding: var(--space-5);">
+                            <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
+                                <h2 style="font-size: var(--text-lg); margin: 0;">
+                                    <i class="fas fa-history" style="margin-right: var(--space-2); color: var(--text-muted);"></i>
+                                    Recent Activity
+                                </h2>
+                                <button class="btn btn-ghost btn-sm" @click="switchView('orders')">View All</button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                <template x-for="(act, ai) in dashboardRecentActivity" :key="ai">
+                                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-subtle); border-radius: var(--radius-md);">
+                                        <i :class="activityStatusIcon(act.status)" :style="'color:' + activityStatusColor(act.status) + ';font-size:var(--text-lg);flex-shrink:0;width:20px;text-align:center;'"></i>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-weight: var(--font-medium); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="act.name"></div>
+                                            <div style="font-size: var(--text-xs); color: var(--text-muted);">
+                                                <span x-text="act.status"></span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; flex-shrink: 0;" x-text="act.time_label"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ===== Quick Actions ===== -->
+                    <div class="mb-6">
+                        <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">Quick Actions</h2>
+                        <div class="flex gap-3" style="flex-wrap: wrap;">
+                            <button class="btn btn-primary" @click="switchView('browse')">
+                                <i class="fas fa-store"></i> Browse Products
+                            </button>
+                            <button class="btn btn-ghost" @click="switchView('orders')">
+                                <i class="fas fa-clipboard-list"></i> View Orders
+                            </button>
+                            <button class="btn btn-ghost" @click="switchView('templates')">
+                                <i class="fas fa-copy"></i> Template Orders
+                            </button>
+                            <template x-if="savedLists.length > 0">
+                                <button class="btn btn-ghost" @click="switchView('savedLists')">
+                                    <i class="fas fa-bookmark"></i> Saved Lists
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Recently Viewed -->
+                    <template x-if="recentlyViewed.length > 0">
+                        <div class="mb-6">
+                            <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">Recently Viewed</h2>
+                            <div class="recently-viewed">
+                                <template x-for="item in recentlyViewed" :key="item.ItemNumber || item.item_number">
+                                    <a :href="getProductUrl(item)" class="recently-viewed-item" style="cursor:pointer; text-decoration:none; color:inherit;">
+                                        <div style="font-size: 1.5rem; color: var(--color-neutral-300); margin-bottom: var(--space-2);">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div style="font-size: var(--text-xs); font-weight: var(--font-medium);" class="truncate" x-text="(item.name || item.description || item.Description || 'Product').substring(0, 30)"></div>
+                                        <div style="font-size: var(--text-xs); color: var(--color-primary-500); font-weight: var(--font-bold);" x-text="formatPrice(item.Price || item.price || item.UnitPrice)"></div>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Featured Products -->
+                    <template x-if="products.length > 0">
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 style="font-size: var(--text-lg);">Featured Products</h2>
+                                <button class="btn btn-ghost btn-sm" @click="switchView('browse')">Browse All <i class="fas fa-arrow-right" style="margin-left:4px;font-size:var(--text-xs);"></i></button>
+                            </div>
+                            <div class="products-grid">
+                                <template x-for="product in products.slice(0, 5)" :key="product.ItemNumber || product.item_number || product.id">
+                                    <div class="product-card">
+                                        <div class="product-card-image" style="cursor:pointer;" @click="openProductModal(product)">
+                                            <i class="fas" :class="getCategoryIcon(product)" :style="'font-size: 2.5rem; color: ' + getCategoryColor(product)"></i>
+                                            <div class="product-card-actions" @click.stop>
+                                                <button class="btn btn-ghost btn-icon btn-sm" @click="openProductModal(product)" title="Quick View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="product-card-body">
+                                            <div class="product-card-vendor" x-text="product.VendorName || ''"></div>
+                                            <div class="product-card-name" style="cursor:pointer;" @click="openProductModal(product)" x-text="product.Description || product.description || product.name || 'Product'"></div>
+                                            <div class="product-card-meta" x-text="'#' + (product.ItemNumber || product.item_number || '')"></div>
+                                        </div>
+                                        <div class="product-card-footer">
+                                            <div class="product-card-price" x-text="formatPrice(product.Price || product.price || product.UnitPrice)"></div>
+                                            <button class="btn btn-primary btn-sm" @click="addToCart(product)">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- =============== BROWSE PRODUCTS VIEW =============== -->
+            <template x-if="ready && activeView === 'browse'">
+                <div>
+                    <!-- Browse Header -->
+                    <div class="flex justify-between items-center mb-4" style="flex-wrap: wrap; gap: var(--space-3);">
+                        <div>
+                            <h1 style="font-size: var(--text-2xl);">Browse Products</h1>
+                            <p style="color: var(--text-secondary); font-size: var(--text-sm);" x-text="browseTotal + ' products available'"></p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <!-- View toggle -->
+                            <div class="view-toggle">
+                                <button class="view-toggle-btn" :class="{ active: browseViewMode === 'grid' }" @click="browseViewMode = 'grid'" title="Grid View">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                                <button class="view-toggle-btn" :class="{ active: browseViewMode === 'list' }" @click="browseViewMode = 'list'" title="List View">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                            <!-- Sort -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseSortBy" @change="fetchBrowseProducts()">
+                                <option value="name">Name A-Z</option>
+                                <option value="name_desc">Name Z-A</option>
+                                <option value="price_asc">Price Low-High</option>
+                                <option value="price_desc">Price High-Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Search + Filter Bar -->
+                    <div class="card mb-4" style="padding: var(--space-3) var(--space-4);">
+                        <div class="flex gap-3" style="flex-wrap: wrap; align-items: center;">
+                            <!-- Search -->
+                            <div class="input-icon-wrapper" style="flex: 1; min-width: 200px; position: relative;" @click.outside="showBrowseAutocomplete = false">
+                                <i class="fas fa-search input-icon"></i>
+                                <input type="text" class="input" placeholder="Search products..."
+                                       x-model="browseQuery"
+                                       @input="browseAutocomplete()"
+                                       @keydown.enter="browseSearchSubmit()"
+                                       @keydown.escape="showBrowseAutocomplete = false"
+                                       role="combobox"
+                                       aria-autocomplete="list"
+                                       aria-controls="browse-autocomplete-list"
+                                       :aria-expanded="showBrowseAutocomplete">
+                                <!-- Autocomplete -->
+                                <div id="browse-autocomplete-list" role="listbox" class="autocomplete-dropdown"
+                                     x-show="showBrowseAutocomplete" x-cloak>
+                                    <!-- Loading state -->
+                                    <template x-if="browseAutocompleteLoading && browseAutocompleteSuggestions.length === 0">
+                                        <div style="padding: var(--space-3) var(--space-4); display:flex; align-items:center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-sm);">
+                                            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>
+                                            <span>Searching...</span>
+                                        </div>
+                                    </template>
+                                    <!-- Results -->
+                                    <template x-for="(s, i) in browseAutocompleteSuggestions" :key="i">
+                                        <div role="option" class="autocomplete-item" style="cursor:pointer;"
+                                             @click="selectBrowseAutocomplete(s)">
+                                            <i class="fas fa-box" style="color:var(--text-muted);font-size:var(--text-xs); flex-shrink:0;"></i>
+                                            <div style="flex:1; min-width:0;">
+                                                <div style="font-weight:var(--font-medium);" x-text="s.Description || s.name || ''"></div>
+                                                <div style="font-size:var(--text-xs);color:var(--text-muted);" x-text="s.VendorName || ''"></div>
+                                            </div>
+                                            <div style="font-size:var(--text-xs); font-weight:var(--font-bold); color:var(--color-primary-500); flex-shrink:0; white-space:nowrap;"
+                                                 x-text="s.Price ? formatPrice(s.Price) : ''"></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Contract/Bid dropdown -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseBidId" @change="browseApplyFilters()">
+                                <option value="">All Contracts</option>
+                                <template x-for="bid in availableBids" :key="bid.bid_id">
+                                    <option :value="bid.bid_id" x-text="bid.bid_name + ' (' + bid.product_count + ')'"></option>
+                                </template>
+                            </select>
+
+                            <!-- Category dropdown -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseCategory" @change="browseApplyFilters()">
+                                <option value="">All Categories</option>
+                                <template x-for="cat in categories" :key="cat.id || cat.name">
+                                    <option :value="cat.name" x-text="cat.name + (cat.product_count ? ' (' + cat.product_count + ')' : '')"></option>
+                                </template>
+                            </select>
+
+                            <!-- Vendor dropdown (filtered by category if selected) -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseVendor" @change="browseApplyFilters()">
+                                <option value="">All Vendors</option>
+                                <template x-for="v in filteredVendorList" :key="v.id || v.name">
+                                    <option :value="v.name" x-text="v.name + (v.product_count ? ' (' + v.product_count + ')' : '')"></option>
+                                </template>
+                            </select>
+
+                            <!-- Price range -->
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="input" style="width: 80px;" placeholder="Min $" x-model="browseMinPrice" @change="browseApplyFilters()">
+                                <span style="color: var(--text-muted);">-</span>
+                                <input type="number" class="input" style="width: 80px;" placeholder="Max $" x-model="browseMaxPrice" @change="browseApplyFilters()">
+                            </div>
+                        </div>
+
+                        <!-- Active filters -->
+                        <template x-if="browseActiveFilters.length > 0">
+                            <div class="flex gap-2 mt-2" style="flex-wrap: wrap; align-items: center;">
+                                <template x-for="f in browseActiveFilters" :key="f.key">
+                                    <div class="filter-tag" @click="browseRemoveFilter(f.key)">
+                                        <span x-text="f.label"></span>
+                                        <i class="fas fa-times remove"></i>
+                                    </div>
+                                </template>
+                                <button class="btn btn-ghost btn-sm" @click="browseClearFilters()" style="font-size: var(--text-xs);">Clear All</button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Loading -->
+                    <template x-if="browseLoading">
+                        <div class="products-grid">
+                            <template x-for="i in 6" :key="i">
+                                <div class="product-card">
+                                    <div class="skeleton" style="height: 180px;"></div>
+                                    <div style="padding: var(--space-4);">
+                                        <div class="skeleton" style="height: 12px; width: 60%; margin-bottom: var(--space-2);"></div>
+                                        <div class="skeleton" style="height: 14px; width: 90%; margin-bottom: var(--space-2);"></div>
+                                        <div class="skeleton" style="height: 12px; width: 40%;"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Products Grid View -->
+                    <template x-if="!browseLoading && browseViewMode === 'grid'">
+                        <div>
+                            <div class="products-grid" x-show="browseProducts.length > 0">
+                                <template x-for="product in browseProducts" :key="product.ItemNumber || product.item_number || product.id">
+                                    <div class="product-card">
+                                        <div class="product-card-image" style="cursor:pointer;" @click="openProductModal(product)">
+                                            <i class="fas" :class="getCategoryIcon(product)" :style="'font-size: 2.5rem; color: ' + getCategoryColor(product)"></i>
+                                            <div class="product-card-actions" @click.stop>
+                                                <button class="btn btn-ghost btn-icon btn-sm" @click="openProductModal(product)" title="Quick View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="product-card-body">
+                                            <div class="product-card-vendor" x-text="product.VendorName || ''"></div>
+                                            <div class="product-card-name" style="cursor:pointer;" @click="openProductModal(product)" x-text="product.Description || product.description || product.name || 'Product'"></div>
+                                            <div class="product-card-meta">
+                                                <span x-text="'#' + (product.ItemNumber || product.item_number || '')"></span>
+                                                <template x-if="product.ManufacturerName || product.manufacturer">
+                                                    <span> &middot; <span x-text="product.ManufacturerName || product.manufacturer"></span></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="product-card-footer">
+                                            <div class="product-card-price" x-text="formatPrice(product.Price || product.price || product.UnitPrice)"></div>
+                                            <button class="btn btn-primary btn-sm" @click="addToCart(product)">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div x-show="browseProducts.length === 0" class="empty-state">
+                                <div class="empty-state-icon"><i class="fas fa-search"></i></div>
+                                <div class="empty-state-title">No products found</div>
+                                <p>Try adjusting your filters or search terms</p>
+                                <button class="btn btn-primary mt-4" @click="browseClearFilters()">Clear Filters</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Products List View -->
+                    <template x-if="!browseLoading && browseViewMode === 'list'">
+                        <div>
+                            <div class="products-list" x-show="browseProducts.length > 0">
+                                <template x-for="product in browseProducts" :key="product.ItemNumber || product.item_number || product.id">
+                                    <div class="product-list-item">
+                                        <div class="product-image" style="cursor:pointer; display:flex; align-items:center; justify-content:center;" @click="openProductModal(product)">
+                                            <i class="fas" :class="getCategoryIcon(product)" :style="'font-size: 1.5rem; color: ' + getCategoryColor(product)"></i>
+                                        </div>
+                                        <div class="product-info">
+                                            <div style="font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;" x-text="product.VendorName || ''"></div>
+                                            <div style="font-weight: var(--font-semibold); cursor:pointer;" @click="openProductModal(product)" x-text="product.Description || product.description || product.name"></div>
+                                            <div style="font-size: var(--text-xs); color: var(--text-secondary);">
+                                                <span x-text="'#' + (product.ItemNumber || product.item_number || '')"></span>
+                                                <template x-if="product.ManufacturerName || product.manufacturer">
+                                                    <span> &middot; <span x-text="product.ManufacturerName || product.manufacturer"></span></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <div class="product-actions">
+                                            <div style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--color-primary-500);" x-text="formatPrice(product.Price || product.price || product.UnitPrice)"></div>
+                                            <button class="btn btn-primary btn-sm" @click="addToCart(product)">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Pagination -->
+                    <template x-if="!browseLoading && browseTotalPages > 1">
+                        <div class="pagination mt-6">
+                            <button class="pagination-btn" :disabled="browsePage <= 1" @click="browseGoToPage(browsePage - 1)">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <template x-for="(page, idx) in browsePageNumbers" :key="'p'+page">
+                                <div style="display:contents;">
+                                    <template x-if="idx > 0 && page - browsePageNumbers[idx-1] > 1">
+                                        <span class="pagination-ellipsis">&hellip;</span>
+                                    </template>
+                                    <button class="pagination-btn" :class="{ active: page === browsePage }" @click="browseGoToPage(page)" x-text="page"></button>
+                                </div>
+                            </template>
+                            <button class="pagination-btn" :disabled="browsePage >= browseTotalPages" @click="browseGoToPage(browsePage + 1)">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Load More button -->
+                    <template x-if="!browseLoading && browsePage < browseTotalPages">
+                        <div style="text-align:center;margin-top:var(--space-4);">
+                            <button class="btn btn-ghost" @click="browseLoadMore()" :disabled="browseLoadingMore"
+                                    style="min-width:200px;">
+                                <template x-if="browseLoadingMore">
+                                    <span><i class="fas fa-spinner fa-spin" style="margin-right:var(--space-2);"></i> Loading...</span>
+                                </template>
+                                <template x-if="!browseLoadingMore">
+                                    <span><i class="fas fa-plus" style="margin-right:var(--space-2);"></i> Load More Products</span>
+                                </template>
+                            </button>
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2);"
+                                 x-text="'Showing ' + browseProducts.length + ' of ' + Number(browseTotal || 0).toLocaleString() + ' products'"></div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- =============== ORDERS VIEW (consolidated active + pending) =============== -->
+            <template x-if="ready && activeView === 'orders'">
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+                        <h1 style="font-size: var(--text-2xl); margin:0;">My Orders</h1>
+                        <button class="btn btn-ghost btn-sm" @click="fetchOrders()" :disabled="ordersLoading">
+                            <i class="fas" :class="ordersLoading ? 'fa-spinner fa-spin' : 'fa-sync-alt'" style="margin-right:var(--space-2);"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="tabs mb-4" role="tablist">
+                        <button class="tab" role="tab" :aria-selected="ordersTab === 'all'" :class="{ active: ordersTab === 'all' }" @click="ordersTab = 'all'">
+                            All Orders
+                            <span x-show="orders.length > 0" class="badge badge-neutral" style="margin-left:var(--space-1);font-size:var(--text-xs);" x-text="orders.length"></span>
+                        </button>
+                        <button class="tab" role="tab" :aria-selected="ordersTab === 'active'" :class="{ active: ordersTab === 'active' }" @click="ordersTab = 'active'">Active</button>
+                        <button class="tab" role="tab" :aria-selected="ordersTab === 'pending'" :class="{ active: ordersTab === 'pending' }" @click="ordersTab = 'pending'">Pending</button>
+                        <button class="tab" role="tab" :aria-selected="ordersTab === 'completed'" :class="{ active: ordersTab === 'completed' }" @click="ordersTab = 'completed'">Completed</button>
+                    </div>
+
+                    <!-- Loading state -->
+                    <template x-if="ordersLoading && orders.length === 0">
+                        <div class="card" style="padding:var(--space-8);text-align:center;">
+                            <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--eds-primary);margin-bottom:var(--space-4);"></i>
+                            <p style="color:var(--text-muted);">Loading orders...</p>
+                        </div>
+                    </template>
+
+                    <!-- Empty state -->
+                    <template x-if="!ordersLoading && orders.length === 0">
+                        <div class="card" style="padding:var(--space-8);text-align:center;">
+                            <div style="font-size:3rem;color:var(--text-muted);margin-bottom:var(--space-4);"><i class="fas fa-inbox"></i></div>
+                            <h3 style="margin-bottom:var(--space-2);color:var(--text-primary);">No Orders Yet</h3>
+                            <p style="color:var(--text-muted);margin-bottom:var(--space-4);">Orders you submit will appear here. Browse products to get started.</p>
+                            <button class="btn btn-primary" @click="switchView('browse')">
+                                <i class="fas fa-shopping-bag" style="margin-right:var(--space-2);"></i> Browse Products
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Orders table -->
+                    <template x-if="!ordersLoading && orders.length > 0">
+                        <div class="card">
+                            <template x-if="filteredOrders.length === 0">
+                                <div style="padding:var(--space-6);text-align:center;color:var(--text-muted);">
+                                    No orders match this filter. Try a different tab.
+                                </div>
+                            </template>
+                            <template x-if="filteredOrders.length > 0">
+                                <div class="data-table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Requisition #</th>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="order in filteredOrders" :key="order.requisition_id">
+                                            <tr style="cursor:pointer;" @click="openOrderDetail(order)">
+                                                <td style="font-weight: var(--font-semibold);" x-text="order.requisition_number || ('#' + order.requisition_id)"></td>
+                                                <td x-text="order.created_at ? new Date(order.created_at).toLocaleDateString() : '-'"></td>
+                                                <td x-text="order.item_count || '-'"></td>
+                                                <td style="font-weight: var(--font-semibold);" x-text="formatPrice(order.total_amount || 0)"></td>
+                                                <td>
+                                                    <span class="badge"
+                                                          :class="{
+                                                              'badge-success': order.status === 'Approved' || order.status === 'Fulfilled',
+                                                              'badge-warning': order.status === 'Submitted' || order.status === 'Pending Approval',
+                                                              'badge-info': order.status === 'Draft',
+                                                              'badge-accent': order.status === 'Rejected' || order.status === 'Cancelled',
+                                                              'badge-neutral': !order.status
+                                                          }"
+                                                          x-text="order.status || 'Unknown'">
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- =============== TEMPLATE ORDERS VIEW =============== -->
+            <template x-if="ready && activeView === 'templates'">
+                <div>
+                    <div class="flex justify-between items-center mb-2" style="flex-wrap:wrap; gap:var(--space-3);">
+                        <h1 style="font-size: var(--text-2xl);">Template Orders</h1>
+                        <button class="btn btn-secondary btn-sm" @click="showSaveTemplateDialog = true" :disabled="cart.length === 0"
+                                :title="cart.length === 0 ? 'Add items to cart first' : 'Save your current cart as a reusable template'">
+                            <i class="fas fa-save" style="margin-right:var(--space-1);"></i> Save Cart as Template
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">Pre-built order templates for common supply needs. Select a template to quickly add items to your cart.</p>
+
+                    <!-- Template category tabs -->
+                    <div class="flex gap-2 mb-4" style="flex-wrap:wrap;">
+                        <button class="btn btn-sm" :class="templateTab === 'all' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'all'">All Templates</button>
+                        <button class="btn btn-sm" :class="templateTab === 'classroom' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'classroom'">
+                            <i class="fas fa-chalkboard" style="margin-right:var(--space-1);"></i> Classroom
+                        </button>
+                        <button class="btn btn-sm" :class="templateTab === 'office' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'office'">
+                            <i class="fas fa-building" style="margin-right:var(--space-1);"></i> Office
+                        </button>
+                        <button class="btn btn-sm" :class="templateTab === 'art' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'art'">
+                            <i class="fas fa-palette" style="margin-right:var(--space-1);"></i> Art & Music
+                        </button>
+                        <button class="btn btn-sm" :class="templateTab === 'sports' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'sports'">
+                            <i class="fas fa-futbol" style="margin-right:var(--space-1);"></i> Athletics
+                        </button>
+                        <button class="btn btn-sm" :class="templateTab === 'tech' ? 'btn-primary' : 'btn-ghost'" @click="templateTab = 'tech'">
+                            <i class="fas fa-laptop" style="margin-right:var(--space-1);"></i> Technology
+                        </button>
+                    </div>
+
+                    <!-- Loading state -->
+                    <template x-if="templatesLoading && templates.length === 0">
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-4);">
+                            <template x-for="i in 4" :key="'tpl-skel-'+i">
+                                <div class="card" style="padding:var(--space-5);">
+                                    <div class="skeleton" style="width:44px; height:44px; border-radius:var(--radius-lg); margin-bottom:var(--space-3);"></div>
+                                    <div class="skeleton" style="height:16px; width:70%; margin-bottom:var(--space-2);"></div>
+                                    <div class="skeleton" style="height:12px; width:100%; margin-bottom:var(--space-1);"></div>
+                                    <div class="skeleton" style="height:12px; width:60%;"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Template cards grid -->
+                    <template x-if="!templatesLoading || templates.length > 0">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-4);">
+                        <template x-for="tpl in filteredTemplates" :key="tpl.id">
+                            <div class="card card-interactive" style="padding:var(--space-5); display:flex; flex-direction:column; gap:var(--space-3);">
+                                <!-- Header -->
+                                <div class="flex items-center gap-3">
+                                    <div :style="'width:44px; height:44px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:#fff; background:' + tpl.color">
+                                        <i :class="tpl.icon"></i>
+                                    </div>
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="font-weight:var(--font-semibold); font-size:var(--text-base);" x-text="tpl.name"></div>
+                                        <div class="flex gap-1 items-center">
+                                            <span class="badge badge-neutral" style="font-size:var(--text-2xs);" x-text="tpl.category"></span>
+                                            <template x-if="!tpl.is_default">
+                                                <span class="badge badge-info" style="font-size:var(--text-2xs);">Custom</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <!-- Delete button for user templates -->
+                                    <template x-if="!tpl.is_default">
+                                        <button class="btn btn-ghost btn-icon btn-sm" @click.stop="
+                                            fetch('/api/templates/' + tpl.id + '?session_id=' + encodeURIComponent(sessionId || ''), {method:'DELETE'})
+                                                .then(() => { templates = templates.filter(t => t.id !== tpl.id); showToast('Template deleted', 'fas fa-trash'); });
+                                        " title="Delete template">
+                                            <i class="fas fa-trash" style="font-size:var(--text-xs); color:var(--color-danger-500);"></i>
+                                        </button>
+                                    </template>
+                                </div>
+                                <!-- Description -->
+                                <p style="font-size:var(--text-sm); color:var(--text-secondary); line-height:1.5; flex:1;" x-text="tpl.description"></p>
+                                <!-- Items preview -->
+                                <div style="font-size:var(--text-xs); color:var(--text-muted); border-top:1px solid var(--border-light); padding-top:var(--space-2);">
+                                    <span x-text="tpl.items.length + ' items'"></span> &middot;
+                                    <span x-text="'~' + formatPrice(tpl.items.reduce((s,i) => s + i.price * i.qty, 0))"></span> est. total
+                                </div>
+                                <!-- Expand/collapse items with qty controls -->
+                                <template x-if="expandedTemplate === tpl.id">
+                                    <div style="border-top:1px solid var(--border-light); padding-top:var(--space-2);">
+                                        <template x-for="item in tpl.items" :key="item.item_id || item.name">
+                                            <div class="flex items-center gap-2" style="padding:var(--space-1) 0; font-size:var(--text-xs);">
+                                                <div style="flex:1; min-width:0;">
+                                                    <div style="color:var(--text-primary); font-weight:var(--font-medium);" x-text="item.name" class="truncate"></div>
+                                                    <div style="color:var(--text-muted);" x-text="item.vendor + (item.item_code ? ' · ' + item.item_code : '')"></div>
+                                                </div>
+                                                <!-- Qty controls -->
+                                                <div class="flex items-center gap-1">
+                                                    <button class="btn btn-ghost btn-sm" style="width:22px; height:22px; padding:0; min-width:0; font-size:10px;"
+                                                            @click.stop="item.qty = Math.max(1, item.qty - 1)">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span style="min-width:20px; text-align:center; font-weight:var(--font-semibold);" x-text="item.qty"></span>
+                                                    <button class="btn btn-ghost btn-sm" style="width:22px; height:22px; padding:0; min-width:0; font-size:10px;"
+                                                            @click.stop="item.qty++">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                                <span style="white-space:nowrap; color:var(--text-secondary); min-width:50px; text-align:right;" x-text="formatPrice(item.price)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <!-- Actions -->
+                                <div class="flex gap-2">
+                                    <button class="btn btn-primary btn-sm" style="flex:1;" @click.stop="addTemplateToCart(tpl)">
+                                        <i class="fas fa-cart-plus" style="margin-right:var(--space-1);"></i> Add All to Cart
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" @click.stop="expandedTemplate = expandedTemplate === tpl.id ? null : tpl.id"
+                                            :title="expandedTemplate === tpl.id ? 'Hide items' : 'Preview items'">
+                                        <i :class="expandedTemplate === tpl.id ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    </template>
+
+                    <!-- Empty state for filtered -->
+                    <template x-if="!templatesLoading && filteredTemplates.length === 0">
+                        <div class="empty-state" style="padding:var(--space-8);">
+                            <div class="empty-state-icon"><i class="fas fa-filter"></i></div>
+                            <div class="empty-state-title">No Templates in This Category</div>
+                            <p>Try selecting a different category above.</p>
+                            <button class="btn btn-primary mt-4" @click="templateTab = 'all'">View All Templates</button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- =============== SAVED LISTS VIEW =============== -->
+            <template x-if="ready && activeView === 'savedLists'">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 style="font-size: var(--text-2xl);">Saved Lists</h1>
+                    </div>
+
+                    <template x-if="savedLists.length === 0">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-bookmark"></i></div>
+                            <div class="empty-state-title">No saved lists yet</div>
+                            <p>Save product lists while browsing to quickly reorder them later.</p>
+                            <button class="btn btn-primary mt-4" @click="switchView('browse')">Browse Products</button>
+                        </div>
+                    </template>
+
+                    <div class="flex flex-col gap-3">
+                        <template x-for="list in savedLists" :key="list.name">
+                            <div class="card" style="padding: var(--space-4);">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div style="font-weight: var(--font-semibold); font-size: var(--text-base);" x-text="list.name"></div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="list.count + ' items &middot; Saved ' + list.savedAt"></div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn btn-primary btn-sm" @click="addListToCart(list)">
+                                            <i class="fas fa-cart-plus"></i> Add to Cart
+                                        </button>
+                                        <button class="btn btn-ghost btn-sm" @click="deleteSavedList(list.name)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- =============== APPROVALS VIEW (admin) =============== -->
+            <template x-if="ready && activeView === 'approvals' && isAdmin">
+                <div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-4);">
+                        <h1 style="font-size: var(--text-2xl);">Pending Approvals</h1>
+                        <button class="btn btn-ghost btn-sm" @click="fetchPendingApprovals()" :disabled="approvalsLoading">
+                            <i class="fas fa-sync-alt" :class="{ 'fa-spin': approvalsLoading }"></i> Refresh
+                        </button>
+                    </div>
+
+                    <!-- Error state -->
+                    <template x-if="approvalsError">
+                        <div class="card" style="padding: var(--space-4); border-left: 3px solid var(--color-accent-500); margin-bottom: var(--space-4);">
+                            <div style="display:flex; align-items:center; gap: var(--space-2); color: var(--color-accent-600);">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span x-text="approvalsError"></span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Loading state -->
+                    <template x-if="approvalsLoading && approvalReqs.length === 0">
+                        <div style="text-align:center; padding: var(--space-8); color: var(--text-muted);">
+                            <i class="fas fa-spinner fa-spin" style="font-size: var(--text-2xl); margin-bottom: var(--space-3);"></i>
+                            <p>Loading pending approvals...</p>
+                        </div>
+                    </template>
+
+                    <!-- Empty state -->
+                    <template x-if="!approvalsLoading && !approvalsError && approvalReqs.length === 0">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="empty-state-title">All caught up!</div>
+                            <p>No requisitions need your approval right now.</p>
+                        </div>
+                    </template>
+
+                    <!-- Approvals list -->
+                    <template x-if="approvalReqs.length > 0">
+                        <div>
+                            <div style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-3);">
+                                Showing <span x-text="approvalReqs.length"></span> of <span x-text="approvalsTotal"></span> pending requisitions
+                            </div>
+
+                            <div style="display:flex; flex-direction:column; gap: var(--space-3);">
+                                <template x-for="req in approvalReqs" :key="req.requisition_id">
+                                    <div class="card" style="padding: var(--space-4);">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: var(--space-4); flex-wrap:wrap;">
+                                            <!-- Left: req info -->
+                                            <div style="flex:1; min-width:200px;">
+                                                <div style="display:flex; align-items:center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                                                    <span style="font-weight: var(--font-bold); font-size: var(--text-md);" x-text="req.requisition_number || ('REQ-' + req.requisition_id)"></span>
+                                                    <span class="badge" :class="req.status === 'Submitted' ? 'badge-primary' : 'badge-warning'" x-text="req.status"></span>
+                                                </div>
+                                                <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                                                    Submitted by <strong x-text="req.submitted_by || 'Unknown'"></strong>
+                                                    <span style="color: var(--text-muted);" x-text="' \u2022 ' + approvalTimeAgo(req.created_at)"></span>
+                                                </div>
+                                                <div style="display:flex; gap: var(--space-4); font-size: var(--text-sm); color: var(--text-muted);">
+                                                    <span><i class="fas fa-box" style="margin-right:4px;"></i> <span x-text="(req.item_count || 0) + ' items'"></span></span>
+                                                    <span style="font-weight: var(--font-semibold); color: var(--color-primary-500);" x-text="formatPrice(req.total_amount)"></span>
+                                                </div>
+                                                <template x-if="req.notes_preview">
+                                                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2); font-style:italic;" x-text="req.notes_preview"></div>
+                                                </template>
+                                            </div>
+
+                                            <!-- Right: action buttons -->
+                                            <div style="display:flex; gap: var(--space-2); align-items:center; flex-shrink:0;">
+                                                <button class="btn btn-ghost btn-sm" @click="openApprovalDetail(req)">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                                <button class="btn btn-primary btn-sm" @click="promptApprove(req)">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                                <button class="btn btn-sm" style="background: var(--color-accent-500); color: white; border-color: var(--color-accent-500);" @click="promptReject(req)">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ===== Approval Detail Modal ===== -->
+                    <template x-if="showApprovalDetail && selectedApproval">
+                        <div class="overlay active" style="z-index:50;" @click.self="closeApprovalDetail()">
+                            <div class="card" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:700px; max-height:80vh; overflow-y:auto; z-index:51; padding: var(--space-5);" @click.stop>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-4);">
+                                    <h2 style="font-size: var(--text-xl);">
+                                        <span x-text="selectedApproval.requisition_number || ('REQ-' + selectedApproval.requisition_id)"></span>
+                                    </h2>
+                                    <button class="btn btn-ghost btn-icon btn-sm" @click="closeApprovalDetail()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4); font-size: var(--text-sm);">
+                                    <div><span style="color: var(--text-muted);">Status:</span> <span class="badge badge-warning" x-text="selectedApproval.status"></span></div>
+                                    <div><span style="color: var(--text-muted);">Submitted by:</span> <strong x-text="selectedApproval.submitted_by || 'Unknown'"></strong></div>
+                                    <div><span style="color: var(--text-muted);">Items:</span> <span x-text="selectedApproval.item_count || 0"></span></div>
+                                    <div><span style="color: var(--text-muted);">Total:</span> <strong style="color: var(--color-primary-500);" x-text="formatPrice(selectedApproval.total_amount)"></strong></div>
+                                </div>
+
+                                <!-- Line items -->
+                                <h3 style="font-size: var(--text-md); font-weight: var(--font-semibold); margin-bottom: var(--space-2);">Line Items</h3>
+                                <template x-if="approvalDetailLoading">
+                                    <div style="text-align:center; padding: var(--space-4); color: var(--text-muted);">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading items...
+                                    </div>
+                                </template>
+                                <template x-if="!approvalDetailLoading && approvalDetailItems.length > 0">
+                                    <div style="border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow:hidden; margin-bottom: var(--space-4);">
+                                        <table style="width:100%; font-size: var(--text-sm); border-collapse: collapse;">
+                                            <thead>
+                                                <tr style="background: var(--bg-subtle); text-align:left;">
+                                                    <th style="padding: var(--space-2) var(--space-3);">Item</th>
+                                                    <th style="padding: var(--space-2) var(--space-3); text-align:center;">Qty</th>
+                                                    <th style="padding: var(--space-2) var(--space-3); text-align:right;">Price</th>
+                                                    <th style="padding: var(--space-2) var(--space-3); text-align:right;">Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="item in approvalDetailItems" :key="item.item_number || item.id">
+                                                    <tr style="border-top: 1px solid var(--border-light);">
+                                                        <td style="padding: var(--space-2) var(--space-3);">
+                                                            <div style="font-weight: var(--font-medium);" x-text="item.description || item.item_number || 'Item'"></div>
+                                                            <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.item_number || ''"></div>
+                                                        </td>
+                                                        <td style="padding: var(--space-2) var(--space-3); text-align:center;" x-text="item.quantity || 1"></td>
+                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right;" x-text="formatPrice(item.price || item.unit_price || 0)"></td>
+                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right; font-weight: var(--font-semibold);" x-text="formatPrice((item.price || item.unit_price || 0) * (item.quantity || 1))"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+
+                                <!-- Action buttons -->
+                                <div style="display:flex; gap: var(--space-3); justify-content:flex-end; padding-top: var(--space-3); border-top: 1px solid var(--border-light);">
+                                    <button class="btn btn-ghost" @click="closeApprovalDetail()">Close</button>
+                                    <button class="btn" style="background: var(--color-accent-500); color: white; border-color: var(--color-accent-500);" @click="promptReject(selectedApproval)">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                    <button class="btn btn-primary" @click="promptApprove(selectedApproval)">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ===== Approve Confirmation Dialog ===== -->
+                    <template x-if="showApproveDialog && approveTarget">
+                        <div class="overlay active" style="z-index:60;" @click.self="cancelApprove()">
+                            <div class="card" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:450px; z-index:61; padding: var(--space-5);" @click.stop>
+                                <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">
+                                    <i class="fas fa-check-circle" style="color: var(--color-success-500);"></i> Approve Requisition
+                                </h3>
+                                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                                    Approve <strong x-text="approveTarget.requisition_number || ('REQ-' + approveTarget.requisition_id)"></strong>
+                                    for <strong x-text="formatPrice(approveTarget.total_amount)"></strong>?
+                                </p>
+                                <div style="margin-bottom: var(--space-4);">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); display:block; margin-bottom: var(--space-1);">Comments (optional)</label>
+                                    <textarea class="input" rows="3" x-model="approveComments" placeholder="Add optional comments..." style="resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:flex; gap: var(--space-2); justify-content:flex-end;">
+                                    <button class="btn btn-ghost" @click="cancelApprove()">Cancel</button>
+                                    <button class="btn btn-primary" @click="confirmApprove()" :disabled="approveSubmitting">
+                                        <template x-if="approveSubmitting"><i class="fas fa-spinner fa-spin"></i></template>
+                                        <template x-if="!approveSubmitting"><i class="fas fa-check"></i></template>
+                                        Approve
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ===== Reject Dialog ===== -->
+                    <template x-if="showRejectDialog && rejectTarget">
+                        <div class="overlay active" style="z-index:60;" @click.self="cancelReject()">
+                            <div class="card" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:450px; z-index:61; padding: var(--space-5);" @click.stop>
+                                <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">
+                                    <i class="fas fa-times-circle" style="color: var(--color-accent-500);"></i> Reject Requisition
+                                </h3>
+                                <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-3);">
+                                    Reject <strong x-text="rejectTarget.requisition_number || ('REQ-' + rejectTarget.requisition_id)"></strong>?
+                                    The submitter will be notified.
+                                </p>
+                                <div style="margin-bottom: var(--space-4);">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); display:block; margin-bottom: var(--space-1);">
+                                        Reason <span style="color: var(--color-accent-500);">*</span>
+                                    </label>
+                                    <textarea class="input" rows="3" x-model="rejectReason" placeholder="Explain why this requisition is being rejected (min 10 characters)..." style="resize:vertical;" required></textarea>
+                                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-1);">
+                                        <span x-text="rejectReason.length"></span>/500 characters
+                                        <span x-show="rejectReason.length > 0 && rejectReason.length < 10" style="color: var(--color-accent-500);"> (minimum 10)</span>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap: var(--space-2); justify-content:flex-end;">
+                                    <button class="btn btn-ghost" @click="cancelReject()">Cancel</button>
+                                    <button class="btn" style="background: var(--color-accent-500); color: white; border-color: var(--color-accent-500);"
+                                            @click="confirmReject()" :disabled="rejectSubmitting || rejectReason.trim().length < 10">
+                                        <template x-if="rejectSubmitting"><i class="fas fa-spinner fa-spin"></i></template>
+                                        <template x-if="!rejectSubmitting"><i class="fas fa-times"></i></template>
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- =============== REPORTS VIEW (admin) =============== -->
+            <template x-if="ready && activeView === 'reports' && canViewReports">
+                <div>
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-6" style="flex-wrap:wrap;gap:var(--space-3);">
+                        <div>
+                            <h1 style="font-size: var(--text-2xl); margin:0;">Reports</h1>
+                            <p style="color: var(--text-secondary); margin-top: var(--space-1); font-size: var(--text-sm);" x-text="reportsPeriodLabel"></p>
+                        </div>
+                        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center;">
+                            <button class="btn btn-sm" :class="reportsPeriod === 'current' ? 'btn-primary' : 'btn-ghost'" @click="setReportsPeriod('current')">Current Year</button>
+                            <button class="btn btn-sm" :class="reportsPeriod === 'previous' ? 'btn-primary' : 'btn-ghost'" @click="setReportsPeriod('previous')">Previous Year</button>
+                            <button class="btn btn-sm" :class="reportsPeriod === 'ytd' ? 'btn-primary' : 'btn-ghost'" @click="setReportsPeriod('ytd')">Year to Date</button>
+                            <button class="btn btn-sm" :class="reportsPeriod === 'custom' ? 'btn-primary' : 'btn-ghost'" @click="showReportsDatePicker = !showReportsDatePicker">
+                                <i class="fas fa-calendar-alt"></i> Custom
+                            </button>
+                            <div style="width:1px;height:20px;background:var(--color-neutral-200);margin:0 var(--space-1);"></div>
+                            <button class="btn btn-sm btn-ghost" @click="reportsExportCSV('all')" :disabled="reportsExporting || reportsLoading" title="Export all reports as CSV">
+                                <i class="fas" :class="reportsExporting ? 'fa-spinner fa-spin' : 'fa-file-csv'"></i> CSV
+                            </button>
+                            <button class="btn btn-sm btn-ghost" @click="reportsExportPDF()" :disabled="reportsExporting || reportsLoading" title="Export formatted PDF report">
+                                <i class="fas" :class="reportsExporting ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom date picker -->
+                    <template x-if="showReportsDatePicker">
+                        <div class="card mb-4" style="padding:var(--space-4);display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                            <label style="font-size:var(--text-sm);font-weight:var(--font-semibold);color:var(--text-secondary);">From</label>
+                            <input type="date" class="input" style="width:auto;font-size:var(--text-sm);" x-model="reportsCustomStart">
+                            <label style="font-size:var(--text-sm);font-weight:var(--font-semibold);color:var(--text-secondary);">To</label>
+                            <input type="date" class="input" style="width:auto;font-size:var(--text-sm);" x-model="reportsCustomEnd">
+                            <button class="btn btn-sm btn-primary" @click="applyCustomDateRange()" :disabled="!reportsCustomStart || !reportsCustomEnd">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                            <button class="btn btn-sm btn-ghost" @click="showReportsDatePicker = false">Cancel</button>
+                        </div>
+                    </template>
+
+                    <!-- Loading state -->
+                    <template x-if="reportsLoading">
+                        <div class="empty-state" style="padding:var(--space-12) 0;">
+                            <div class="empty-state-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                            <div class="empty-state-title">Loading reports...</div>
+                        </div>
+                    </template>
+
+                    <template x-if="!reportsLoading && reportsSummary">
+                        <div>
+                            <!-- ===== Summary Stats Row ===== -->
+                            <div class="stats-grid mb-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon primary"><i class="fas fa-dollar-sign"></i></div>
+                                    <div>
+                                        <div class="stat-value" x-text="reportsFmtCurrency(reportsSummary.total_spend)"></div>
+                                        <div class="stat-label">Total Spend</div>
+                                        <template x-if="reportsSummary.vs_last_period">
+                                            <div style="font-size:var(--text-2xs);margin-top:2px;" :style="reportsSummary.vs_last_period > 0 ? 'color:var(--color-accent-500)' : 'color:var(--color-success-600)'">
+                                                <i class="fas" :class="reportsSummary.vs_last_period > 0 ? 'fa-arrow-up' : 'fa-arrow-down'"></i>
+                                                <span x-text="Math.abs(reportsSummary.vs_last_period) + '% vs last period'"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon success"><i class="fas fa-file-invoice"></i></div>
+                                    <div>
+                                        <div class="stat-value" x-text="reportsFmtNumber(reportsSummary.total_orders)"></div>
+                                        <div class="stat-label">Total Orders</div>
+                                        <template x-if="reportsSummary.orders_vs_last">
+                                            <div style="font-size:var(--text-2xs);margin-top:2px;color:var(--text-muted);">
+                                                <i class="fas fa-arrow-up"></i>
+                                                <span x-text="reportsSummary.orders_vs_last + '% vs last period'"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon info"><i class="fas fa-calculator"></i></div>
+                                    <div>
+                                        <div class="stat-value" x-text="reportsFmtCurrency(reportsSummary.avg_order_value)"></div>
+                                        <div class="stat-label">Avg Order Value</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon warning"><i class="fas fa-boxes"></i></div>
+                                    <div>
+                                        <div class="stat-value" x-text="reportsFmtNumber(reportsSummary.total_items)"></div>
+                                        <div class="stat-label">Items Ordered</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ===== Tab Navigation ===== -->
+                            <div class="rpt-tabs mb-6">
+                                <button class="rpt-tab" :class="{ active: reportsTab === 'overview' }" @click="reportsTab = 'overview'">
+                                    <i class="fas fa-chart-line"></i> Overview
+                                </button>
+                                <button class="rpt-tab" :class="{ active: reportsTab === 'vendors' }" @click="reportsTab = 'vendors'">
+                                    <i class="fas fa-store"></i> By Vendor
+                                </button>
+                                <button class="rpt-tab" :class="{ active: reportsTab === 'categories' }" @click="reportsTab = 'categories'">
+                                    <i class="fas fa-tags"></i> By Category
+                                </button>
+                                <button class="rpt-tab" :class="{ active: reportsTab === 'orders' }" @click="reportsTab = 'orders'">
+                                    <i class="fas fa-clipboard-list"></i> Orders
+                                </button>
+                            </div>
+
+                            <!-- ======== OVERVIEW TAB ======== -->
+                            <template x-if="reportsTab === 'overview'">
+                                <div>
+                                    <!-- Monthly Trend + Budget -->
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);" class="mb-6 rpt-responsive-grid">
+                                        <!-- Monthly Spend Trend -->
+                                        <div class="card" style="padding:var(--space-5);">
+                                            <h3 style="font-size:var(--text-lg);margin:0 0 var(--space-4) 0;">Monthly Spending</h3>
+                                            <div class="rpt-bar-chart">
+                                                <template x-for="m in reportsMonthlyTrend" :key="m.month">
+                                                    <div class="rpt-bar-col">
+                                                        <div class="rpt-bar-tooltip" x-text="reportsFmtCurrency(m.amount)"></div>
+                                                        <div class="rpt-bar" :style="'height:' + reportsTrendHeight(m.amount) + ';background:' + reportsTrendColor(m.amount)"></div>
+                                                        <div class="rpt-bar-label" x-text="m.month"></div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <!-- Budget Overview -->
+                                        <div class="card" style="padding:var(--space-5);">
+                                            <h3 style="font-size:var(--text-lg);margin:0 0 var(--space-4) 0;">Budget Overview</h3>
+                                            <div style="text-align:center;margin-bottom:var(--space-4);">
+                                                <div class="rpt-budget-ring" :style="'--pct:' + reportsSummary.budget_percent">
+                                                    <div class="rpt-budget-ring-inner">
+                                                        <div style="font-size:var(--text-2xl);font-weight:var(--font-bold);" x-text="reportsSummary.budget_percent + '%'"></div>
+                                                        <div style="font-size:var(--text-xs);color:var(--text-muted);">Used</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);text-align:center;">
+                                                <div>
+                                                    <div style="font-size:var(--text-xs);color:var(--text-muted);">Budget</div>
+                                                    <div style="font-weight:var(--font-bold);" x-text="reportsFmtCurrency(reportsSummary.budget_total)"></div>
+                                                </div>
+                                                <div>
+                                                    <div style="font-size:var(--text-xs);color:var(--text-muted);">Spent</div>
+                                                    <div style="font-weight:var(--font-bold);" x-text="reportsFmtCurrency(reportsSummary.budget_spent)"></div>
+                                                </div>
+                                                <div>
+                                                    <div style="font-size:var(--text-xs);color:var(--text-muted);">Remaining</div>
+                                                    <div style="font-weight:var(--font-bold);color:var(--color-success-600);" x-text="reportsFmtCurrency(reportsSummary.budget_remaining)"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Top Vendors + Top Categories side by side -->
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);" class="mb-6 rpt-responsive-grid">
+                                        <!-- Top 5 Vendors -->
+                                        <div class="card" style="padding:var(--space-5);">
+                                            <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                                <h3 style="font-size:var(--text-lg);margin:0;">Top Vendors</h3>
+                                                <button class="btn btn-ghost btn-sm" @click="reportsTab = 'vendors'">View All</button>
+                                            </div>
+                                            <template x-for="(v, i) in reportsVendorSpend.slice(0, 5)" :key="v.code">
+                                                <div class="rpt-hbar-row">
+                                                    <div class="rpt-hbar-label">
+                                                        <span class="rpt-rank" x-text="i + 1"></span>
+                                                        <span x-text="v.name" class="truncate"></span>
+                                                    </div>
+                                                    <div class="rpt-hbar-track">
+                                                        <div class="rpt-hbar-fill" :style="'width:' + reportsBarWidth(v.spend, reportsVendorSpend[0].spend)"></div>
+                                                    </div>
+                                                    <div class="rpt-hbar-value" x-text="reportsFmtCurrency(v.spend)"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Top Categories -->
+                                        <div class="card" style="padding:var(--space-5);">
+                                            <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                                <h3 style="font-size:var(--text-lg);margin:0;">Spending by Category</h3>
+                                                <button class="btn btn-ghost btn-sm" @click="reportsTab = 'categories'">View All</button>
+                                            </div>
+                                            <template x-for="c in reportsCategorySpend.slice(0, 5)" :key="c.name">
+                                                <div class="rpt-hbar-row">
+                                                    <div class="rpt-hbar-label">
+                                                        <i class="fas" :class="c.icon" :style="'color:' + c.color + ';width:16px;text-align:center;'"></i>
+                                                        <span x-text="c.name" class="truncate"></span>
+                                                    </div>
+                                                    <div class="rpt-hbar-track">
+                                                        <div class="rpt-hbar-fill" :style="'width:' + reportsBarWidth(c.spend, reportsCategorySpend[0].spend) + ';background:' + c.color"></div>
+                                                    </div>
+                                                    <div class="rpt-hbar-value" x-text="reportsFmtCurrency(c.spend)"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <!-- Department Budget Health -->
+                                    <div class="card mb-6" style="padding:var(--space-5);">
+                                        <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                            <h3 style="font-size:var(--text-lg);margin:0;">Department Budget Health</h3>
+                                            <button class="btn btn-ghost btn-sm" @click="reportsExportCSV('schools')" :disabled="reportsExporting"><i class="fas fa-download"></i> Export</button>
+                                        </div>
+                                        <div class="rpt-dept-grid">
+                                            <template x-for="dept in reportsBudgetDepts" :key="dept.name">
+                                                <div class="rpt-dept-card">
+                                                    <div class="flex justify-between items-center" style="margin-bottom:var(--space-2);">
+                                                        <div style="font-weight:var(--font-semibold);font-size:var(--text-sm);" x-text="dept.name"></div>
+                                                        <span class="badge" :class="{
+                                                            'badge-success': dept.pct < 75,
+                                                            'badge-warning': dept.pct >= 75 && dept.pct < 90,
+                                                            'badge-accent': dept.pct >= 90
+                                                        }" x-text="reportsBudgetStatus(dept.pct)" style="font-size:var(--text-2xs);"></span>
+                                                    </div>
+                                                    <div class="dash-budget-bar-track" style="height:6px;">
+                                                        <div class="dash-budget-bar-fill" :style="'width:' + Math.min(dept.pct, 100) + '%;background:' + reportsBudgetColor(dept.pct)"></div>
+                                                    </div>
+                                                    <div class="flex justify-between" style="font-size:var(--text-2xs);color:var(--text-muted);margin-top:var(--space-1);">
+                                                        <span x-text="reportsFmtCurrency(dept.spent) + ' of ' + reportsFmtCurrency(dept.budget)"></span>
+                                                        <span x-text="dept.pct + '%'"></span>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- ======== VENDORS TAB ======== -->
+                            <template x-if="reportsTab === 'vendors'">
+                                <div class="card" style="padding:var(--space-5);">
+                                    <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                        <h3 style="font-size:var(--text-lg);margin:0;">Vendor Spending Breakdown</h3>
+                                        <button class="btn btn-ghost btn-sm" @click="reportsExportCSV('vendors')" :disabled="reportsExporting"><i class="fas fa-download"></i> Export</button>
+                                    </div>
+                                    <div style="overflow-x:auto;">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:40px;">#</th>
+                                                    <th>Vendor</th>
+                                                    <th>Code</th>
+                                                    <th style="text-align:right;">Orders</th>
+                                                    <th style="text-align:right;">Spend</th>
+                                                    <th style="width:200px;">Share</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="(v, i) in reportsVendorSpend" :key="v.code">
+                                                    <tr style="cursor:pointer;" @click="reportsDrillVendor(v)" title="Click to see line-item detail">
+                                                        <td style="color:var(--text-muted);font-weight:var(--font-semibold);" x-text="i + 1"></td>
+                                                        <td style="font-weight:var(--font-semibold);color:var(--color-primary-500);" x-text="v.name"></td>
+                                                        <td><span class="badge badge-neutral" x-text="v.code"></span></td>
+                                                        <td style="text-align:right;" x-text="reportsFmtNumber(v.orders)"></td>
+                                                        <td style="text-align:right;font-weight:var(--font-semibold);" x-text="reportsFmtCurrency(v.spend)"></td>
+                                                        <td>
+                                                            <div style="display:flex;align-items:center;gap:var(--space-2);">
+                                                                <div class="rpt-hbar-track" style="flex:1;">
+                                                                    <div class="rpt-hbar-fill" :style="'width:' + reportsBarWidth(v.spend, reportsVendorSpend[0].spend)"></div>
+                                                                </div>
+                                                                <span style="font-size:var(--text-xs);color:var(--text-muted);width:40px;text-align:right;" x-text="v.pct + '%'"></span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- ======== CATEGORIES TAB ======== -->
+                            <template x-if="reportsTab === 'categories'">
+                                <div>
+                                    <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                        <h3 style="font-size:var(--text-lg);margin:0;">Category Spending Breakdown</h3>
+                                        <button class="btn btn-ghost btn-sm" @click="reportsExportCSV('categories')" :disabled="reportsExporting"><i class="fas fa-download"></i> Export</button>
+                                    </div>
+                                    <div class="rpt-cat-grid mb-6">
+                                        <template x-for="c in reportsCategorySpend" :key="c.name">
+                                            <div class="card" style="padding:var(--space-5);cursor:pointer;transition:box-shadow 0.15s;" @click="reportsDrillCategory(c)" title="Click for detail">
+                                                <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">
+                                                    <div style="width:40px;height:40px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;" :style="'background:' + c.color + '15;'">
+                                                        <i class="fas" :class="c.icon" :style="'color:' + c.color"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div style="font-weight:var(--font-semibold);color:var(--color-primary-500);" x-text="c.name"></div>
+                                                        <div style="font-size:var(--text-xs);color:var(--text-muted);" x-text="c.pct + '% of total spend'"></div>
+                                                    </div>
+                                                </div>
+                                                <div style="font-size:var(--text-2xl);font-weight:var(--font-bold);margin-bottom:var(--space-3);" x-text="reportsFmtCurrency(c.spend)"></div>
+                                                <div class="rpt-hbar-track" style="height:8px;">
+                                                    <div class="rpt-hbar-fill" :style="'width:' + c.pct + '%;background:' + c.color"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- ======== ORDERS TAB ======== -->
+                            <template x-if="reportsTab === 'orders'">
+                                <div class="card" style="padding:var(--space-5);">
+                                    <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                        <h3 style="font-size:var(--text-lg);margin:0;">Recent Orders</h3>
+                                        <div style="display:flex;gap:var(--space-3);align-items:center;">
+                                            <span style="font-size:var(--text-sm);color:var(--text-muted);" x-text="reportsRecentOrders.length + ' orders'"></span>
+                                            <button class="btn btn-ghost btn-sm" @click="reportsExportCSV('orders')" :disabled="reportsExporting"><i class="fas fa-download"></i> Export</button>
+                                        </div>
+                                    </div>
+                                    <div style="overflow-x:auto;">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order #</th>
+                                                    <th>Date</th>
+                                                    <th>Requester</th>
+                                                    <th>Department</th>
+                                                    <th style="text-align:right;">Items</th>
+                                                    <th style="text-align:right;">Amount</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="o in reportsRecentOrders" :key="o.id">
+                                                    <tr>
+                                                        <td style="font-weight:var(--font-semibold);" x-text="o.id"></td>
+                                                        <td x-text="o.date"></td>
+                                                        <td x-text="o.requester"></td>
+                                                        <td><span class="badge badge-neutral" x-text="o.dept"></span></td>
+                                                        <td style="text-align:right;" x-text="o.items"></td>
+                                                        <td style="text-align:right;font-weight:var(--font-semibold);" x-text="reportsFmtCurrency(o.amount)"></td>
+                                                        <td><span class="badge" :class="reportsStatusClass(o.status)" x-text="o.status"></span></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
+
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+        </div><!-- end page-content -->
+
+        <!-- ===== Drill-down Modal ===== -->
+        <template x-if="showReportsDrilldown">
+            <div @keydown.escape.window="closeDrilldown()">
+                <div class="overlay active" @click="closeDrilldown()"></div>
+                <div role="dialog" aria-modal="true" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:var(--z-modal);background:var(--bg-card);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-xl);width:min(900px,90vw);max-height:80vh;overflow:auto;">
+                    <!-- Loading -->
+                    <template x-if="reportsDrilldownLoading">
+                        <div style="text-align:center;padding:var(--space-8);">
+                            <div class="spinner"></div>
+                            <p style="color:var(--text-muted);margin-top:var(--space-3);">Loading details...</p>
+                        </div>
+                    </template>
+                    <!-- Vendor drill-down -->
+                    <template x-if="!reportsDrilldownLoading && reportsDrilldown && reportsDrilldown._type === 'vendor'">
+                        <div>
+                            <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                <div>
+                                    <h3 style="font-size:var(--text-lg);margin:0;" x-text="reportsDrilldown.vendor.name"></h3>
+                                    <p style="font-size:var(--text-sm);color:var(--text-muted);margin-top:2px;">
+                                        Code: <span class="badge badge-neutral" x-text="reportsDrilldown.vendor.code"></span>
+                                        &bull; <span x-text="reportsDrilldown.total_items + ' line items'"></span>
+                                    </p>
+                                </div>
+                                <button class="btn btn-ghost btn-icon btn-sm" @click="closeDrilldown()"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>SKU</th>
+                                            <th>School</th>
+                                            <th style="text-align:right;">Qty</th>
+                                            <th style="text-align:right;">Unit Price</th>
+                                            <th style="text-align:right;">Total</th>
+                                            <th>Req #</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="item in reportsDrilldown.items" :key="item.sku + item.req_number">
+                                            <tr>
+                                                <td style="max-width:200px;" class="truncate" x-text="item.item_name"></td>
+                                                <td style="font-size:var(--text-xs);color:var(--text-muted);" x-text="item.sku"></td>
+                                                <td style="font-size:var(--text-sm);" x-text="item.school"></td>
+                                                <td style="text-align:right;" x-text="item.qty"></td>
+                                                <td style="text-align:right;" x-text="reportsFmtCurrency(item.unit_price)"></td>
+                                                <td style="text-align:right;font-weight:var(--font-semibold);" x-text="reportsFmtCurrency(item.line_total)"></td>
+                                                <td style="font-size:var(--text-xs);" x-text="item.req_number"></td>
+                                                <td style="font-size:var(--text-xs);color:var(--text-muted);" x-text="item.date"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Category drill-down -->
+                    <template x-if="!reportsDrilldownLoading && reportsDrilldown && reportsDrilldown._type === 'category'">
+                        <div>
+                            <div class="flex justify-between items-center" style="margin-bottom:var(--space-4);">
+                                <div>
+                                    <h3 style="font-size:var(--text-lg);margin:0;" x-text="reportsDrilldown.category"></h3>
+                                    <p style="font-size:var(--text-sm);color:var(--text-muted);margin-top:2px;" x-text="reportsDrilldown.total_items + ' requisitions'"></p>
+                                </div>
+                                <button class="btn btn-ghost btn-icon btn-sm" @click="closeDrilldown()"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Req #</th>
+                                            <th>Date</th>
+                                            <th>Requester</th>
+                                            <th>School</th>
+                                            <th style="text-align:right;">Items</th>
+                                            <th style="text-align:right;">Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="item in reportsDrilldown.items" :key="item.req_number">
+                                            <tr>
+                                                <td style="font-weight:var(--font-semibold);" x-text="item.req_number"></td>
+                                                <td x-text="item.date"></td>
+                                                <td x-text="item.requester"></td>
+                                                <td style="font-size:var(--text-sm);" x-text="item.school"></td>
+                                                <td style="text-align:right;" x-text="item.item_count"></td>
+                                                <td style="text-align:right;font-weight:var(--font-semibold);" x-text="reportsFmtCurrency(item.amount)"></td>
+                                                <td><span class="badge" :class="reportsStatusClass(item.status)" x-text="item.status"></span></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div><!-- end main-content -->
+</div><!-- end app-layout -->
+
+<!-- ===== Cart Drawer ===== -->
+<div class="overlay" :class="{ active: cartOpen }" @click="cartOpen = false"></div>
+<div class="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart" :class="{ open: cartOpen }" x-trap.noscroll="cartOpen" @keydown.escape.window="cartOpen = false">
+    <div class="cart-drawer-header">
+        <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold);">
+            Cart <span style="color: var(--text-muted); font-weight: var(--font-normal);" x-text="'(' + cartCount + ')'"></span>
+        </h3>
+        <button class="btn btn-ghost btn-icon btn-sm" @click="cartOpen = false">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="cart-drawer-body">
+        <template x-if="cart.length === 0">
+            <div class="empty-state" style="padding: var(--space-8) 0;">
+                <div class="empty-state-icon"><i class="fas fa-shopping-cart"></i></div>
+                <div class="empty-state-title">Cart is empty</div>
+                <p>Add products to get started</p>
+            </div>
+        </template>
+        <template x-for="(item, idx) in cart" :key="item.ItemNumber || item.item_number || idx">
+            <div class="cart-item">
+                <div class="cart-item-image">
+                    <i class="fas fa-box" style="color: var(--color-neutral-300);"></i>
+                </div>
+                <div class="cart-item-info">
+                    <div style="font-size: var(--text-sm); font-weight: var(--font-semibold);" class="truncate" x-text="item.Description || item.description || item.name || 'Item'"></div>
+                    <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.VendorName || item.vendor_name || ''"></div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <button class="btn btn-ghost btn-icon btn-sm" style="width:24px;height:24px;font-size:var(--text-xs);" @click="updateCartQty(idx, -1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span style="font-size: var(--text-sm); font-weight: var(--font-semibold); min-width: 20px; text-align: center;" x-text="item.quantity || 1"></span>
+                        <button class="btn btn-ghost btn-icon btn-sm" style="width:24px;height:24px;font-size:var(--text-xs);" @click="updateCartQty(idx, 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-icon btn-sm" style="width:24px;height:24px;font-size:var(--text-xs);color:var(--color-danger-500);margin-left:auto;" @click="removeFromCart(idx)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style="font-weight: var(--font-bold); color: var(--color-primary-500); white-space: nowrap;" x-text="formatPrice((item.Price || item.price || item.UnitPrice || 0) * (item.quantity || 1))"></div>
+            </div>
+        </template>
+    </div>
+    <div class="cart-drawer-footer" x-show="cart.length > 0">
+        <div class="flex justify-between items-center mb-4">
+            <span style="font-weight: var(--font-semibold);">Subtotal</span>
+            <span style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--color-primary-500);" x-text="formatPrice(cartTotal)"></span>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-ghost w-full" @click="showSaveListFromCart()">
+                <i class="fas fa-bookmark"></i> Save List
+            </button>
+            <a href="checkout.html" class="btn btn-primary w-full" style="text-decoration:none;">
+                <i class="fas fa-arrow-right"></i> Checkout
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Toast Notifications (stacking) ===== -->
+<div style="position:fixed; top:1.25rem; right:1.25rem; z-index:10000; display:flex; flex-direction:column; gap:0.5rem; pointer-events:none;">
+    <template x-for="toast in toasts" :key="toast.id">
+        <div x-show="toast.visible"
+             x-transition:enter.duration.300ms
+             x-transition:leave.duration.200ms
+             style="display:flex; align-items:center; gap:0.625rem; padding:0.875rem 1.25rem; background:#fff; border-radius:0.75rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); border-left: 4px solid var(--eds-primary); min-width:280px; max-width:420px; font-size:0.9rem; pointer-events:auto;">
+            <i :class="toast.icon || 'fas fa-check-circle'" :style="'color:' + (toast.color || 'var(--color-success-500)') + '; font-size:1.1rem;'"></i>
+            <span x-text="toast.message" style="flex:1; color:var(--color-gray-800);"></span>
+            <button @click="dismissToast(toast.id)" style="background:none; border:none; cursor:pointer; opacity:0.4; padding:0 0.25rem; font-size:0.85rem; color:var(--color-gray-600);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </template>
+</div>
+
+<!-- ===== Save List Dialog ===== -->
+<template x-if="showSaveListDialog">
+    <div @keydown.escape.window="showSaveListDialog = false">
+        <div class="overlay active" @click="showSaveListDialog = false"></div>
+        <div role="dialog" aria-modal="true" aria-labelledby="savelist-dialog-title" x-trap="showSaveListDialog" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:var(--z-modal);background:var(--bg-card);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-xl);min-width:360px;">
+            <h3 id="savelist-dialog-title" style="font-size: var(--text-lg); font-weight: var(--font-bold); margin-bottom: var(--space-4);">Save as List</h3>
+            <input type="text" class="input mb-4" placeholder="List name..." x-model="newListName" @keydown.enter="saveCurrentList()">
+            <div class="flex gap-2 justify-between">
+                <button class="btn btn-ghost" @click="showSaveListDialog = false">Cancel</button>
+                <button class="btn btn-primary" @click="saveCurrentList()">Save List</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ===== Save Cart as Template Dialog ===== -->
+<template x-if="showSaveTemplateDialog">
+    <div @keydown.escape.window="showSaveTemplateDialog = false">
+        <div class="overlay active" @click="showSaveTemplateDialog = false"></div>
+        <div role="dialog" aria-modal="true" x-trap="showSaveTemplateDialog" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:var(--z-modal);background:var(--bg-card);border-radius:var(--radius-xl);padding:var(--space-6);box-shadow:var(--shadow-xl);min-width:400px;max-width:480px;">
+            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); margin-bottom: var(--space-4);">Save Cart as Template</h3>
+            <p style="font-size:var(--text-sm); color:var(--text-secondary); margin-bottom:var(--space-4);" x-text="cart.length + ' item(s) will be saved to this template.'"></p>
+            <label style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--text-secondary); display:block; margin-bottom:var(--space-1);">Template Name *</label>
+            <input type="text" class="input mb-4" placeholder="e.g. My Classroom Supplies" x-model="newTemplateName" @keydown.enter="saveCartAsTemplate()">
+            <label style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--text-secondary); display:block; margin-bottom:var(--space-1);">Category</label>
+            <select class="input mb-4" x-model="newTemplateCategory">
+                <option value="Custom">Custom</option>
+                <option value="Classroom">Classroom</option>
+                <option value="Office">Office</option>
+                <option value="Art & Music">Art & Music</option>
+                <option value="Athletics">Athletics</option>
+                <option value="Technology">Technology</option>
+            </select>
+            <label style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--text-secondary); display:block; margin-bottom:var(--space-1);">Description (optional)</label>
+            <input type="text" class="input mb-4" placeholder="Brief description..." x-model="newTemplateDescription">
+            <div class="flex gap-2 justify-between">
+                <button class="btn btn-ghost" @click="showSaveTemplateDialog = false">Cancel</button>
+                <button class="btn btn-primary" @click="saveCartAsTemplate()" :disabled="!newTemplateName.trim()">
+                    <i class="fas fa-save" style="margin-right:var(--space-1);"></i> Save Template
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ===== Product Detail Modal ===== -->
+<template x-if="showProductModal && selectedProduct">
+    <div style="position:fixed;inset:0;z-index:var(--z-overlay);" @keydown.escape.window="showProductModal = false">
+        <div class="overlay active" @click="showProductModal = false"></div>
+        <div role="dialog" aria-modal="true" aria-labelledby="product-modal-title" x-trap="showProductModal" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:var(--z-modal);background:var(--bg-card);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);width:90%;max-width:600px;max-height:85vh;overflow-y:auto;">
+            <!-- Modal header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--border-light);">
+                <h2 id="product-modal-title" style="font-size:var(--text-lg);font-weight:var(--font-bold);margin:0;">Product Details</h2>
+                <button class="btn btn-ghost btn-icon btn-sm" @click="showProductModal = false"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Product hero -->
+            <div style="display:flex;align-items:center;justify-content:center;padding:var(--space-8);background:var(--bg-subtle);">
+                <i class="fas" :class="getCategoryIcon(selectedProduct)" :style="'font-size:4rem;color:' + getCategoryColor(selectedProduct)"></i>
+            </div>
+            <!-- Product info -->
+            <div style="padding:var(--space-6);">
+                <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-1);" x-text="selectedProduct.VendorName || ''"></div>
+                <h3 style="font-size:var(--text-xl);font-weight:var(--font-bold);margin-bottom:var(--space-2);line-height:1.3;" x-text="selectedProduct.Description || selectedProduct.description || selectedProduct.name || 'Product'"></h3>
+                <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--space-4);">
+                    Item # <span x-text="selectedProduct.ItemNumber || selectedProduct.item_number || ''"></span>
+                </div>
+
+                <!-- Details grid -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-6);">
+                    <div class="card" style="padding:var(--space-3);margin:0;">
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Price</div>
+                        <div style="font-size:var(--text-lg);font-weight:var(--font-bold);color:var(--color-primary-500);" x-text="formatPrice(selectedProduct.Price || selectedProduct.price || selectedProduct.UnitPrice)"></div>
+                    </div>
+                    <div class="card" style="padding:var(--space-3);margin:0;">
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Unit</div>
+                        <div style="font-weight:var(--font-semibold);" x-text="selectedProduct.UnitOfMeasure || selectedProduct.unit || 'Each'"></div>
+                    </div>
+                    <template x-if="selectedProduct.ManufacturerName || selectedProduct.manufacturer">
+                        <div class="card" style="padding:var(--space-3);margin:0;">
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Manufacturer</div>
+                            <div style="font-weight:var(--font-semibold);" x-text="selectedProduct.ManufacturerName || selectedProduct.manufacturer"></div>
+                        </div>
+                    </template>
+                    <template x-if="selectedProduct.ManufacturerPartNumber || selectedProduct.mfr_part">
+                        <div class="card" style="padding:var(--space-3);margin:0;">
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Mfr Part #</div>
+                            <div style="font-weight:var(--font-semibold);" x-text="selectedProduct.ManufacturerPartNumber || selectedProduct.mfr_part"></div>
+                        </div>
+                    </template>
+                    <template x-if="selectedProduct.CategoryDescription || selectedProduct.category">
+                        <div class="card" style="padding:var(--space-3);margin:0;">
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Category</div>
+                            <div style="font-weight:var(--font-semibold);" x-text="selectedProduct.CategoryDescription || selectedProduct.category"></div>
+                        </div>
+                    </template>
+                    <template x-if="selectedProduct.PackSize || selectedProduct.pack_size">
+                        <div class="card" style="padding:var(--space-3);margin:0;">
+                            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:2px;">Pack Size</div>
+                            <div style="font-weight:var(--font-semibold);" x-text="selectedProduct.PackSize || selectedProduct.pack_size"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Vendor info -->
+                <template x-if="selectedProduct.VendorName">
+                    <div style="background:var(--bg-subtle);border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-6);">
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-2);">Vendor Information</div>
+                        <div style="font-weight:var(--font-semibold);margin-bottom:var(--space-1);" x-text="selectedProduct.VendorName"></div>
+                        <template x-if="selectedProduct.VendorNumber || selectedProduct.vendor_number">
+                            <div style="font-size:var(--text-sm);color:var(--text-secondary);">Vendor # <span x-text="selectedProduct.VendorNumber || selectedProduct.vendor_number"></span></div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Add to cart -->
+                <div style="display:flex;gap:var(--space-3);">
+                    <button class="btn btn-primary" style="flex:1;" @click="addToCart(selectedProduct); showProductModal = false;">
+                        <i class="fas fa-cart-plus" style="margin-right:var(--space-2);"></i> Add to Cart
+                    </button>
+                    <button class="btn btn-ghost" @click="showProductModal = false">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ===== Order Detail Modal ===== -->
+<template x-if="showOrderDetail && selectedOrder">
+    <div x-trap="showOrderDetail" style="position:fixed;inset:0;z-index:var(--z-overlay);" @keydown.escape.window="showOrderDetail = false">
+        <div class="overlay active" @click="showOrderDetail = false"></div>
+        <div role="dialog" aria-modal="true" aria-labelledby="order-modal-title" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:var(--z-modal);background:var(--bg-card);border-radius:var(--radius-xl);box-shadow:var(--shadow-xl);width:92%;max-width:700px;max-height:85vh;overflow-y:auto;">
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--border-light);">
+                <div>
+                    <h2 id="order-modal-title" style="font-size:var(--text-lg);font-weight:var(--font-bold);margin:0;" x-text="'Order ' + (selectedOrder.requisition_number || '#' + selectedOrder.requisition_id)"></h2>
+                    <span class="badge" style="margin-top:var(--space-1);"
+                          :class="{
+                              'badge-success': selectedOrder.status === 'Approved' || selectedOrder.status === 'Fulfilled',
+                              'badge-warning': selectedOrder.status === 'Submitted' || selectedOrder.status === 'Pending Approval',
+                              'badge-info': selectedOrder.status === 'Draft',
+                              'badge-accent': selectedOrder.status === 'Rejected' || selectedOrder.status === 'Cancelled'
+                          }"
+                          x-text="selectedOrder.status"></span>
+                </div>
+                <button class="btn btn-ghost btn-icon btn-sm" @click="showOrderDetail = false"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Order summary -->
+            <div style="padding:var(--space-4) var(--space-6);background:var(--bg-subtle);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);">
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;">Date</div>
+                    <div style="font-weight:var(--font-semibold);" x-text="selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : '-'"></div>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;">Items</div>
+                    <div style="font-weight:var(--font-semibold);" x-text="selectedOrder.item_count || orderDetailItems.length || '-'"></div>
+                </div>
+                <div>
+                    <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;">Total</div>
+                    <div style="font-weight:var(--font-bold);color:var(--eds-primary);" x-text="formatPrice(selectedOrder.total_amount || 0)"></div>
+                </div>
+            </div>
+            <!-- Notes -->
+            <template x-if="selectedOrder.notes_preview || selectedOrder.notes">
+                <div style="padding:var(--space-3) var(--space-6);border-bottom:1px solid var(--border-light);font-size:var(--text-sm);color:var(--text-secondary);">
+                    <i class="fas fa-sticky-note" style="margin-right:var(--space-2);"></i>
+                    <span x-text="selectedOrder.notes_preview || selectedOrder.notes"></span>
+                </div>
+            </template>
+            <!-- Line items -->
+            <div style="padding:var(--space-4) var(--space-6);">
+                <h3 style="font-size:var(--text-base);font-weight:var(--font-semibold);margin-bottom:var(--space-3);">Line Items</h3>
+                <!-- Loading -->
+                <template x-if="orderDetailLoading">
+                    <div style="text-align:center;padding:var(--space-6);color:var(--text-muted);">
+                        <i class="fas fa-spinner fa-spin"></i> Loading items...
+                    </div>
+                </template>
+                <!-- Empty -->
+                <template x-if="!orderDetailLoading && orderDetailItems.length === 0">
+                    <div style="text-align:center;padding:var(--space-6);color:var(--text-muted);">
+                        No line items found for this order.
+                    </div>
+                </template>
+                <!-- Items table -->
+                <template x-if="!orderDetailLoading && orderDetailItems.length > 0">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" style="font-size:var(--text-sm);">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="text-align:center;">Qty</th>
+                                    <th style="text-align:right;">Unit Price</th>
+                                    <th style="text-align:right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="item in orderDetailItems" :key="item.line_id">
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight:var(--font-semibold);" x-text="item.product_name"></div>
+                                            <div style="font-size:var(--text-xs);color:var(--text-muted);">
+                                                <span x-show="item.vendor" x-text="item.vendor"></span>
+                                                <span x-show="item.vendor && item.sku"> &middot; </span>
+                                                <span x-show="item.sku" x-text="'SKU: ' + item.sku"></span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align:center;" x-text="item.quantity"></td>
+                                        <td style="text-align:right;" x-text="formatPrice(item.unit_price)"></td>
+                                        <td style="text-align:right;font-weight:var(--font-semibold);" x-text="formatPrice(item.extended_price)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top:2px solid var(--border-default);">
+                                    <td colspan="3" style="text-align:right;font-weight:var(--font-bold);">Order Total</td>
+                                    <td style="text-align:right;font-weight:var(--font-bold);color:var(--eds-primary);" x-text="formatPrice(selectedOrder.total_amount || 0)"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </template>
+            </div>
+            <!-- Footer -->
+            <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--border-light);display:flex;justify-content:flex-end;">
+                <button class="btn btn-ghost" @click="showOrderDetail = false">Close</button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ===== Demo Mode Switcher (only visible in demo) ===== -->
+<template x-if="_getSessionId() === 'demo'">
+    <div style="position:fixed;bottom:16px;right:16px;z-index:9999;" x-data="{ demoOpen: false }">
+        <!-- Toggle button -->
+        <button @click="demoOpen = !demoOpen"
+                style="width:44px;height:44px;border-radius:50%;border:2px solid var(--color-primary-300);background:var(--color-primary-500);color:white;cursor:pointer;box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform 0.15s;"
+                :style="demoOpen && 'transform:rotate(45deg)'"
+                title="Switch demo persona">
+            <i class="fas fa-user-cog"></i>
+        </button>
+        <!-- Switcher panel -->
+        <div x-show="demoOpen" x-transition.opacity.duration.150ms
+             @click.outside="demoOpen = false"
+             style="position:absolute;bottom:54px;right:0;background:var(--bg-card);border:1px solid var(--border-default);border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);padding:12px;min-width:220px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px;">Demo Persona</div>
+            <button @click="$dispatch('demo-switch', 'approver'); demoOpen = false"
+                    class="demo-persona-btn"
+                    :class="{ 'demo-persona-active': isAdmin }"
+                    style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:1px solid var(--border-light);border-radius:var(--radius-md);background:none;cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:6px;transition:background 0.1s;"
+                    onmouseover="this.style.background='var(--bg-muted)'" onmouseout="this.style.background=this.classList.contains('demo-persona-active')?'var(--color-primary-50)':'none'">
+                <span style="width:28px;height:28px;border-radius:50%;background:var(--color-primary-100);color:var(--color-primary-600);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">
+                    <i class="fas fa-user-shield"></i>
+                </span>
+                <div style="text-align:left;">
+                    <div style="font-weight:600;line-height:1.2;">District Admin</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Approval Level 2</div>
+                </div>
+            </button>
+            <button @click="$dispatch('demo-switch', 'teacher'); demoOpen = false"
+                    class="demo-persona-btn"
+                    :class="{ 'demo-persona-active': !isAdmin }"
+                    style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:1px solid var(--border-light);border-radius:var(--radius-md);background:none;cursor:pointer;font-family:inherit;font-size:13px;transition:background 0.1s;"
+                    onmouseover="this.style.background='var(--bg-muted)'" onmouseout="this.style.background=this.classList.contains('demo-persona-active')?'var(--color-primary-50)':'none'">
+                <span style="width:28px;height:28px;border-radius:50%;background:var(--color-success-100);color:var(--color-success-600);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </span>
+                <div style="text-align:left;">
+                    <div style="font-weight:600;line-height:1.2;">Teacher</div>
+                    <div style="font-size:11px;color:var(--text-muted);">No approval rights</div>
+                </div>
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Mobile nav toggle -->
+<button class="mobile-nav-toggle" @click="mobileMenuOpen = !mobileMenuOpen">
+    <i class="fas" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+</button>
+
+<!-- ===== Application Modules ===== -->
+<script src="js/config.js?v=7"></script>
+<script src="js/api-client.js?v=7"></script>
+<script src="js/product-helpers.js?v=7"></script>
+<script src="js/auth.js?v=7"></script>
+<script src="js/cart.js?v=7"></script>
+<script src="js/browse.js?v=7"></script>
+<script src="js/autocomplete.js?v=7"></script>
+<script src="js/orders.js?v=7"></script>
+<script src="js/saved-lists.js?v=7"></script>
+<script src="js/ui.js?v=7"></script>
+<script src="js/dashboard.js?v=7"></script>
+<script src="js/approvals.js?v=7"></script>
+<script src="js/reports.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
+
+
+</body>
+</html>

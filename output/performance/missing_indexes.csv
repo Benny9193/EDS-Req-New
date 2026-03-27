@@ -1,0 +1,143 @@
+ID,DateIdentified,SQLHash,Executions,WaitTimeMS,EstimatedSaving%,Database,Schema,Table,IndexName,SQLPreview
+37529,2026-01-06 00:00:00,6165020754,1,4,99.992,tempdb,dbo,#BidList, ,SELECT Count(*) FROM [Master Catalog] where  catalogid = 2018258 and UniqueItemNumber != PackedCode
+36461,2025-12-11 00:00:00,6401319922,41,3,99.985,EDS,dbo,Budgets, ,"(@P1 int,@P2 int,@P3 datetime,@P4 datetime,@P5 int)SELECT  A.EMAILBLASTLOGID, A.EMAILBLASTID, A.PRIM"
+37584,2026-01-07 00:00:00,3035590148,3,16,99.985,EDS,dbo,Budgets, ,"SELECT  A.EMAILBLASTLOGID, A.EMAILBLASTID, A.PRIMARYRECIPIENT, A.CONTACTFULLNAME, A.EMAILSENTTO, A.S"
+37585,2026-01-07 00:00:00,4449878463,3,2,99.985,EDS,dbo,Budgets, ,"SELECT  A.EMAILBLASTLOGID, A.EMAILBLASTID, A.PRIMARYRECIPIENT, A.CONTACTFULLNAME, A.EMAILSENTTO, A.S"
+36460,2025-12-11 00:00:00,5779685164,2,15,99.984,EDS,dbo,Budgets, ,"SELECT  A.EMAILBLASTLOGID, A.EMAILBLASTID, A.PRIMARYRECIPIENT, A.CONTACTFULLNAME, A.EMAILSENTTO, A.S"
+36688,2025-12-16 00:00:00,4312295684,1,4,99.883,EDS_TEST,dbo,SKI_AIDate_HashKey,CrossRefs,"WITH x AS (
+  SELECT TOP (20000) SysId, CatalogId, VendorItemCode
+  FROM Catalogs.dbo.uniqueCodes
+)
+"
+37048,2025-12-22 00:00:00,3475408651,52,8,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37084,2025-12-23 00:00:00,3475408651,36,3,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37365,2026-01-04 00:00:00,3475408651,16,1,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37325,2026-01-02 00:00:00,3475408651,11,1,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37108,2025-12-24 00:00:00,3475408651,8,2,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37020,2025-12-21 00:00:00,3475408651,6,5,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37278,2026-01-01 00:00:00,3475408651,5,3,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37347,2026-01-03 00:00:00,3475408651,4,2,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37226,2025-12-30 00:00:00,3475408651,2,1,99.834,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37498,2026-01-06 00:00:00,3475408651,158,11,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37412,2026-01-05 00:00:00,3475408651,157,15,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37689,2026-01-08 00:00:00,3475408651,138,16,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36426,2025-12-11 00:00:00,3475408651,127,17,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37591,2026-01-07 00:00:00,3475408651,119,8,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36611,2025-12-15 00:00:00,3475408651,112,9,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36767,2025-12-17 00:00:00,3475408651,98,7,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36932,2025-12-18 00:00:00,3475408651,86,14,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36674,2025-12-16 00:00:00,3475408651,86,6,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36500,2025-12-12 00:00:00,3475408651,86,11,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36973,2025-12-19 00:00:00,3475408651,63,4,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36563,2025-12-14 00:00:00,3475408651,9,2,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+37001,2025-12-20 00:00:00,3475408651,8,2,99.833,EDS,dbo,PK_BidRequestItemMergeHistory,BidRequestItemMergeActions,"(@P0 nvarchar(4000))declare @userEmail varchar(255) =  @P0 
+declare @code as varchar(8) = left(newid"
+36846,2025-12-17 00:00:00,5347010849,1,26,99.662,tempdb,dbo,PK__#ItemTab__3214EC077C9ED17A,#ItemTable,"WITH s AS (
+  SELECT TOP (50000) AwardId
+  FROM SearchData.dbo.PricingConsolidated
+  WHERE AwardId I"
+36824,2025-12-17 00:00:00,4844081050,1,14,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37011,2025-12-20 00:00:00,4844081050,1,5,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36984,2025-12-19 00:00:00,4844081050,1,5,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36944,2025-12-18 00:00:00,4844081050,1,10,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36573,2025-12-14 00:00:00,4844081050,1,6,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36627,2025-12-15 00:00:00,4844081050,1,8,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36696,2025-12-16 00:00:00,4844081050,1,5,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36520,2025-12-12 00:00:00,4844081050,1,5,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36550,2025-12-13 00:00:00,4844081050,1,5,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+36446,2025-12-11 00:00:00,4844081050,1,9,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37616,2026-01-07 00:00:00,4844081050,1,8,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37519,2026-01-06 00:00:00,4844081050,1,8,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37432,2026-01-05 00:00:00,4844081050,1,7,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37373,2026-01-04 00:00:00,4844081050,1,9,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37236,2025-12-30 00:00:00,4844081050,1,9,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37187,2025-12-28 00:00:00,4844081050,1,10,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37211,2025-12-29 00:00:00,4844081050,1,7,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37355,2026-01-03 00:00:00,4844081050,1,8,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37333,2026-01-02 00:00:00,4844081050,1,9,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37269,2025-12-31 00:00:00,4844081050,1,6,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"
+37287,2026-01-01 00:00:00,4844081050,1,6,99.613,,,,,"CREATE     procedure [dbo].[usp_GetBidItemsNeedingAIUpdate] as
+begin
+/* Table Changes 
+alter tabl"

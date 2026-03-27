@@ -1,0 +1,19 @@
+Connecting...
+Connected.
+
+=== BEFORE: vw_ReqTotalsByVendor for req 60076856 ===
+VendorCode	VendorName	ItemsTotal	VendorTotal	POBelowMinimum	MinimumPOAmount
+2222	Staples Inc	21.8400	21.84	0	10.0000
+3877	United Sales USA Corp.	2.7200	2.72	0	10.0000
+3877	United Sales USA Corp.	237.6200	237.62	0	10.0000
+
+Applying ALTER VIEW...
+ALTER VIEW applied successfully.
+
+=== AFTER: vw_ReqTotalsByVendor for req 60076856 ===
+VendorCode	VendorName	ItemsTotal	VendorTotal	POBelowMinimum	MinimumPOAmount
+2222	Staples Inc	21.8400	21.84	0	10.0000
+3877	United Sales USA Corp.	2.7200	2.72	0	10.0000
+3877	United Sales USA Corp.	237.6200	237.62	0	10.0000
+
+Done.

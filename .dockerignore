@@ -1,0 +1,75 @@
+# EDS Universal Requisition - Docker Ignore
+# Files and directories to exclude from Docker builds
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+ENV
+.eggs
+*.egg-info
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
+coverage.xml
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests (not needed in production images)
+tests/
+
+# Development files
+.env
+.env.*
+!.env.example
+config/*.env
+!config/*.example
+
+# Build artifacts
+dist/
+build/
+*.exe
+*.spec
+
+# Logs
+*.log
+logs/
+
+# Data files
+data/
+*.csv
+*.xlsx
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
+
+# Claude/AI
+.claude/

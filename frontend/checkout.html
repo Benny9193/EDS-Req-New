@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - EDS Universal Requisition</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="css/design-system.css">
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+
+        body {
+            background: var(--bg-body);
+            min-height: 100vh;
+        }
+
+        .checkout-header {
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .checkout-header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .checkout-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .checkout-brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary-500);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .checkout-brand h1 {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: var(--font-bold);
+            color: var(--text-primary);
+        }
+
+        .checkout-brand p {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+        }
+
+        .back-link {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover { color: var(--text-primary); }
+
+        /* Steps */
+        .steps-bar {
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 1.5rem;
+        }
+
+        .steps-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .steps-inner::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 12%;
+            right: 12%;
+            height: 2px;
+            background: var(--border-light);
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: var(--text-sm);
+            border: 2px solid var(--border-light);
+            background: white;
+            color: var(--text-tertiary);
+            transition: all 0.3s;
+        }
+
+        .step-item.active .step-circle {
+            background: var(--color-primary-500);
+            border-color: var(--color-primary-500);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(28, 26, 131, 0.15);
+        }
+
+        .step-item.completed .step-circle {
+            background: var(--color-success);
+            border-color: var(--color-success);
+            color: white;
+        }
+
+        .step-label {
+            margin-top: 0.5rem;
+            font-size: var(--text-xs);
+            font-weight: 500;
+            color: var(--text-tertiary);
+        }
+
+        .step-item.active .step-label { color: var(--color-primary-500); font-weight: 600; }
+        .step-item.completed .step-label { color: var(--color-success); }
+
+        /* Main content */
+        .checkout-main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .checkout-section {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i { color: var(--color-primary-500); }
+
+        /* Cart item */
+        .cart-review-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-body);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .cart-review-item .item-image {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cart-review-item .item-info { flex: 1; min-width: 0; }
+        .cart-review-item .item-name { font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); }
+        .cart-review-item .item-vendor { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 0.125rem; }
+        .cart-review-item .item-price { font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.25rem; }
+
+        .cart-review-item .item-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            background: white;
+        }
+
+        .qty-controls button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .qty-controls button:hover { background: var(--bg-body); }
+        .qty-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .qty-controls .qty-value {
+            width: 40px;
+            text-align: center;
+            font-size: var(--text-sm);
+            font-weight: 600;
+            border-left: 1px solid var(--border-light);
+            border-right: 1px solid var(--border-light);
+            padding: 0.25rem;
+        }
+
+        .item-total { font-size: var(--text-md); font-weight: 700; color: var(--text-primary); }
+
+        .remove-btn {
+            font-size: var(--text-xs);
+            color: var(--text-tertiary);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .remove-btn:hover { color: var(--color-accent-500); }
+
+        /* Summary bar */
+        .summary-bar {
+            background: var(--bg-body);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .summary-bar .total-label { font-size: var(--text-sm); color: var(--text-secondary); }
+        .summary-bar .total-amount { font-size: var(--text-xl); font-weight: 700; color: var(--color-primary-500); }
+
+        /* Form fields */
+        .checkout-form-group { margin-bottom: 1rem; }
+        .checkout-form-group label {
+            display: block;
+            font-size: var(--text-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.375rem;
+        }
+
+        .checkout-input, .checkout-select, .checkout-textarea {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1.5px solid var(--border-default);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-family: inherit;
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .checkout-input:focus, .checkout-select:focus, .checkout-textarea:focus {
+            outline: none;
+            border-color: var(--color-primary-500);
+            box-shadow: 0 0 0 3px rgba(28, 26, 131, 0.1);
+        }
+
+        .checkout-textarea { resize: vertical; }
+
+        /* Shipping option */
+        .shipping-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        .shipping-option:hover { border-color: var(--border-default); }
+        .shipping-option.selected {
+            border-color: var(--color-primary-500);
+            background: var(--color-primary-50);
+        }
+
+        /* Nav buttons */
+        .checkout-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            gap: 1rem;
+        }
+
+        .btn-back {
+            padding: 0.625rem 1.25rem;
+            border: 1.5px solid var(--border-default);
+            border-radius: var(--radius-md);
+            background: white;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: var(--text-sm);
+            font-family: inherit;
+        }
+
+        .btn-back:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); }
+
+        .btn-next {
+            padding: 0.625rem 1.5rem;
+            background: var(--color-primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: var(--text-sm);
+            font-family: inherit;
+            margin-left: auto;
+        }
+
+        .btn-next:hover { background: var(--color-primary-600); }
+        .btn-next:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        .btn-submit {
+            padding: 0.75rem 2rem;
+            background: var(--color-success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: var(--text-md);
+            font-family: inherit;
+            margin-left: auto;
+        }
+
+        .btn-submit:hover { filter: brightness(0.95); }
+        .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* Confirmation */
+        .confirmation-box {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .confirmation-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #dcfce7;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .confirmation-icon i { font-size: 2rem; color: var(--color-success); }
+
+        /* Empty cart */
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-cart-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--bg-body);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart-icon i { font-size: 1.75rem; color: var(--text-tertiary); }
+
+        /* Summary review items */
+        .review-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: var(--text-sm);
+        }
+
+        .review-row .label { color: var(--text-secondary); }
+        .review-row .value { font-weight: 600; color: var(--text-primary); }
+
+        @media (max-width: 640px) {
+            .cart-review-item { flex-direction: column; }
+            .cart-review-item .item-actions { flex-direction: row; align-items: center; }
+            .checkout-nav { flex-direction: column; }
+        }
+    </style>
+</head>
+<body x-data="checkout()" x-init="init()" x-cloak>
+
+    <!-- Header -->
+    <header class="checkout-header">
+        <div class="checkout-header-inner">
+            <a href="/v7/" class="checkout-brand">
+                <div class="checkout-brand-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div>
+                    <h1>Checkout</h1>
+                    <p>EDS Universal Requisition</p>
+                </div>
+            </a>
+            <a href="/v7/" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Shopping
+            </a>
+        </div>
+    </header>
+
+    <!-- Steps -->
+    <div class="steps-bar" x-show="step <= 4">
+        <div class="steps-inner">
+            <template x-for="(s, i) in stepNames" :key="i">
+                <div class="step-item" :class="{ 'active': step === i + 1, 'completed': step > i + 1 }">
+                    <div class="step-circle">
+                        <template x-if="step > i + 1"><i class="fas fa-check"></i></template>
+                        <template x-if="step <= i + 1"><span x-text="i + 1"></span></template>
+                    </div>
+                    <span class="step-label" x-text="s"></span>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <main class="checkout-main">
+        <!-- Step 1: Review Cart -->
+        <div x-show="step === 1">
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="fas fa-shopping-cart"></i> Review Your Cart</h2>
+
+                <template x-if="cart.length === 0">
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <h3 style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 0.5rem;">Your cart is empty</h3>
+                        <p style="color: var(--text-tertiary); margin-bottom: 1rem;">Add items to get started</p>
+                        <a href="/v7/" class="btn-next" style="display: inline-flex;"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+                    </div>
+                </template>
+
+                <template x-if="cart.length > 0">
+                    <div>
+                        <template x-for="item in cart" :key="item.ItemNumber || item.id">
+                            <div class="cart-review-item">
+                                <div class="item-image">
+                                    <i class="fas fa-cube" style="font-size: 1.5rem; color: var(--color-primary-200);"></i>
+                                </div>
+                                <div class="item-info">
+                                    <div class="item-name" x-text="item.Description || item.name"></div>
+                                    <div class="item-vendor" x-text="item.VendorName || item.vendor || 'Unknown Vendor'"></div>
+                                    <div class="item-price" x-text="formatPrice(item.Price || item.price) + ' / unit'"></div>
+                                </div>
+                                <div class="item-actions">
+                                    <div class="qty-controls">
+                                        <button @click="updateQty(item, -1)" :disabled="item.quantity <= 1"><i class="fas fa-minus"></i></button>
+                                        <span class="qty-value" x-text="item.quantity"></span>
+                                        <button @click="updateQty(item, 1)"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                    <span class="item-total" x-text="formatPrice((item.Price || item.price) * item.quantity)"></span>
+                                    <button class="remove-btn" @click="removeItem(item)"><i class="fas fa-trash-alt"></i> Remove</button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="summary-bar">
+                            <span class="total-label"><span x-text="totalItems"></span> items</span>
+                            <span class="total-amount" x-text="formatPrice(cartTotal)"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="checkout-nav" x-show="cart.length > 0">
+                <a href="/v7/" class="btn-back"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+                <button class="btn-next" @click="step = 2">Next: Shipping <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- Step 2: Shipping -->
+        <div x-show="step === 2">
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="fas fa-truck"></i> Shipping Information</h2>
+
+                <div class="checkout-form-group">
+                    <label>Delivery Location *</label>
+                    <select x-model="shipping.location" class="checkout-select">
+                        <option value="">Select a location...</option>
+                        <template x-for="loc in locations" :key="loc.id">
+                            <option :value="loc.id" x-text="loc.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Attention To *</label>
+                    <input type="text" x-model="shipping.attentionTo" placeholder="Recipient name" class="checkout-input">
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Delivery Speed</label>
+                    <label class="shipping-option" :class="{ 'selected': shipping.preference === 'standard' }">
+                        <input type="radio" x-model="shipping.preference" value="standard" id="shipping-standard">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: var(--text-sm);">Standard Delivery</div>
+                            <div style="font-size: var(--text-xs); color: var(--text-tertiary);">5-7 business days</div>
+                        </div>
+                        <span class="badge badge-success">Free</span>
+                    </label>
+                    <label class="shipping-option" :class="{ 'selected': shipping.preference === 'expedited' }">
+                        <input type="radio" x-model="shipping.preference" value="expedited" id="shipping-expedited">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: var(--text-sm);"><i class="fas fa-bolt" style="color: #f59e0b;"></i> Expedited Delivery</div>
+                            <div style="font-size: var(--text-xs); color: var(--text-tertiary);">2-3 business days</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Delivery Notes (optional)</label>
+                    <textarea x-model="shipping.notes" rows="2" placeholder="Special instructions..." class="checkout-textarea"></textarea>
+                </div>
+            </div>
+
+            <div class="checkout-nav">
+                <button class="btn-back" @click="step = 1"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="btn-next" @click="step = 3" :disabled="!shipping.location || !shipping.attentionTo">Next: Notes <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- Step 3: Notes -->
+        <div x-show="step === 3">
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="fas fa-clipboard"></i> Requisition Notes</h2>
+
+                <div class="checkout-form-group">
+                    <label>Purpose / Justification *</label>
+                    <textarea x-model="notes.purpose" rows="4" maxlength="500"
+                              placeholder="Describe why these items are needed..."
+                              class="checkout-textarea"></textarea>
+                    <div style="text-align: right; font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 0.25rem;" x-text="notes.purpose.length + '/500'"></div>
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Account / Budget Code (optional)</label>
+                    <input type="text" x-model="notes.accountCode" placeholder="e.g., 100-5100-610" class="checkout-input">
+                </div>
+
+                <div class="checkout-form-group">
+                    <label>Internal Notes (optional)</label>
+                    <textarea x-model="notes.internalNotes" rows="2" maxlength="300"
+                              placeholder="Internal tracking notes..."
+                              class="checkout-textarea"></textarea>
+                </div>
+            </div>
+
+            <div class="checkout-nav">
+                <button class="btn-back" @click="step = 2"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="btn-next" @click="step = 4" :disabled="!notes.purpose.trim()">Review Order <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+
+        <!-- Step 4: Confirm -->
+        <div x-show="step === 4">
+            <div class="checkout-section">
+                <h2 class="section-title"><i class="fas fa-check-circle"></i> Review & Submit</h2>
+
+                <!-- Order Summary -->
+                <div style="background: var(--bg-body); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+                    <div class="review-row">
+                        <span class="label">Items</span>
+                        <span class="value" x-text="totalItems + ' items'"></span>
+                    </div>
+                    <div class="review-row">
+                        <span class="label">Subtotal</span>
+                        <span class="value" x-text="formatPrice(cartTotal)"></span>
+                    </div>
+                    <div class="review-row">
+                        <span class="label">Shipping</span>
+                        <span class="value" x-text="shipping.preference === 'standard' ? 'Free' : 'Expedited'"></span>
+                    </div>
+                </div>
+
+                <!-- Shipping -->
+                <div style="background: var(--bg-body); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; font-size: var(--text-sm); margin-bottom: 0.5rem;"><i class="fas fa-truck" style="color: var(--color-primary-500); margin-right: 0.25rem;"></i> Shipping</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+                        <span x-text="getLocationName(shipping.location)"></span><br>
+                        Attention: <span x-text="shipping.attentionTo"></span>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div style="background: var(--bg-body); border-radius: var(--radius-md); padding: 1rem;">
+                    <div style="font-weight: 600; font-size: var(--text-sm); margin-bottom: 0.5rem;"><i class="fas fa-clipboard" style="color: var(--color-primary-500); margin-right: 0.25rem;"></i> Purpose</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-secondary);" x-text="notes.purpose"></div>
+                </div>
+            </div>
+
+            <div class="checkout-nav">
+                <button class="btn-back" @click="step = 3"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="btn-submit" @click="submitOrder()" :disabled="isSubmitting">
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin"></i>
+                    <span x-text="isSubmitting ? 'Submitting...' : 'Submit Requisition'"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 5: Confirmation -->
+        <div x-show="step === 5">
+            <div class="checkout-section">
+                <div class="confirmation-box">
+                    <div class="confirmation-icon"><i class="fas fa-check"></i></div>
+                    <h2 style="font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; margin-bottom: 0.5rem;">Requisition Submitted!</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Your requisition has been submitted for approval.</p>
+                    <p x-show="confirmationId" style="font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: 1.5rem;">
+                        Reference: <strong x-text="confirmationId"></strong>
+                    </p>
+                    <a href="/v7/" class="btn-next" style="display: inline-flex;"><i class="fas fa-arrow-left"></i> Back to Shopping</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/product-helpers.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>

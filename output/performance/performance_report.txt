@@ -1,0 +1,104 @@
+================================================================================
+SQL SERVER PERFORMANCE ANALYSIS REPORT
+================================================================================
+Generated: 2026-01-09 09:17:00
+Source: dpa_EDSAdmin database
+
+EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+Missing Indexes Found: 50
+Slow Queries Identified: 50
+Blocking Events: 44
+I/O Latency Issues: 100
+
+TOP 5 MISSING INDEX RECOMMENDATIONS
+--------------------------------------------------------------------------------
+1. tempdb.dbo.#BidList
+   Potential Improvement: 99.99%
+   Executions: 1
+   Wait Time: 4ms
+
+2. EDS.dbo.Budgets
+   Potential Improvement: 99.98%
+   Executions: 41
+   Wait Time: 3ms
+
+3. EDS.dbo.Budgets
+   Potential Improvement: 99.98%
+   Executions: 3
+   Wait Time: 16ms
+
+4. EDS.dbo.Budgets
+   Potential Improvement: 99.98%
+   Executions: 3
+   Wait Time: 2ms
+
+5. EDS.dbo.Budgets
+   Potential Improvement: 99.98%
+   Executions: 2
+   Wait Time: 15ms
+
+TOP 5 SLOWEST QUERIES (BY I/O)
+--------------------------------------------------------------------------------
+1. SQL Hash: 3977744925
+   Total Buffer Gets: 27,506,736,236
+   Avg Buffer Gets/Exec: 37,992,729.61
+   Executions: 724
+   Preview: insert DMSVendorBidDocuments (VendorCode, DistrictVisible, BidHeaderId, BidNbr, DocType, ExpirationD
+
+2. SQL Hash: 5432150664
+   Total Buffer Gets: 21,531,867,748
+   Avg Buffer Gets/Exec: 29,822,531.51
+   Executions: 722
+   Preview: insert DMSVendorBidDocuments (VendorCode, DistrictVisible, BidHeaderId, BidNbr, DocType, ExpirationD
+
+3. SQL Hash: 4730038114
+   Total Buffer Gets: 21,076,600,704
+   Avg Buffer Gets/Exec: 29,191,967.73
+   Executions: 722
+   Preview: insert DMSBidDocuments (BidHeaderId, BidNbr, DocType, DocId, DistrictVisible, PagesCaptured, FileNam
+
+4. SQL Hash: 3967956687
+   Total Buffer Gets: 16,998,577,569
+   Avg Buffer Gets/Exec: 5,879,826.21
+   Executions: 2891
+   Preview: -- insert new vendors
+insert registrations (active, vendorid, code, password, email, name, address1
+
+5. SQL Hash: 3967956687
+   Total Buffer Gets: 16,998,577,569
+   Avg Buffer Gets/Exec: 5,879,826.21
+   Executions: 2891
+   Preview: egcalendar.bscid = BidScheduleCats.BSCId
+ where regcalendar.regcalendarid is null
+ group by regist
+
+TOP 5 BLOCKING EVENTS
+--------------------------------------------------------------------------------
+1. 2026-01-06 22:00:00
+   Type: Unknown - EDS-EDSIQ-ASP-7
+   Blockee Time: 45.98 hours
+   Blocker Time: 4.18 hours
+
+2. 2026-01-06 22:00:00
+   Type: Database - eds-edsiq-854f4c4d46-k2hxs
+   Blockee Time: 45.51 hours
+   Blocker Time: 4.40 hours
+
+3. 2026-01-06 22:00:00
+   Type: Program - eds-edsiq-854f4c4d46-k2hxs
+   Blockee Time: 44.70 hours
+   Blocker Time: 3.87 hours
+
+4. 2026-01-06 22:00:00
+   Type: Event - KietMai
+   Blockee Time: 35.90 hours
+   Blocker Time: 1.90 hours
+
+5. 2026-01-06 22:00:00
+   Type: Unknown - eds-edsiq-2-868b8bf5f-mxk47
+   Blockee Time: 26.50 hours
+   Blocker Time: 2.01 hours
+
+================================================================================
+See CSV files in output/performance/ for complete details
