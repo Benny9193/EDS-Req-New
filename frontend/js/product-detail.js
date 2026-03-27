@@ -8,7 +8,8 @@ function productDetail() {
         toastMessage: '',
 
         _getSessionId() {
-            return getSessionId();
+            // Shared getSessionId() from auth-guard.js
+            return typeof getSessionId === 'function' ? getSessionId() : null;
         },
 
         async init() {
