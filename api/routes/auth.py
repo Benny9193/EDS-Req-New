@@ -86,14 +86,14 @@ async def login(request: LoginRequest):
             row = cursor.fetchone()
 
             if not row or row[0] is None:
-                logger.warning(f"Login failed for district={request.district_code}, user={request.user_number}")
+                logger.warning("Login failed for district=%s, user=%s", request.district_code, request.user_number)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid credentials"
                 )
 
             session_id = row[0]
-            logger.info(f"Login successful: session_id={session_id}")
+            logger.info("Login successful: session_id=%s", session_id)
 
             # Commit to ensure session is persisted before validation
             cursor.commit()
@@ -121,7 +121,7 @@ async def login(request: LoginRequest):
             session_row = cursor.fetchone()
 
             if not session_row:
-                logger.error(f"Session {session_id} not found after creation")
+                logger.error("Session %s not found after creation", session_id)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Session creation failed"
@@ -152,7 +152,7 @@ async def login(request: LoginRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Login error: {e}")
+        logger.error("Login error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication service error"
@@ -190,7 +190,7 @@ async def get_session(session_id: int):
 
         # Check if session has been ended (logged out)
         if result.get('SessionEnd') is not None:
-            logger.info(f"Session {session_id} has been ended")
+            logger.info("Session %s has been ended", session_id)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session has expired"
@@ -199,7 +199,7 @@ async def get_session(session_id: int):
         # Check session age timeout
         session_age = result.get('session_age_hours', 0) or 0
         if session_age > SESSION_TIMEOUT_HOURS:
-            logger.info(f"Session {session_id} exceeded max age: {session_age}h > {SESSION_TIMEOUT_HOURS}h")
+            logger.info("Session %s exceeded max age: %sh > %sh", session_id, session_age, SESSION_TIMEOUT_HOURS)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session has expired"
@@ -208,7 +208,7 @@ async def get_session(session_id: int):
         # Check inactivity timeout
         inactive_hours = result.get('inactive_hours', 0) or 0
         if inactive_hours > SESSION_INACTIVITY_HOURS:
-            logger.info(f"Session {session_id} inactive too long: {inactive_hours}h > {SESSION_INACTIVITY_HOURS}h")
+            logger.info("Session %s inactive too long: %sh > %sh", session_id, inactive_hours, SESSION_INACTIVITY_HOURS)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session has expired due to inactivity"
@@ -225,7 +225,7 @@ async def get_session(session_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get session error: {e}")
+        logger.error("Get session error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Session service error"
@@ -252,14 +252,14 @@ async def logout(session_id: int):
             cursor.commit()
 
             if rows_affected == 0:
-                logger.warning(f"Logout: session {session_id} not found or already ended")
+                logger.warning("Logout: session %s not found or already ended", session_id)
             else:
-                logger.info(f"Logout successful for session_id={session_id}")
+                logger.info("Logout successful for session_id=%s", session_id)
 
             return {"message": "Logged out successfully", "session_id": session_id}
 
     except Exception as e:
-        logger.error(f"Logout error: {e}")
+        logger.error("Logout error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Logout service error"
@@ -295,7 +295,7 @@ async def touch_session(session_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Touch session error: {e}")
+        logger.error("Touch session error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Session service error"
