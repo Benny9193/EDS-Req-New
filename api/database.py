@@ -74,7 +74,7 @@ def get_db_connection() -> Generator[pyodbc.Connection, None, None]:
         conn = pyodbc.connect(_get_cached_connection_string())
         yield conn
     except pyodbc.Error as e:
-        logger.error(f"Database connection error: {e}")
+        logger.error("Database connection error: %s", e)
         raise
     finally:
         if conn:
@@ -120,9 +120,9 @@ def transaction() -> Generator[tuple[pyodbc.Connection, pyodbc.Cursor], None, No
         if conn:
             try:
                 conn.rollback()
-                logger.warning(f"Transaction rolled back due to: {e}")
+                logger.warning("Transaction rolled back due to: %s", e)
             except Exception as rollback_error:
-                logger.error(f"Rollback failed: {rollback_error}")
+                logger.error("Rollback failed: %s", rollback_error)
         raise
     finally:
         if cursor:
@@ -151,11 +151,11 @@ def execute_query(
         else:
             cursor.execute(query)
 
-        columns = [column[0] for column in cursor.description]
-        results = []
-        for row in cursor.fetchall():
-            results.append(dict(zip(columns, row)))
-        return results
+        if cursor.description is None:
+            return []
+
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
 def execute_single(
@@ -172,8 +172,18 @@ def execute_single(
     Returns:
         Dictionary with column names as keys, or None if no result
     """
-    results = execute_query(query, params)
-    return results[0] if results else None
+    with get_db_cursor() as cursor:
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+
+        if cursor.description is None:
+            return None
+
+        columns = [col[0] for col in cursor.description]
+        row = cursor.fetchone()
+        return dict(zip(columns, row)) if row else None
 
 
 def test_connection() -> bool:
@@ -183,7 +193,7 @@ def test_connection() -> bool:
             cursor.execute("SELECT 1")
             return True
     except Exception as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.error("Database connection failed: %s", e)
         return False
 
 
@@ -201,4 +211,7 @@ def get_connection_info() -> dict:
 
 # Log connection info at module load (for debugging)
 _conn_info = get_connection_info()
-logger.info(f"Database config: server={_conn_info['server']}, database={_conn_info['database']}, user={_conn_info['username']}")
+logger.info(
+    "Database config: server=%s, database=%s, user=%s",
+    _conn_info['server'], _conn_info['database'], _conn_info['username'],
+)
