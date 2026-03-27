@@ -4,7 +4,7 @@ Pydantic models for the EDS API.
 
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from enum import Enum
 
 
@@ -14,18 +14,17 @@ from enum import Enum
 
 class APIError(BaseModel):
     """Standardized API error response."""
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "error_code": "VALIDATION_ERROR",
+            "message": "Invalid item_id provided",
+            "details": {"field": "item_id", "value": "abc", "reason": "Must be a valid integer"},
+        }
+    })
+
     error_code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
     details: Dict[str, Any] = Field(default_factory=dict, description="Additional error context")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "error_code": "VALIDATION_ERROR",
-                "message": "Invalid item_id provided",
-                "details": {"field": "item_id", "value": "abc", "reason": "Must be a valid integer"}
-            }
-        }
 
 
 # ===========================================
@@ -77,6 +76,8 @@ class RequisitionStatus(str, Enum):
 
 class Product(BaseModel):
     """Product model for catalog items."""
+    model_config = ConfigDict(use_enum_values=True)
+
     id: str = Field(..., description="Unique product identifier/SKU")
     name: str = Field(..., description="Product name")
     description: Optional[str] = Field("", description="Product description")
@@ -88,9 +89,6 @@ class Product(BaseModel):
     unit_of_measure: str = Field("Each", description="Unit of measure")
     unit_price: float = Field(..., description="Price per unit")
     tags: List[str] = Field(default_factory=list, description="Search tags")
-
-    class Config:
-        use_enum_values = True
 
 
 class ProductListResponse(BaseModel):
@@ -218,6 +216,8 @@ class RequisitionLineItem(BaseModel):
 
 class RequisitionListItem(BaseModel):
     """Summary item for requisition list."""
+    model_config = ConfigDict(use_enum_values=True)
+
     requisition_id: int
     requisition_number: str
     status: RequisitionStatus
@@ -226,12 +226,11 @@ class RequisitionListItem(BaseModel):
     created_at: datetime
     notes_preview: Optional[str] = Field(None, description="First 100 chars of notes")
 
-    class Config:
-        use_enum_values = True
-
 
 class RequisitionDetail(BaseModel):
     """Full requisition detail with line items."""
+    model_config = ConfigDict(use_enum_values=True)
+
     requisition_id: int
     requisition_number: str
     status: str
@@ -245,9 +244,6 @@ class RequisitionDetail(BaseModel):
     approved_at: Optional[datetime] = None
     approved_by: Optional[str] = None
     rejection_reason: Optional[str] = None
-
-    class Config:
-        use_enum_values = True
 
 
 class RequisitionListResponse(BaseModel):
