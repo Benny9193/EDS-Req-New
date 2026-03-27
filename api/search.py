@@ -55,10 +55,9 @@ async def es_healthy() -> bool:
     if client is None:
         return False
     try:
-        info = await client.info()
-        return True
+        return await client.ping()
     except Exception as e:
-        logger.warning(f"Elasticsearch health check failed: {e}")
+        logger.warning("Elasticsearch health check failed: %s", e)
         return False
 
 
@@ -230,11 +229,11 @@ async def ensure_index():
         exists = await client.indices.exists(index=ES_INDEX)
         if not exists:
             await client.indices.create(index=ES_INDEX, body=PRODUCT_INDEX_SETTINGS)
-            logger.info(f"Created Elasticsearch index: {ES_INDEX}")
+            logger.info("Created Elasticsearch index: %s", ES_INDEX)
         else:
-            logger.info(f"Elasticsearch index already exists: {ES_INDEX}")
+            logger.info("Elasticsearch index already exists: %s", ES_INDEX)
     except Exception as e:
-        logger.error(f"Failed to create ES index: {e}")
+        logger.error("Failed to create ES index: %s", e)
 
 
 async def recreate_index():
@@ -246,8 +245,8 @@ async def recreate_index():
         exists = await client.indices.exists(index=ES_INDEX)
         if exists:
             await client.indices.delete(index=ES_INDEX)
-            logger.info(f"Deleted existing index: {ES_INDEX}")
+            logger.info("Deleted existing index: %s", ES_INDEX)
         await client.indices.create(index=ES_INDEX, body=PRODUCT_INDEX_SETTINGS)
-        logger.info(f"Recreated Elasticsearch index: {ES_INDEX}")
+        logger.info("Recreated Elasticsearch index: %s", ES_INDEX)
     except Exception as e:
-        logger.error(f"Failed to recreate ES index: {e}")
+        logger.error("Failed to recreate ES index: %s", e)
