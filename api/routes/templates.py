@@ -118,11 +118,9 @@ async def _resolve_items(item_ids: List[int], qtys: List[int]) -> List[TemplateI
     cache_key = f"tpl_items_{'_'.join(str(i) for i in sorted(item_ids))}"
     cached = await cache.get(cache_key)
     if cached is not None:
-        # Re-apply quantities (cache stores items without qty)
+        # Return copies with correct quantities (don't mutate cached objects)
         id_to_qty = dict(zip(item_ids, qtys))
-        for item in cached:
-            item.qty = id_to_qty.get(item.item_id, 1)
-        return cached
+        return [item.model_copy(update={"qty": id_to_qty.get(item.item_id, 1)}) for item in cached]
 
     placeholders = ",".join("?" for _ in item_ids)
     query = f"""
@@ -178,7 +176,7 @@ async def get_templates(session_id: Optional[str] = Query(None)) -> List[Templat
                 is_default=True
             ))
         except Exception as e:
-            logger.error(f"Failed to resolve template {tdef['id']}: {e}")
+            logger.error("Failed to resolve template %s: %s", tdef['id'], e)
 
     # Add user-created templates for this session
     if session_id and session_id in _user_templates:
