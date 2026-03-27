@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python \"SQL-Server Conect/performance_analysis.py\")",
-      "Bash(python extract_trigger_and_query.py)"
-    ]
-  }
-}
