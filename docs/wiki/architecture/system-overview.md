@@ -44,7 +44,7 @@
 │  │  ┌─────────────────────────────┐  ┌─────────────────────────────┐   │    │
 │  │  │           EDS               │  │      dpa_EDSAdmin           │   │    │
 │  │  │    (Production Database)    │  │   (DPA Monitoring DB)       │   │    │
-│  │  │    438 tables, ~1.2 TB      │  │    207 tables               │   │    │
+│  │  │    439 tables, ~1.4 TB      │  │    207 tables               │   │    │
 │  │  └─────────────────────────────┘  └─────────────────────────────┘   │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -79,7 +79,7 @@
 
 | Database | Purpose | Size |
 |----------|---------|------|
-| **EDS** | Production data | ~1.2 TB |
+| **EDS** | Production data | ~1.4 TB |
 | **dpa_EDSAdmin** | Performance monitoring | ~50 GB |
 | **SearchData** | Search indexes | Variable |
 
