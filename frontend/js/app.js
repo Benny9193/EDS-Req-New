@@ -107,6 +107,19 @@ function app() {
             }
         },
 
+        // --- Cleanup (called by Alpine x-init destroy or page unload) ---
+        destroy() {
+            this.stopDashboardRefresh();
+            if (this._sessionCheckInterval) {
+                clearInterval(this._sessionCheckInterval);
+                this._sessionCheckInterval = null;
+            }
+            clearTimeout(this.globalAutocompleteTimer);
+            clearTimeout(this.browseAutocompleteTimer);
+            if (this._globalAbort) { this._globalAbort.abort(); this._globalAbort = null; }
+            if (this._browseAbort) { this._browseAbort.abort(); this._browseAbort = null; }
+        },
+
         // --- Init (orchestrates module inits) ---
         async init() {
             const authed = await this._initAuth();
@@ -122,6 +135,9 @@ function app() {
             this._startSessionCheck();
             this.startDashboardRefresh();
 
+            // Clean up intervals/timers on page unload to prevent leaks
+            window.addEventListener('beforeunload', () => this.destroy());
+
             // Demo persona switcher
             this.$el.addEventListener('demo-switch', (e) => {
                 const persona = this._demoPersonas[e.detail];
@@ -133,7 +149,8 @@ function app() {
 
         // --- Data fetching ---
         async fetchData() {
-            await Promise.all([
+            // Use allSettled so one failing fetch doesn't block the rest
+            await Promise.allSettled([
                 this.fetchProducts(),
                 this.fetchVendors(),
                 this.fetchCategories(),
@@ -146,9 +163,9 @@ function app() {
         async fetchProducts() {
             this.dashboardLoading = true;
             try {
-                const r = await fetch('/api/products?page_size=12');
-                if (r.ok) {
-                    const d = await r.json();
+                const result = await edsApi.get('/api/products?page_size=12', { silent: true });
+                if (result.ok) {
+                    const d = result.data;
                     this.products = (d.products || d.items || d || []).map(p => this.normalizeProduct(p));
                     if (d.total) this.totalProductCount = d.total;
                 }
@@ -158,9 +175,9 @@ function app() {
 
         async fetchVendors() {
             try {
-                const r = await fetch('/api/vendors?limit=500');
-                if (r.ok) {
-                    const d = await r.json();
+                const result = await edsApi.get('/api/vendors?limit=500', { silent: true });
+                if (result.ok) {
+                    const d = result.data;
                     this.vendors = d.vendors || d || [];
                 }
             } catch (e) { console.error('Vendors fetch error:', e); }
@@ -168,9 +185,9 @@ function app() {
 
         async fetchCategories() {
             try {
-                const r = await fetch('/api/categories');
-                if (r.ok) {
-                    const d = await r.json();
+                const result = await edsApi.get('/api/categories', { silent: true });
+                if (result.ok) {
+                    const d = result.data;
                     this.categories = d.categories || d || [];
                 }
             } catch (e) { console.error('Categories fetch error:', e); }
@@ -181,9 +198,9 @@ function app() {
             this.templatesLoading = true;
             try {
                 const sid = this.sessionId || '';
-                const r = await fetch('/api/templates?session_id=' + encodeURIComponent(sid));
-                if (r.ok) {
-                    this.templates = await r.json();
+                const result = await edsApi.get('/api/templates?session_id=' + encodeURIComponent(sid), { silent: true });
+                if (result.ok) {
+                    this.templates = result.data;
                 }
             } catch (e) { console.error('Templates fetch error:', e); }
             finally { this.templatesLoading = false; }
@@ -193,27 +210,22 @@ function app() {
             const name = this.newTemplateName.trim();
             if (!name || this.cart.length === 0) return;
             try {
-                const r = await fetch('/api/templates?session_id=' + encodeURIComponent(this.sessionId || ''), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: name,
-                        category: this.newTemplateCategory || 'Custom',
-                        description: this.newTemplateDescription.trim(),
-                        items: this.cart.map(item => ({
-                            item_id: item.ItemId || item.item_id || 0,
-                            item_code: edsProduct.getId(item),
-                            name: edsProduct.getName(item) || 'Unknown',
-                            price: edsProduct.getPrice(item),
-                            qty: item.quantity || 1,
-                            vendor: edsProduct.getVendor(item),
-                            unit: item.UnitOfMeasure || item.unit || 'Each'
-                        }))
-                    })
+                const result = await edsApi.post('/api/templates?session_id=' + encodeURIComponent(this.sessionId || ''), {
+                    name: name,
+                    category: this.newTemplateCategory || 'Custom',
+                    description: this.newTemplateDescription.trim(),
+                    items: this.cart.map(item => ({
+                        item_id: item.ItemId || item.item_id || 0,
+                        item_code: edsProduct.getId(item),
+                        name: edsProduct.getName(item) || 'Unknown',
+                        price: edsProduct.getPrice(item),
+                        qty: item.quantity || 1,
+                        vendor: edsProduct.getVendor(item),
+                        unit: item.UnitOfMeasure || item.unit || 'Each'
+                    }))
                 });
-                if (r.ok) {
-                    const tpl = await r.json();
-                    this.templates.push(tpl);
+                if (result.ok) {
+                    this.templates.push(result.data);
                     this.showSaveTemplateDialog = false;
                     this.newTemplateName = '';
                     this.newTemplateDescription = '';

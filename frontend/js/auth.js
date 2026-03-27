@@ -8,7 +8,8 @@ function authModule() {
         _sessionCheckInterval: null,
 
         _getSessionId() {
-            try { return JSON.parse(localStorage.getItem('eds-session')).session_id; } catch { return null; }
+            // Delegate to shared getSessionId() from auth-guard.js (single source of truth)
+            return typeof getSessionId === 'function' ? getSessionId() : null;
         },
 
         async _initAuth() {
