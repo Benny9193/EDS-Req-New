@@ -57,7 +57,7 @@
 | [EDS_SUMMARY.md](EDS_SUMMARY.md) | Executive summary of database objects and statistics |
 | [EDS_DATA_DICTIONARY.md](EDS_DATA_DICTIONARY.md) | Complete generated table/column reference |
 | [EDS_ERD.md](EDS_ERD.md) | Entity relationship diagrams (Mermaid) |
-| [EDS_INDEXES.md](EDS_INDEXES.md) | Index documentation (1,115 indexes) |
+| [EDS_INDEXES.md](EDS_INDEXES.md) | Index documentation (1,117 indexes) |
 | [EDS_STATUS_CODES.md](EDS_STATUS_CODES.md) | Status codes and lookup tables |
 
 ### Schema Statistics
@@ -68,7 +68,7 @@
 | **Columns** | 4,638 |
 | **Stored Procedures** | 396 |
 | **Views** | 475 |
-| **Indexes** | 1,115 |
+| **Indexes** | 1,117 |
 | **Foreign Keys** | 31 |
 
 ---

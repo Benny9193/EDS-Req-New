@@ -568,9 +568,9 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 - [`SCHEMA.md`](/docs/SCHEMA.md) - Schema guide with ERD diagrams and organizational hierarchy. Pairs with `EDS_DATA_DICTIONARY.md` (reference) below
 - [`EDS_SUMMARY.md`](/docs/EDS_SUMMARY.md) - Executive summary of database objects
 - [`DATABASE_INVENTORY.md`](/docs/DATABASE_INVENTORY.md) - Full inventory of all 22 databases on the SQL Server instance
-- [`EDS_DATA_DICTIONARY.md`](/docs/EDS_DATA_DICTIONARY.md) - Complete generated table/column reference (439 tables, 4,638 columns)
+- [`EDS_DATA_DICTIONARY.md`](/docs/EDS_DATA_DICTIONARY.md) - Complete generated table/column reference (439 tables, 4,644 columns + 475 views, 6,866 columns)
 - [`EDS_ERD.md`](/docs/EDS_ERD.md) - Entity relationship diagrams (Mermaid)
-- [`EDS_INDEXES.md`](/docs/EDS_INDEXES.md) - Index documentation (1,115 indexes)
+- [`EDS_INDEXES.md`](/docs/EDS_INDEXES.md) - Index documentation (1,117 indexes)
 - [`EDS_STATUS_CODES.md`](/docs/EDS_STATUS_CODES.md) - Status codes and lookup tables (StatusTable, 53 rows)
 
 ### Stored Procedures & Views
