@@ -233,7 +233,7 @@ python -m http.server 80
    DB_POOL_MAX=20
    ```
 
-3. **Caching** - Add Redis for session/cache (optional)
+3. **Caching** - Redis is deployed in the `idiq-uat` K8s namespace (`uat-idiq-redis`) as the IDIQ backing store. For the Universal Requisition API, Redis can be added as a session/cache layer:
    ```yaml
    services:
      redis:

@@ -115,6 +115,8 @@
 |----------|-------------|
 | [EDS_BUSINESS_DOMAINS.md](EDS_BUSINESS_DOMAINS.md) | Overview of tables by functional area |
 | [EDS_BUSINESS_WORKFLOWS.md](EDS_BUSINESS_WORKFLOWS.md) | Key business processes (bidding, orders, vendors, catalogs, budgets) |
+| [AZURE_INFRASTRUCTURE.md](AZURE_INFRASTRUCTURE.md) | Full Azure inventory: 31 resource groups, 14 VMs, networking, storage, Key Vaults, DR/ASR |
+| [ELASTICSEARCH_INFRASTRUCTURE.md](ELASTICSEARCH_INFRASTRUCTURE.md) | ES VM, 44 indices, version mismatch, security concerns |
 | [kubernetes-clusters.md](kubernetes-clusters.md) | AKS cluster documentation (prod/UAT, nodes, workloads) |
 | [guides/DAILY_MONITORING_GUIDE.md](guides/DAILY_MONITORING_GUIDE.md) | SQL-based daily monitoring queries and dashboard |
 

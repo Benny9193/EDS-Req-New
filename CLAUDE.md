@@ -28,7 +28,7 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 4 | 0004 | Blick Art Materials LLC | 14,501 | $11,392,729.01 |
 | 9045 | 1538 | United Supply of NJ Corp | 62,325 | $9,988,290.34 |
 | 552 | 0528 | School Health Corporation | 19,747 | $8,799,702.38 |
-| 541 | 0518 | School Specialty, LLC dba Nasco Education | 33,384 | $5,900,306.01 |
+| 541 | 0518 | School Specialty LLC dba Nasco Education | 33,384 | $5,900,306.01 |
 | 8341 | 8080 | W.B. Mason Co., Inc. | 8,989 | $5,570,653.70 |
 | 916 | 0904 | Carolina Biological Supply Co | 11,119 | $4,726,186.17 |
 | 8175 | 6664 | George L. Heider Inc. dba Sportsman's | 5,485 | $4,180,896.96 |
@@ -66,7 +66,6 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 5890 | 6835 | Pitsco Education, LLC | 1,966 | $623,165.64 |
 | 863 | 0849 | Shar Products Company dba Shar Music | 1,990 | $621,583.68 |
 | 979 | 0961 | Parco Scientific Company | 2,212 | $616,077.87 |
-| 83 | 0069 | School Specialty LLC. | 2,510 | $595,420.47 |
 | 9325 | 5868 | Charles J Becker & Bro Inc/Beckers School Supplies | 5,811 | $573,170.55 |
 | 1175 | 1156 | Uniforms For All Sports, Inc. | 679 | $558,226.68 |
 | 880 | 0868 | Music In Motion Inc. | 2,490 | $547,048.71 |
@@ -135,7 +134,6 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 1623210 | 9489 | Johnson Lambe Company, Inc. | 111 | $59,529.78 |
 | 8535 | 5338 | Washington Music Sales Center, Inc. | 117 | $57,722.35 |
 | 1711130 | 9663 | PZ&SZ LLC dba Apex Supply USA | 80 | $56,818.78 |
-| 8912 | 4884 | Island School & Art Supply Inc. | 1,422 | $55,245.49 |
 | 13963 | 2130 | Sachs & Zitcer Supply Corp. | 8 | $53,874.04 |
 | 3367 | 3389 | Scoles Floorshine Industries dba Scoles Systems | 27 | $52,239.26 |
 | 9619 | 7579 | Farrar Filter Company, Inc. | 30 | $51,787.51 |
@@ -148,15 +146,12 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 1588 | 1591 | Ocean Janitorial Supply, Inc. | 90 | $41,355.50 |
 | 5688 | 6533 | Sweetwater Sound, LLC | 247 | $40,862.41 |
 | 1623487 | 9589 | Sure Industries LLC | 36 | $39,815.63 |
-| 1621039 | 9354 | South Side Printing LLC | 59 | $39,193.40 |
 | 716 | 0695 | Acco Brands Corporation dba Acco Brands USA LLC | 109 | $38,296.92 |
 | 1850 | 1866 | Blue Gauntlet Fencing Gear, Inc. | 29 | $37,688.81 |
 | 1117731 | 7838 | Metal Supply Center, LLC | 9 | $37,662.61 |
 | 1686 | 1691 | AZ Plastics LLC | 8 | $37,314.25 |
 | 3653 | 3678 | Capital Supply Company | 36 | $36,195.08 |
-| 111 | 0097 | Massapequa Soccer Shop LLC | 183 | $36,151.85 |
 | 7031 | 8331 | Klingspor Corporation dba Klingspor's Woodworking | 310 | $33,694.35 |
-| 3010 | 3046 | JGR Enterprises | 69 | $33,509.29 |
 | 2170 | 2189 | Brookaire Company, LLC | 24 | $29,394.29 |
 | 2294 | 2326 | American Process Lettering Inc dba AMPRO | 33 | $27,843.88 |
 | 14953 | 5470 | Fun and Function LLC | 364 | $27,379.60 |
@@ -179,7 +174,6 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 2775 | 2811 | SupplyitAll dba South Jersey Paper Company | 16 | $11,707.58 |
 | 6205 | 7171 | Resilite Sports Products, Inc. | 1 | $11,694.48 |
 | 1552 | 1555 | VEX Robotics, Inc. | 7 | $10,805.60 |
-| 3655 | 3680 | Bio-Shine, LLC | 6 | $10,581.81 |
 | 2947 | 2981 | Best Plumbing Specialties, Inc. | 7 | $10,053.84 |
 | 5576 | 6422 | Joseph Gartland Inc. dba Beautiful Rags | 16 | $9,964.20 |
 | 7883 | 7890 | Penn Jersey Paper Co., LLC a BradyPlus Company | 5 | $9,902.21 |
@@ -225,7 +219,6 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 7828 | 5133 | Mill Wiping Rags, Inc. | 1 | $680.00 |
 | 7737 | T045 | Zaner-Bloser, Inc. | 5 | $677.22 |
 | 1711137 | 9667 | Roth Publishers Inc. | 4 | $635.84 |
-| 1625 | 1627 | SIRCHIE FINGERPRINT LABS | 1 | $630.40 |
 | 5786 | 6648 | Emerald Island Supply Company Inc. | 4 | $624.87 |
 | 1679 | 1684 | United Electric Supply Company Inc. | 4 | $568.83 |
 | 7808 | T120 | D&S Marketing Systems | 2 | $499.00 |
@@ -255,18 +248,17 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 1711897 | 9942 | Haksav Vehaloshon | 1 | $15.00 |
 | 13959 | 2069 | SUPERIOR TEXT | 1 | $6.45 |
 
-> **Note**: 233 active vendors with POs Dec 2022–Nov 2025. To refresh this table, a scheduled task (`annual-vendor-table-refresh`) runs each December 15 and will regenerate the vendor query and update these rows. You can also trigger it manually from the Scheduled section in the sidebar.
+> **Note**: 226 active vendors with POs Dec 2022–Nov 2025. To refresh this table, a scheduled task (`annual-vendor-table-refresh`) runs each December 15 and will regenerate the vendor query and update these rows. You can also trigger it manually from the Scheduled section in the sidebar. Last refreshed: 2026-03-27.
 
 ### Vendors with Multiple VendorId Entries
 
 These vendors appear under more than one VendorId/Code — all are intentional separate contracts, not data errors.
 
-**School Specialty (combined ~$68.6M)**
+**School Specialty (combined ~$68.0M)**
 | VendorId | Code | Name | POs | Total Spend |
 |----------|------|------|-----|-------------|
 | 9 | 0009 | School Specialty, LLC | 205,723 | $62,112,979.69 |
-| 541 | 0518 | School Specialty, LLC dba Nasco Education | 33,384 | $5,900,306.01 |
-| 83 | 0069 | School Specialty LLC. | 2,510 | $595,420.47 |
+| 541 | 0518 | School Specialty LLC dba Nasco Education | 33,384 | $5,900,306.01 |
 
 **W.B. Mason (combined ~$9.0M)**
 | VendorId | Code | Name | POs | Total Spend |
@@ -414,8 +406,8 @@ Key modules:
 
 ## Database Connections
 
-Two databases on same SQL Server:
-- **EDS** - Production catalog (products, vendors, categories, users, sessions)
+The SQL Server hosts 22 databases (see [`DATABASE_INVENTORY.md`](/docs/DATABASE_INVENTORY.md)). The two used by this codebase:
+- **EDS** - Production catalog (products, vendors, categories, users, sessions) — ~1.4 TB, 439 tables
 - **dpa_EDSAdmin** - DPA monitoring data (performance metrics, blocking events)
 
 Environment variables:
@@ -482,7 +474,7 @@ docker-compose up -d          # Start all services
 docker-compose logs -f api    # View API logs
 ```
 
-Services: frontend (nginx:alpine, port 80), api (python:3.11-slim, port 8000)
+Services: frontend (nginx:alpine, port 80), api (python:3.11-slim, port 8000), elasticsearch (ES 8.17.0, port 9200 — **note**: production runs ES 7.15.2, see [`ELASTICSEARCH_INFRASTRUCTURE.md`](/docs/ELASTICSEARCH_INFRASTRUCTURE.md))
 
 ## Kubernetes Infrastructure
 
@@ -565,6 +557,8 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 ### Business & Operations
 - [`EDS_BUSINESS_DOMAINS.md`](/docs/EDS_BUSINESS_DOMAINS.md) - Overview of tables by functional area. See [`domains/`](/docs/domains/) for deep dives per domain
 - [`EDS_BUSINESS_WORKFLOWS.md`](/docs/EDS_BUSINESS_WORKFLOWS.md) - Key business processes (bidding, orders, vendors, catalogs, budgets)
+- [`AZURE_INFRASTRUCTURE.md`](/docs/AZURE_INFRASTRUCTURE.md) - Full Azure inventory: 31 resource groups, 14 VMs, networking, storage, Key Vaults, DR/ASR
+- [`ELASTICSEARCH_INFRASTRUCTURE.md`](/docs/ELASTICSEARCH_INFRASTRUCTURE.md) - ES VM, 44 indices, version mismatch (7.15.2 prod vs 8.17.0 dev), security concerns
 - [`kubernetes-clusters.md`](/docs/kubernetes-clusters.md) - AKS cluster documentation (prod/UAT, nodes, workloads, networking)
 - [`guides/DAILY_MONITORING_GUIDE.md`](/docs/guides/DAILY_MONITORING_GUIDE.md) - SQL-based daily monitoring queries and dashboard. See also [`wiki/operations/daily-monitoring.md`](/docs/wiki/operations/daily-monitoring.md) for checklist workflow
 

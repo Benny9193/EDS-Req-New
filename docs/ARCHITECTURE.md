@@ -391,7 +391,7 @@ Future integrations could include:
 
 - Increase uvicorn workers: `--workers 4`
 - Increase connection pool: `DB_POOL_MAX=20`
-- Add Redis for session caching
+- Add Redis for session caching (Redis is already deployed in K8s for IDIQ — `uat-idiq-redis`)
 
 ---
 
