@@ -22,14 +22,14 @@ Generated: 2026-01-09 12:05:00
 | Object Type | Count |
 |-------------|-------|
 | Tables | 439 |
-| Table Columns | 4,638 |
+| Table Columns | 4,644 |
 | Views | 475 |
-| View Columns | 6,847 |
+| View Columns | 6,866 |
 | Stored Procedures | 396 |
 | SP Parameters | 1,308 |
 | Functions | 231 |
 | Triggers | 59 |
-| Indexes | 1,115 |
+| Indexes | 1,117 |
 | Foreign Keys | 31 |
 | Check Constraints | 1 |
 | Default Constraints | 133 |
@@ -41,12 +41,12 @@ Generated: 2026-01-09 12:05:00
 | Object Type | Documented | Total | Coverage |
 |-------------|------------|-------|----------|
 | Tables | 439 | 439 | 100.0% |
-| Table Columns | 4,638 | 4,638 | 100.0% |
+| Table Columns | 4,644 | 4,644 | 100.0% |
 | Views | 475 | 475 | 100.0% |
-| View Columns | 6,847 | 6,847 | 100.0% |
+| View Columns | 6,866 | 6,866 | 100.0% |
 | Stored Procedures | 396 | 396 | 100.0% |
 | SP Parameters | 1,308 | 1,308 | 100.0% |
-| **TOTAL** | **14,103** | **14,103** | **100.0%** |
+| **TOTAL** | **14,128** | **14,128** | **100.0%** |
 
 ---
 
