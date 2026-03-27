@@ -92,7 +92,7 @@
 | Component | Technology |
 |-----------|------------|
 | **Database** | SQL Server 2017 Developer Edition |
-| **Web App** | Java (JDBC), IIS |
+| **Web App** | ColdFusion (Lucee/CFWheels), IIS |
 | **API/Services** | Node.js (node-mssql) |
 | **Infrastructure** | Azure VM, Kubernetes |
 | **Monitoring** | SolarWinds DPA |
