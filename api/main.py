@@ -18,11 +18,9 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 
 from . import __version__
-
-_logger = logging.getLogger(__name__)
 from .database import test_connection, get_connection_info
 from .models import APIStatus
 from .middleware import RateLimitMiddleware, SecurityHeadersMiddleware
@@ -38,6 +36,8 @@ from .routes.templates import router as templates_router
 from .routes.search import router as search_router
 from .routes.dashboard import router as dashboard_router
 from .routes.reports import router as reports_router
+
+_logger = logging.getLogger(__name__)
 
 # Path to frontend directory
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
@@ -158,30 +158,25 @@ _ROUTE_ALIASES = {
 _FALLBACK_PAGE = "index.html"
 
 
-def _serve_frontend_page(page_name: str) -> FileResponse:
+def _resolve_frontend_page(page_name: str) -> Path | None:
     """
-    Resolve a page name to a frontend HTML file.
-    Supports nested paths like 'admin/dashboard'.
-    Falls back to the main SPA page if the file doesn't exist.
+    Resolve a page name to a safe frontend HTML file path.
+
+    Returns the resolved Path if the file exists and is inside FRONTEND_DIR,
+    or None if the page doesn't exist or the path escapes FRONTEND_DIR.
     """
-    html_file = FRONTEND_DIR / f"{page_name}.html"
-    if html_file.exists():
-        return FileResponse(html_file, headers={"Cache-Control": "no-cache"})
-    # Special fallbacks
-    if page_name == "login":
-        return FileResponse(FRONTEND_DIR / "index.html")
-    if page_name in ("alpine-requisition", "index"):
-        alt = "index.html" if page_name == "alpine-requisition" else _FALLBACK_PAGE
-        return FileResponse(FRONTEND_DIR / alt)
-    return FileResponse(FRONTEND_DIR / _FALLBACK_PAGE)
+    html_file = (FRONTEND_DIR / f"{page_name}.html").resolve()
+    if html_file.is_relative_to(FRONTEND_DIR.resolve()) and html_file.is_file():
+        return html_file
+    return None
 
 
 @app.get("/", tags=["Frontend"])
 async def root():
     """Serve the main frontend application."""
-    app_file = FRONTEND_DIR / _FALLBACK_PAGE
-    if app_file.exists():
-        return FileResponse(app_file)
+    index = _resolve_frontend_page("index")
+    if index:
+        return FileResponse(index, headers={"Cache-Control": "no-cache"})
     return {"message": "EDS Universal Requisition API", "docs": "/docs"}
 
 
@@ -254,8 +249,6 @@ async def debug_connection():
 @app.get("/favicon.ico", tags=["Frontend"])
 async def favicon():
     """Serve favicon."""
-    from fastapi.responses import Response
-    # Simple blue square with 'E' SVG as ICO fallback
     svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect fill="#1c1a83" width="32" height="32" rx="6"/><text x="16" y="22" text-anchor="middle" fill="white" font-family="Arial" font-weight="bold" font-size="16">E</text></svg>'''
     return Response(content=svg, media_type="image/svg+xml")
 
@@ -288,11 +281,11 @@ async def catch_all(full_path: str):
     # Apply route aliases (e.g. "search" -> "search-results")
     page_name = _ROUTE_ALIASES.get(page_name, page_name)
 
-    # Only serve known HTML files — prevent directory traversal
-    # by checking the resolved path stays inside FRONTEND_DIR
-    html_file = (FRONTEND_DIR / f"{page_name}.html").resolve()
-    if html_file.is_relative_to(FRONTEND_DIR.resolve()) and html_file.is_file():
-        return _serve_frontend_page(page_name)
+    # Only serve known HTML files — _resolve_frontend_page handles
+    # directory traversal prevention via resolve() + is_relative_to()
+    html_file = _resolve_frontend_page(page_name)
+    if html_file:
+        return FileResponse(html_file, headers={"Cache-Control": "no-cache"})
 
     # 404 fallback
     not_found_file = FRONTEND_DIR / "404.html"
