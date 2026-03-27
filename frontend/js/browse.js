@@ -53,10 +53,9 @@ function browseModule() {
             if (this.availableBids.length > 0) return;
             this.bidsLoading = true;
             try {
-                const r = await fetch('/api/bids?active_only=true');
-                if (r.ok) {
-                    const d = await r.json();
-                    this.availableBids = (d.bids || []).filter(b => b.product_count > 0);
+                const result = await edsApi.get('/api/bids?active_only=true', { silent: true });
+                if (result.ok) {
+                    this.availableBids = (result.data.bids || []).filter(b => b.product_count > 0);
                 }
             } catch (e) { console.error('Bids fetch error:', e); }
             finally { this.bidsLoading = false; }
@@ -67,9 +66,9 @@ function browseModule() {
             this.browseLoading = true;
             try {
                 const params = this._buildBrowseParams(this.browsePage);
-                const r = await fetch(this._browseEndpoint() + '?' + params.toString());
-                if (r.ok) {
-                    const d = await r.json();
+                const result = await edsApi.get(this._browseEndpoint() + '?' + params.toString(), { silent: true });
+                if (result.ok) {
+                    const d = result.data;
                     this.browseProducts = (d.products || []).map(p => this.normalizeProduct(p));
                     this.browseTotal = d.total || 0;
                     this.browsePage = d.page || 1;
@@ -88,9 +87,9 @@ function browseModule() {
             try {
                 const nextPage = this.browsePage + 1;
                 const params = this._buildBrowseParams(nextPage);
-                const r = await fetch(this._browseEndpoint() + '?' + params.toString());
-                if (r.ok) {
-                    const d = await r.json();
+                const result = await edsApi.get(this._browseEndpoint() + '?' + params.toString(), { silent: true });
+                if (result.ok) {
+                    const d = result.data;
                     const newProducts = (d.products || []).map(p => this.normalizeProduct(p));
                     this.browseProducts = [...this.browseProducts, ...newProducts];
                     this.browsePage = d.page || nextPage;
