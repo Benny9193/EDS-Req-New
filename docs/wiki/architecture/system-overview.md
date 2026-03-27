@@ -21,7 +21,7 @@
 │  │                    Kubernetes Cluster (Azure)                        │    │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌────────────┐  │    │
 │  │  │ eds-edsiq-* │  │eds-edsiq-2-*│  │eds-nodeindex│  │eds-report- │  │    │
-│  │  │ (Java/JDBC) │  │ (Java/JDBC) │  │   (Node.js) │  │  handler   │  │    │
+│  │  │(CFML/Lucee) │  │(CFML/Lucee) │  │   (Node.js) │  │  handler   │  │    │
 │  │  │  170 hrs/mo │  │             │  │  62 hrs/mo  │  │            │  │    │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └────────────┘  │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
@@ -70,7 +70,7 @@
 
 | Component | Technology | Purpose | Activity |
 |-----------|------------|---------|----------|
-| **eds-edsiq-*** | Java/JDBC | Main web application | 170 hrs/month |
+| **eds-edsiq-*** | CFML (Lucee/CFWheels on JVM) | Main web application | 170 hrs/month |
 | **eds-nodeindexer** | Node.js | Search indexing | 62 hrs/month |
 | **eds-report-handler** | Node.js | Report generation | 7.7 hrs/month |
 | **IIS** | .NET | Legacy services | 2.7 hrs/month |
@@ -98,7 +98,7 @@
 
 ### Requisition Flow
 ```
-User → Web App (JDBC) → SQL Server → Stored Procedure → Tables
+User → Web App (CFML/Lucee) → SQL Server → Stored Procedure → Tables
                                    ↓
                             Trigger fires
                                    ↓

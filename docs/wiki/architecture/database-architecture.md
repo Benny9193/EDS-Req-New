@@ -60,9 +60,9 @@ The EDS database runs on SQL Server 2017 hosted on an Azure Virtual Machine, wit
 
 | Object Type | Count |
 |-------------|-------|
-| Tables | 438 |
-| Views | 474 |
-| Stored Procedures | 395 |
+| Tables | 439 |
+| Views | 475 |
+| Stored Procedures | 396 |
 | Functions | 200+ |
 | Triggers | 52 |
 | Indexes | 1500+ |

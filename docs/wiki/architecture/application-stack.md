@@ -153,7 +153,7 @@ Kubernetes Ingress
 │  1. Authentication check            │
 │  2. Authorization validation        │
 │  3. Request processing              │
-│  4. Database query (JDBC)           │
+│  4. Database query (CFQUERY/JDBC)   │
 │  5. Response formatting             │
 │                                     │
 └─────────────────────────────────────┘
@@ -209,7 +209,7 @@ SQL Server
 |--------|--------|-----------------|
 | Response Time | Application | > 2s |
 | Error Rate | Application | > 1% |
-| Connection Pool | HikariCP | > 80% used |
+| Connection Pool | Lucee JDBC pool | > 80% used |
 | Pod Memory | Kubernetes | > 80% |
 
 ---
