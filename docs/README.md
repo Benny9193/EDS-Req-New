@@ -10,9 +10,9 @@
 
 | Document | Description |
 |----------|-------------|
-| [Data Dictionary](EDS_DATA_DICTIONARY.md) | Complete table and column reference (438 tables, 4,638 columns) |
-| [Stored Procedures](EDS_STORED_PROCEDURES.md) | All 395 procedures with source code |
-| [Views](EDS_VIEWS.md) | All 474 views with SQL definitions |
+| [Data Dictionary](EDS_DATA_DICTIONARY.md) | Complete table and column reference (439 tables, 4,638 columns) |
+| [Stored Procedures](EDS_STORED_PROCEDURES.md) | All 396 procedures with source code |
+| [Views](EDS_VIEWS.md) | All 475 views with SQL definitions |
 | [ERD Diagrams](EDS_ERD.md) | Entity relationship diagrams (Mermaid) |
 | [Wiki Home](wiki/index.md) | Navigable knowledge base |
 | [Excel Data Dictionary](EDS_DATA_DICTIONARY.xlsx) | Searchable Excel workbook (6 sheets) |
@@ -52,11 +52,12 @@
 
 | Document | Description |
 |----------|-------------|
+| [DATABASE_INVENTORY.md](DATABASE_INVENTORY.md) | Full inventory of all 22 databases on the SQL Server instance |
 | [SCHEMA.md](SCHEMA.md) | Schema guide with ERD diagrams and organizational hierarchy |
 | [EDS_SUMMARY.md](EDS_SUMMARY.md) | Executive summary of database objects and statistics |
 | [EDS_DATA_DICTIONARY.md](EDS_DATA_DICTIONARY.md) | Complete generated table/column reference |
 | [EDS_ERD.md](EDS_ERD.md) | Entity relationship diagrams (Mermaid) |
-| [EDS_INDEXES.md](EDS_INDEXES.md) | Index documentation (815 indexes, 59 unused) |
+| [EDS_INDEXES.md](EDS_INDEXES.md) | Index documentation (1,115 indexes) |
 | [EDS_STATUS_CODES.md](EDS_STATUS_CODES.md) | Status codes and lookup tables |
 
 ### Schema Statistics
@@ -76,9 +77,9 @@
 
 | Document | Type | Description |
 |----------|------|-------------|
-| [EDS_STORED_PROCEDURES.md](EDS_STORED_PROCEDURES.md) | Reference | All 395 SPs with parameters and source code |
+| [EDS_STORED_PROCEDURES.md](EDS_STORED_PROCEDURES.md) | Reference | All 396 SPs with parameters and source code |
 | [EDS_PROCEDURES_GUIDE.md](EDS_PROCEDURES_GUIDE.md) | Guide | Business context, usage examples, workflow context |
-| [EDS_VIEWS.md](EDS_VIEWS.md) | Reference | All 474 views with SQL definitions and dependencies |
+| [EDS_VIEWS.md](EDS_VIEWS.md) | Reference | All 475 views with SQL definitions and dependencies |
 | [EDS_VIEWS_GUIDE.md](EDS_VIEWS_GUIDE.md) | Guide | Views with naming conventions and domain organization |
 
 ---
@@ -92,7 +93,7 @@
 | [EDS_CIRCULAR_DEPS.md](EDS_CIRCULAR_DEPS.md) | Circular dependency analysis (0 circular, 34 recursive) |
 | [EDS_RECURSIVE_PROCEDURES.md](EDS_RECURSIVE_PROCEDURES.md) | 34 self-calling procedures (tree traversal, org hierarchy) |
 | [EDS_INFINITE_LOOP_ANALYSIS.md](EDS_INFINITE_LOOP_ANALYSIS.md) | Infinite loop pattern analysis (1 HIGH, 78 LOW severity) |
-| [EDS_TRIGGERS.md](EDS_TRIGGERS.md) | 52 triggers (45 INSERT, 39 UPDATE, 10 DELETE) |
+| [EDS_TRIGGERS.md](EDS_TRIGGERS.md) | 59 triggers (includes view-based INSTEAD OF triggers) |
 
 ---
 
@@ -215,7 +216,7 @@ python scripts/generate_extended_properties.py -d EDS
 
 ### Database Health
 
-1. **Low Referential Integrity**: Only 31 foreign keys for 438 tables
+1. **Low Referential Integrity**: Only 31 foreign keys for 439 tables
    - Many relationships are enforced by application logic
    - 219 implicit relationships detected by naming convention
 
