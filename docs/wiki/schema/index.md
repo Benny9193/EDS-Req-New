@@ -14,10 +14,10 @@ The EDS database is a large SQL Server 2017 database containing all procurement 
 
 | Object Type | Count | Notes |
 |-------------|-------|-------|
-| **Tables** | 438 | Including archive tables |
+| **Tables** | 439 | Including archive tables |
 | **Columns** | 4,638 | Across all tables |
-| **Views** | 474 | Reporting and application views |
-| **Stored Procedures** | 395 | Business logic |
+| **Views** | 475 | Reporting and application views |
+| **Stored Procedures** | 396 | Business logic |
 | **Triggers** | 52 | Data integrity and cascades |
 | **Indexes** | 815+ | Performance optimization |
 | **Functions** | 231 | Scalar and table-valued |
