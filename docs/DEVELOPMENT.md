@@ -110,7 +110,7 @@ python test_db.py
 # Expected output:
 # Connection successful!
 # Database: EDS
-# Tables: 438
+# Tables: 439
 ```
 
 ---
