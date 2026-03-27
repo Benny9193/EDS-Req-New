@@ -40,3 +40,10 @@ htmlcov/
 docs/nul
 nul
 /agent
+
+# Large data files
+nasco_items_data.pkl
+
+# Sub-repos
+EDS-Req-New/
+eds-edsiq/
