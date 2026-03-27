@@ -170,10 +170,10 @@ Failures are printed as warnings rather than causing job failure.
 
 **Step: Validate JavaScript files**
 
-Uses Node.js 20 with `node --check` to perform syntax-only validation of all `.js` files in `frontend/js/` and `frontend/js/stores/`. This catches syntax errors without running the scripts.
+Uses Node.js 20 with `node --check` to perform syntax-only validation of all `.js` files in `frontend/js/`. This catches syntax errors without running the scripts.
 
 ```bash
-for file in frontend/js/*.js frontend/js/stores/*.js; do
+for file in frontend/js/*.js; do
     node --check "$file"
 done
 ```
@@ -545,7 +545,7 @@ Codecov failures use `fail_ci_if_error: false` and do not block the pipeline. Ch
 
 ```bash
 # Reproduce locally
-node --check frontend/js/stores/auth.js
+node --check frontend/js/auth.js
 ```
 
 The error output will include the file path and line number. Fix the syntax error and push again.
@@ -615,7 +615,7 @@ pytest tests/ -m "not e2e and not integration" \
   --cov=api --cov-report=term-missing
 
 # Frontend validation
-for file in frontend/js/*.js frontend/js/stores/*.js; do
+for file in frontend/js/*.js; do
   node --check "$file"
 done
 
