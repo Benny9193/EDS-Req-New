@@ -66,10 +66,10 @@ High-level architecture of the EDS Universal Requisition system.
 │   │   │         EDS         │    │     dpa_EDSAdmin    │             │    │
 │   │   │  (Production DB)    │    │   (Monitoring DB)   │             │    │
 │   │   │                     │    │                     │             │    │
-│   │   │  Tables: 438        │    │  Tables: 207        │             │    │
-│   │   │  Size: ~1.2 TB      │    │  DPA metrics        │             │    │
-│   │   │  Stored Procs: 500+ │    │  Performance data   │             │    │
-│   │   │  Views: 200+        │    │                     │             │    │
+│   │   │  Tables: 439        │    │  Tables: 207        │             │    │
+│   │   │  Size: ~1.4 TB      │    │  DPA metrics        │             │    │
+│   │   │  Stored Procs: 396  │    │  Performance data   │             │    │
+│   │   │  Views: 475         │    │                     │             │    │
 │   │   └─────────────────────┘    └─────────────────────┘             │    │
 │   │                                                                   │    │
 │   │   Key Tables: Catalog, Items, Vendors, Categories, Orders        │    │
