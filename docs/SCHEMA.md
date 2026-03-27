@@ -12,10 +12,10 @@ The EDS database is a large SQL Server 2017 database supporting K-12 school dist
 
 | Object Type | Count | Description |
 |-------------|-------|-------------|
-| **Tables** | 438 | Data storage (including 50+ archive tables) |
+| **Tables** | 439 | Data storage (including 50+ archive tables) |
 | **Columns** | 4,638 | Across all tables |
-| **Views** | 474 | Reporting and application views |
-| **Stored Procedures** | 395 | Business logic implementation |
+| **Views** | 475 | Reporting and application views |
+| **Stored Procedures** | 396 | Business logic implementation |
 | **Triggers** | 52 | Data integrity and cascades |
 | **Indexes** | 815+ | Performance optimization |
 | **Functions** | 231 | Scalar and table-valued |

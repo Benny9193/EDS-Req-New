@@ -64,11 +64,11 @@
 
 | Metric | Count |
 |--------|-------|
-| **Tables** | 438 |
+| **Tables** | 439 |
 | **Columns** | 4,638 |
-| **Stored Procedures** | 395 |
-| **Views** | 474 |
-| **Indexes** | 815 |
+| **Stored Procedures** | 396 |
+| **Views** | 475 |
+| **Indexes** | 1,115 |
 | **Foreign Keys** | 31 |
 
 ---
