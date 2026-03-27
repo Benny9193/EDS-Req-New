@@ -16,10 +16,24 @@ import logging
 import math
 
 from api.database import execute_query, execute_single, get_db_cursor, transaction
+from api.middleware import SESSION_TIMEOUT_HOURS
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+# Date range SQL fragments (safe constants, not user input)
+_DATE_RANGE_FILTERS = {
+    "this_week": "AND r.CreatedAt >= DATEADD(WEEK, -1, GETDATE())",
+    "this_month": "AND r.CreatedAt >= DATEADD(MONTH, -1, GETDATE())",
+    "this_quarter": "AND r.CreatedAt >= DATEADD(QUARTER, -1, GETDATE())",
+    "this_year": "AND YEAR(r.CreatedAt) = YEAR(GETDATE())",
+}
+
+
+def _get_date_filter(date_range: str) -> str:
+    """Return a SQL date filter clause for the given range key, or empty string."""
+    return _DATE_RANGE_FILTERS.get(date_range, "")
 
 
 # ===========================================
@@ -44,8 +58,8 @@ def require_admin_session(session_id: int) -> dict:
         LEFT JOIN Users u ON s.UserId = u.UserId
         WHERE s.SessionId = ?
         AND s.SessionEnd IS NULL
-        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < 8
-    """, (session_id,))
+        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < ?
+    """, (session_id, SESSION_TIMEOUT_HOURS))
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
     if user.get("ApprovalLevel", 0) < 1:
@@ -602,16 +616,7 @@ async def get_report_summary(
     """Get report summary statistics."""
     require_admin_session(session_id)
 
-    # Build date filter
-    date_filter = ""
-    if date_range == "this_week":
-        date_filter = "AND r.CreatedAt >= DATEADD(WEEK, -1, GETDATE())"
-    elif date_range == "this_month":
-        date_filter = "AND r.CreatedAt >= DATEADD(MONTH, -1, GETDATE())"
-    elif date_range == "this_quarter":
-        date_filter = "AND r.CreatedAt >= DATEADD(QUARTER, -1, GETDATE())"
-    elif date_range == "this_year":
-        date_filter = "AND YEAR(r.CreatedAt) = YEAR(GETDATE())"
+    date_filter = _get_date_filter(date_range)
 
     dept_filter = ""
     params = []
@@ -682,15 +687,7 @@ async def get_report_by_department(
     """Get per-department report data."""
     require_admin_session(session_id)
 
-    date_filter = ""
-    if date_range == "this_week":
-        date_filter = "AND r.CreatedAt >= DATEADD(WEEK, -1, GETDATE())"
-    elif date_range == "this_month":
-        date_filter = "AND r.CreatedAt >= DATEADD(MONTH, -1, GETDATE())"
-    elif date_range == "this_quarter":
-        date_filter = "AND r.CreatedAt >= DATEADD(QUARTER, -1, GETDATE())"
-    elif date_range == "this_year":
-        date_filter = "AND YEAR(r.CreatedAt) = YEAR(GETDATE())"
+    date_filter = _get_date_filter(date_range)
 
     rows = execute_query(f"""
         SELECT
@@ -741,15 +738,7 @@ async def get_report_top_products(
     """Get top products for reports."""
     require_admin_session(session_id)
 
-    date_filter = ""
-    if date_range == "this_week":
-        date_filter = "AND r.CreatedAt >= DATEADD(WEEK, -1, GETDATE())"
-    elif date_range == "this_month":
-        date_filter = "AND r.CreatedAt >= DATEADD(MONTH, -1, GETDATE())"
-    elif date_range == "this_quarter":
-        date_filter = "AND r.CreatedAt >= DATEADD(QUARTER, -1, GETDATE())"
-    elif date_range == "this_year":
-        date_filter = "AND YEAR(r.CreatedAt) = YEAR(GETDATE())"
+    date_filter = _get_date_filter(date_range)
 
     rows = execute_query(f"""
         SELECT TOP (?)
@@ -796,13 +785,7 @@ async def get_report_top_users(
     """Get top users by spending for reports."""
     require_admin_session(session_id)
 
-    date_filter = ""
-    if date_range == "this_month":
-        date_filter = "AND r.CreatedAt >= DATEADD(MONTH, -1, GETDATE())"
-    elif date_range == "this_quarter":
-        date_filter = "AND r.CreatedAt >= DATEADD(QUARTER, -1, GETDATE())"
-    elif date_range == "this_year":
-        date_filter = "AND YEAR(r.CreatedAt) = YEAR(GETDATE())"
+    date_filter = _get_date_filter(date_range)
 
     rows = execute_query(f"""
         SELECT TOP (?)
@@ -878,7 +861,7 @@ def _run_reindex(full: bool = False):
 
         es = get_es_client()
         info = es.info()
-        logger.info(f"Reindex: connected to ES {info['version']['number']}")
+        logger.info("Reindex: connected to ES %s", info['version']['number'])
 
         conn = get_db_connection()
         total_eligible = count_products(conn)
@@ -902,11 +885,11 @@ def _run_reindex(full: bool = False):
             "elapsed_seconds": round(elapsed, 1),
         }
         _reindex_state["last_run"] = datetime.utcnow().isoformat() + "Z"
-        logger.info(f"Reindex complete: {indexed} indexed, {errors} errors, {elapsed:.1f}s")
+        logger.info("Reindex complete: %d indexed, %d errors, %.1fs", indexed, errors, elapsed)
 
     except Exception as e:
         _reindex_state["error"] = str(e)
-        logger.error(f"Reindex failed: {e}")
+        logger.error("Reindex failed: %s", e)
     finally:
         _reindex_state["running"] = False
 
@@ -914,6 +897,7 @@ def _run_reindex(full: bool = False):
 @router.post("/search/reindex")
 async def trigger_reindex(
     background_tasks: BackgroundTasks,
+    session_id: int = Query(...),
     full: bool = Query(False, description="Full reindex (drop and recreate index)"),
 ):
     """
@@ -924,6 +908,8 @@ async def trigger_reindex(
 
     Runs in the background. Check status via GET /api/admin/search/status.
     """
+    require_admin_session(session_id)
+
     if _reindex_state["running"]:
         raise HTTPException(status_code=409, detail="Reindex already in progress")
 
