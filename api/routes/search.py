@@ -71,27 +71,26 @@ class AutocompleteItem(BaseModel):
 # The pricing_consolidated_60 index uses camelCase fields from the
 # existing EDSIQ ColdFusion indexer. Map them to our API Product model.
 
+def _first(value, default: str = "") -> str:
+    """Unwrap ES fields that may be a string or a list of strings."""
+    if isinstance(value, list):
+        return value[0] if value else default
+    return value or default
+
+
+def _parse_bid_ids(bid_ids: Optional[str]) -> List[int]:
+    """Parse comma-separated bid header IDs into a list of ints."""
+    if not bid_ids:
+        return []
+    return [int(b.strip()) for b in bid_ids.split(",") if b.strip().isdigit()]
+
+
 def _hit_to_product(src: dict, bid_id_list: List[int] = None) -> Product:
     """Convert an ES hit _source to our Product model."""
-    # Name: shortDescription is an array, take first element
-    short_desc = src.get("shortDescription") or src.get("shortDescriptionNative", "")
-    if isinstance(short_desc, list):
-        short_desc = short_desc[0] if short_desc else ""
-
-    # Full description
-    full_desc = src.get("fullDescription") or src.get("fullDescriptionNative", "")
-    if isinstance(full_desc, list):
-        full_desc = full_desc[0] if full_desc else ""
-
-    # Item code
-    item_code = src.get("itemCode", "")
-    if isinstance(item_code, list):
-        item_code = item_code[0] if item_code else ""
-
-    # Vendor item code
-    vendor_item_code = src.get("vendorItemCode") or src.get("vendorItemCodeNative", "")
-    if isinstance(vendor_item_code, list):
-        vendor_item_code = vendor_item_code[0] if vendor_item_code else ""
+    short_desc = _first(src.get("shortDescription") or src.get("shortDescriptionNative", ""))
+    full_desc = _first(src.get("fullDescription") or src.get("fullDescriptionNative", ""))
+    item_code = _first(src.get("itemCode", ""))
+    vendor_item_code = _first(src.get("vendorItemCode") or src.get("vendorItemCodeNative", ""))
 
     # Price: prefer bidPrice when filtering by bid, otherwise catalogPrice
     unit_price = 0.0
@@ -160,10 +159,7 @@ async def search_products(
         )
 
     try:
-        # Parse bid_ids
-        bid_id_list = []
-        if bid_ids:
-            bid_id_list = [int(b.strip()) for b in bid_ids.split(",") if b.strip().isdigit()]
+        bid_id_list = _parse_bid_ids(bid_ids)
 
         body = _build_search_query(
             q=search_term,
@@ -205,8 +201,8 @@ async def search_products(
         )
 
     except Exception as e:
-        logger.error(f"ES search error: {e}")
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+        logger.error("ES search error: %s", e)
+        raise HTTPException(status_code=500, detail="Search failed")
 
 
 # ===========================================
@@ -229,9 +225,7 @@ async def autocomplete(
         raise HTTPException(status_code=503, detail="Search service unavailable")
 
     try:
-        bid_id_list = []
-        if bid_ids:
-            bid_id_list = [int(b.strip()) for b in bid_ids.split(",") if b.strip().isdigit()]
+        bid_id_list = _parse_bid_ids(bid_ids)
 
         # Use the search_as_you_type field + standard multi_match
         must = {
@@ -275,9 +269,7 @@ async def autocomplete(
         items = []
         for hit in result.get("hits", {}).get("hits", []):
             src = hit["_source"]
-            name = src.get("shortDescription") or src.get("shortDescriptionNative", "")
-            if isinstance(name, list):
-                name = name[0] if name else ""
+            name = _first(src.get("shortDescription") or src.get("shortDescriptionNative", ""))
             vendor = src.get("vendorName") or src.get("vendorNameNative", "")
             price = float(src.get("bidPrice", 0) or src.get("catalogPrice", 0) or 0)
             image = src.get("thumbnailURL") or src.get("imageURL")
@@ -293,7 +285,7 @@ async def autocomplete(
         return items
 
     except Exception as e:
-        logger.error(f"ES autocomplete error: {e}")
+        logger.error("ES autocomplete error: %s", e)
         raise HTTPException(status_code=500, detail="Autocomplete failed")
 
 
