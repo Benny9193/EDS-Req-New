@@ -107,6 +107,19 @@ function app() {
             }
         },
 
+        // --- Cleanup (called by Alpine x-init destroy or page unload) ---
+        destroy() {
+            this.stopDashboardRefresh();
+            if (this._sessionCheckInterval) {
+                clearInterval(this._sessionCheckInterval);
+                this._sessionCheckInterval = null;
+            }
+            clearTimeout(this.globalAutocompleteTimer);
+            clearTimeout(this.browseAutocompleteTimer);
+            if (this._globalAbort) { this._globalAbort.abort(); this._globalAbort = null; }
+            if (this._browseAbort) { this._browseAbort.abort(); this._browseAbort = null; }
+        },
+
         // --- Init (orchestrates module inits) ---
         async init() {
             const authed = await this._initAuth();
@@ -122,6 +135,9 @@ function app() {
             this._startSessionCheck();
             this.startDashboardRefresh();
 
+            // Clean up intervals/timers on page unload to prevent leaks
+            window.addEventListener('beforeunload', () => this.destroy());
+
             // Demo persona switcher
             this.$el.addEventListener('demo-switch', (e) => {
                 const persona = this._demoPersonas[e.detail];
@@ -133,7 +149,8 @@ function app() {
 
         // --- Data fetching ---
         async fetchData() {
-            await Promise.all([
+            // Use allSettled so one failing fetch doesn't block the rest
+            await Promise.allSettled([
                 this.fetchProducts(),
                 this.fetchVendors(),
                 this.fetchCategories(),
