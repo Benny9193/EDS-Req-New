@@ -535,15 +535,16 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 ### Database Schema & Structure
 - [`SCHEMA.md`](/docs/SCHEMA.md) - Schema guide with ERD diagrams and organizational hierarchy. Pairs with `EDS_DATA_DICTIONARY.md` (reference) below
 - [`EDS_SUMMARY.md`](/docs/EDS_SUMMARY.md) - Executive summary of database objects
-- [`EDS_DATA_DICTIONARY.md`](/docs/EDS_DATA_DICTIONARY.md) - Complete generated table/column reference (438 tables, 4,638 columns)
+- [`DATABASE_INVENTORY.md`](/docs/DATABASE_INVENTORY.md) - Full inventory of all 22 databases on the SQL Server instance
+- [`EDS_DATA_DICTIONARY.md`](/docs/EDS_DATA_DICTIONARY.md) - Complete generated table/column reference (439 tables, 4,638 columns)
 - [`EDS_ERD.md`](/docs/EDS_ERD.md) - Entity relationship diagrams (Mermaid)
-- [`EDS_INDEXES.md`](/docs/EDS_INDEXES.md) - Index documentation (815 indexes, 59 unused)
+- [`EDS_INDEXES.md`](/docs/EDS_INDEXES.md) - Index documentation (1,115 indexes)
 - [`EDS_STATUS_CODES.md`](/docs/EDS_STATUS_CODES.md) - Status codes and lookup tables (StatusTable, 53 rows)
 
 ### Stored Procedures & Views
-- [`EDS_STORED_PROCEDURES.md`](/docs/EDS_STORED_PROCEDURES.md) - Technical reference: all 395 stored procedures with parameters and source
+- [`EDS_STORED_PROCEDURES.md`](/docs/EDS_STORED_PROCEDURES.md) - Technical reference: all 396 stored procedures with parameters and source
 - [`EDS_PROCEDURES_GUIDE.md`](/docs/EDS_PROCEDURES_GUIDE.md) - Business context guide: key procedures with usage examples and workflow context
-- [`EDS_VIEWS.md`](/docs/EDS_VIEWS.md) - Technical reference: all 474 views with SQL definitions and dependencies
+- [`EDS_VIEWS.md`](/docs/EDS_VIEWS.md) - Technical reference: all 475 views with SQL definitions and dependencies
 - [`EDS_VIEWS_GUIDE.md`](/docs/EDS_VIEWS_GUIDE.md) - Business context guide: views with naming conventions and domain organization
 
 ### Dependencies & Analysis
@@ -552,7 +553,7 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 - [`EDS_CIRCULAR_DEPS.md`](/docs/EDS_CIRCULAR_DEPS.md) - Circular dependency analysis (0 circular, 34 recursive)
 - [`EDS_RECURSIVE_PROCEDURES.md`](/docs/EDS_RECURSIVE_PROCEDURES.md) - 34 self-calling procedures (tree traversal, org hierarchy)
 - [`EDS_INFINITE_LOOP_ANALYSIS.md`](/docs/EDS_INFINITE_LOOP_ANALYSIS.md) - Infinite loop pattern analysis (1 HIGH, 78 LOW severity)
-- [`EDS_TRIGGERS.md`](/docs/EDS_TRIGGERS.md) - 52 triggers documentation (45 INSERT, 39 UPDATE, 10 DELETE)
+- [`EDS_TRIGGERS.md`](/docs/EDS_TRIGGERS.md) - 59 triggers documentation (includes view-based INSTEAD OF triggers)
 
 ### Data Management & Governance
 - [`EDS_DATA_OWNERSHIP.md`](/docs/EDS_DATA_OWNERSHIP.md) - Data stewardship roles and RACI matrix
