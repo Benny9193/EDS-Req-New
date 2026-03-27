@@ -9,10 +9,10 @@
 | Metric | Value |
 |--------|-------|
 | **Database** | SQL Server 2017 (dpa_EDSAdmin monitoring) |
-| **Tables** | 438 |
-| **Stored Procedures** | 395 |
-| **Views** | 474 |
-| **Database Size** | ~1.2 TB |
+| **Tables** | 439 |
+| **Stored Procedures** | 396 |
+| **Views** | 475 |
+| **Database Size** | ~1.4 TB |
 | **Daily Active Users** | ~200+ |
 
 ---
@@ -30,15 +30,15 @@
 
 ### Architecture
 - [System Overview](architecture/system-overview.md) - High-level architecture
-- [Application Stack](architecture/application-stack.md) - JDBC, Node.js, Kubernetes
+- [Application Stack](architecture/application-stack.md) - ColdFusion/Lucee, Node.js, Kubernetes
 - [Database Architecture](architecture/database-architecture.md) - SQL Server configuration
 
 ### Schema Reference
-- [Schema Overview](schema/index.md) - 438 tables summary
+- [Schema Overview](schema/index.md) - 439 tables summary
 - [Tables by Domain](schema/by-domain/) - Bidding, Orders, Vendors, etc.
-- [Stored Procedures](schema/stored-procedures.md) - 395 procedures
-- [Views](schema/views.md) - 474 views
-- [Triggers](schema/triggers.md) - 52 triggers
+- [Stored Procedures](schema/stored-procedures.md) - 396 procedures
+- [Views](schema/views.md) - 475 views
+- [Triggers](schema/triggers.md) - 59 triggers
 
 ### Performance
 - [Performance Overview](performance/index.md) - Current state

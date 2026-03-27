@@ -82,9 +82,9 @@ The EDS database is a large SQL Server 2017 database containing all procurement 
 ## Schema Documentation
 
 ### Detailed References
-- [Stored Procedures](stored-procedures.md) - All 395 procedures
-- [Views](views.md) - All 474 views
-- [Triggers](triggers.md) - 52 triggers with impact analysis
+- [Stored Procedures](stored-procedures.md) - All 396 procedures
+- [Views](views.md) - All 475 views
+- [Triggers](triggers.md) - 59 triggers with impact analysis
 - [Indexes](indexes.md) - Index recommendations
 
 ### Full Documentation

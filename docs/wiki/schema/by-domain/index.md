@@ -6,7 +6,7 @@
 
 ## Overview
 
-The EDS database contains **438 tables** organized into functional domains. This section provides domain-specific schema documentation.
+The EDS database contains **439 tables** organized into functional domains. This section provides domain-specific schema documentation.
 
 ---
 
