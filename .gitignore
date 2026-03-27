@@ -37,3 +37,6 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+docs/nul
+nul
+/agent
