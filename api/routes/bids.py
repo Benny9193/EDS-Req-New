@@ -148,7 +148,7 @@ async def list_bids(
         return result
 
     except Exception as e:
-        logger.error(f"Error listing bids: {e}")
+        logger.error("Error listing bids: %s", e)
         raise HTTPException(status_code=500, detail="Failed to retrieve bids")
 
 
@@ -228,7 +228,7 @@ async def get_bid(bid_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting bid {bid_id}: {e}")
+        logger.error("Error getting bid %s: %s", bid_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve bid details")
 
 
@@ -372,7 +372,7 @@ async def get_bid_products(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting bid products for bid {bid_id}: {e}")
+        logger.error("Error getting bid products for bid %s: %s", bid_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve bid products")
 
 
@@ -418,7 +418,7 @@ async def get_bid_vendors(bid_id: int):
         }
 
     except Exception as e:
-        logger.error(f"Error getting bid vendors for bid {bid_id}: {e}")
+        logger.error("Error getting bid vendors for bid %s: %s", bid_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve bid vendors")
 
 
@@ -465,5 +465,5 @@ async def get_bid_categories(bid_id: int):
         }
 
     except Exception as e:
-        logger.error(f"Error getting bid categories for bid {bid_id}: {e}")
+        logger.error("Error getting bid categories for bid %s: %s", bid_id, e)
         raise HTTPException(status_code=500, detail="Failed to retrieve bid categories")
