@@ -2,12 +2,15 @@
 Category API endpoints.
 """
 
+import logging
 from typing import List
 from fastapi import APIRouter, HTTPException
 
 from ..database import execute_query, execute_single
 from ..models import Category
 from ..cache import get_cache, CACHE_TTL_LONG
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
@@ -56,7 +59,8 @@ async def get_categories():
         return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error("Failed to fetch categories: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to fetch categories")
 
 
 @router.get("/{category_id}", response_model=Category)
@@ -87,4 +91,5 @@ async def get_category(category_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error("Failed to fetch category %s: %s", category_id, e)
+        raise HTTPException(status_code=500, detail="Failed to fetch category")
