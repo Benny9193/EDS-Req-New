@@ -32,7 +32,8 @@ MAX_AI_QUERY_LENGTH = 300
 
 # SQL patterns that are NOT allowed in generated queries
 _BLOCKED_SQL_PATTERNS = re.compile(
-    r"\b(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE|EXEC|EXECUTE|xp_|sp_configure|OPENROWSET|BULK)\b",
+    r"\b(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE|EXEC|EXECUTE|"
+    r"xp_|sp_configure|OPENROWSET|BULK|UNION|INTO|GRANT|REVOKE|SHUTDOWN)\b",
     re.IGNORECASE,
 )
 
@@ -119,7 +120,7 @@ def _generate_product_sql(natural_language: str, page: int, page_size: int) -> d
     if not result.success:
         raise HTTPException(
             status_code=500,
-            detail=f"AI query generation failed: {result.error}",
+            detail="AI query generation failed",
         )
 
     return result.data
@@ -191,5 +192,5 @@ async def ai_search(request: AISearchRequest):
         logger.error("AI search failed: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"AI search encountered an error: {str(e)}",
+            detail="AI search encountered an error",
         )
