@@ -6,6 +6,7 @@ function checkout() {
         cart: [],
         session: null,
         isSubmitting: false,
+        submitError: '',
         confirmationId: '',
         locations: [
             { id: 'main-office', name: 'Main Office / District HQ' },
@@ -75,6 +76,7 @@ function checkout() {
         async submitOrder() {
             if (this.isSubmitting) return;
             this.isSubmitting = true;
+            this.submitError = '';
 
             try {
                 const sessionId = this.session?.session_id;
@@ -119,7 +121,8 @@ function checkout() {
 
                 this.step = 5;
             } catch (error) {
-                alert('Error: ' + error.message);
+                // Use in-page error display instead of alert() to avoid XSS from server error messages
+                this.submitError = typeof error.message === 'string' ? error.message : 'Submission failed';
             } finally {
                 this.isSubmitting = false;
             }
