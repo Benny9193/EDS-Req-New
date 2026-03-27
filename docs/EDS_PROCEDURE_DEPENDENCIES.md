@@ -8,7 +8,7 @@ This document maps the dependencies between stored procedures, showing call chai
 
 ## Overview
 
-The EDS database contains 395 stored procedures with complex interdependencies. Understanding these dependencies is critical for:
+The EDS database contains 396 stored procedures with complex interdependencies. Understanding these dependencies is critical for:
 - Impact analysis before code changes
 - Performance tuning
 - Debugging cascading failures

@@ -8,7 +8,7 @@ This guide provides business context and usage guidance for the key views in the
 
 ## Overview
 
-The EDS database contains 474 views organized into functional domains. Views provide denormalized access to data for reporting, UI display, and application integration.
+The EDS database contains 475 views organized into functional domains. Views provide denormalized access to data for reporting, UI display, and application integration.
 
 ### Schema Distribution
 

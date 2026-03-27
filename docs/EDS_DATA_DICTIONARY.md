@@ -8,9 +8,9 @@ Generated: 2026-01-09 11:32:21
 
 | Metric | Count |
 |--------|-------|
-| Tables | 438 |
+| Tables | 439 |
 | Table Columns | 4638 |
-| Views | 474 |
+| Views | 475 |
 | View Columns | 6847 |
 | Tables with Primary Keys | 344 |
 | Foreign Key Relationships | 31 |
@@ -20,9 +20,9 @@ Generated: 2026-01-09 11:32:21
 
 | Object Type | Documented | Total | Coverage |
 |-------------|------------|-------|----------|
-| Tables | 438 | 438 | 100.0% |
+| Tables | 438 | 439 | 99.8% |
 | Table Columns | 4351 | 4638 | 93.8% |
-| Views | 474 | 474 | 100.0% |
+| Views | 474 | 475 | 99.8% |
 | View Columns | 6093 | 6847 | 89.0% |
 
 ### Tables Without Primary Keys (94)

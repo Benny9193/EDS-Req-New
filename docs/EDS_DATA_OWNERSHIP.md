@@ -8,7 +8,7 @@ This document defines data ownership responsibilities, stewardship roles, and go
 
 ## Overview
 
-The EDS database contains ~540 million rows across 438 tables, supporting purchasing operations for educational institutions. Clear data ownership ensures accountability, data quality, and compliance.
+The EDS database contains ~540 million rows across 439 tables, supporting purchasing operations for educational institutions. Clear data ownership ensures accountability, data quality, and compliance.
 
 ---
 
