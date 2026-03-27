@@ -11,6 +11,7 @@ from datetime import datetime
 import logging
 
 from api.database import execute_single, execute_query
+from api.middleware import SESSION_TIMEOUT_HOURS
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,8 @@ def _get_session_user(session_id: str, demo_approval_level: int = 1) -> dict:
         LEFT JOIN Users u ON s.UserId = u.UserId
         WHERE s.SessionId = ?
         AND s.SessionEnd IS NULL
-        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < 8
-    """, (sid,))
+        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < ?
+    """, (sid, SESSION_TIMEOUT_HOURS))
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
     return user
@@ -124,7 +125,7 @@ async def get_dashboard_summary(
             total_active += r["cnt"]
         order_counts["total_active"] = total_active
     except Exception as e:
-        logger.warning(f"Dashboard order counts query failed: {e}")
+        logger.warning("Dashboard order counts query failed: %s", e)
 
     # --- Pending Approvals (if user is an approver) ---
     pending_approvals = {"count": 0, "urgent": 0, "oldest_days": 0}
@@ -150,7 +151,7 @@ async def get_dashboard_summary(
                     "oldest_days": pending["oldest"] or 0,
                 }
         except Exception as e:
-            logger.warning(f"Dashboard pending approvals query failed: {e}")
+            logger.warning("Dashboard pending approvals query failed: %s", e)
 
     # --- Approver Info ---
     approver_info = None
@@ -196,7 +197,7 @@ async def get_dashboard_summary(
                 "time_label": time_label,
             })
     except Exception as e:
-        logger.warning(f"Dashboard recent activity query failed: {e}")
+        logger.warning("Dashboard recent activity query failed: %s", e)
 
     # --- Alerts ---
     alerts = []
