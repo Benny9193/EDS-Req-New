@@ -2,6 +2,7 @@
 Vendor API endpoints.
 """
 
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
@@ -9,10 +10,39 @@ from ..database import execute_query, execute_single
 from ..models import Vendor
 from ..cache import get_cache, CACHE_TTL_MEDIUM
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/vendors", tags=["Vendors"])
 
 # Cache key for vendors list (no search filter)
 VENDORS_CACHE_KEY = "vendors_list_{limit}"
+
+# Filter out placeholder vendor names, junk data, and EDS default vendor
+_EXCLUDE_NAMES = """
+    v.Name NOT IN ('Unknown', 'Unknown Vendor', 'UNKNOWN', 'TBD', 'N/A', '', '.')
+    AND LTRIM(RTRIM(v.Name)) != ''
+    AND LTRIM(RTRIM(v.Name)) != '.'
+    AND LEN(LTRIM(RTRIM(v.Name))) > 2
+    AND v.Name NOT LIKE '%NO BID%'
+    AND v.Name NOT LIKE '%NOT BID%'
+    AND v.Name NOT LIKE '%NO AWARD%'
+    AND v.Name NOT LIKE '%DELETED%'
+    AND v.Name NOT LIKE '**%'
+"""
+_EXCLUDE_EDS = "v.VendorId != 7853"  # EDS default catalog vendor
+
+
+def _rows_to_vendors(rows: list) -> list[Vendor]:
+    """Convert database rows to Vendor models."""
+    return [
+        Vendor(
+            id=row["id"],
+            name=row["name"] or "Unknown",
+            code=row.get("code"),
+            product_count=row.get("product_count", 0),
+        )
+        for row in rows
+    ]
 
 
 @router.get("", response_model=List[Vendor])
@@ -25,20 +55,6 @@ async def get_vendors(
     Vendors list (without search) is cached for 30 minutes.
     """
     try:
-        # Filter out placeholder vendor names, junk data, and EDS default vendor
-        exclude_names = """
-            v.Name NOT IN ('Unknown', 'Unknown Vendor', 'UNKNOWN', 'TBD', 'N/A', '', '.')
-            AND LTRIM(RTRIM(v.Name)) != ''
-            AND LTRIM(RTRIM(v.Name)) != '.'
-            AND LEN(LTRIM(RTRIM(v.Name))) > 2
-            AND v.Name NOT LIKE '%NO BID%'
-            AND v.Name NOT LIKE '%NOT BID%'
-            AND v.Name NOT LIKE '%NO AWARD%'
-            AND v.Name NOT LIKE '%DELETED%'
-            AND v.Name NOT LIKE '**%'
-        """
-        exclude_eds = "v.VendorId != 7853"  # EDS default catalog vendor
-
         if search:
             # Searches are not cached - need fresh results
             query = f"""
@@ -50,64 +66,47 @@ async def get_vendors(
                 FROM Vendors v
                 LEFT JOIN Items i ON v.VendorId = i.VendorId AND i.Active = 1 AND i.ListPrice > 0
                     AND i.Description IS NOT NULL AND i.Description != ''
-                WHERE v.Active = 1 AND v.Name LIKE ? AND {exclude_names} AND {exclude_eds}
+                WHERE v.Active = 1 AND v.Name LIKE ? AND {_EXCLUDE_NAMES} AND {_EXCLUDE_EDS}
                 GROUP BY v.VendorId, v.Name, v.Code
                 HAVING COUNT(i.ItemId) > 0
                 ORDER BY LTRIM(RTRIM(v.Name))
             """
             rows = execute_query(query, (limit, f"%{search}%"))
-        else:
-            # Check cache for full vendor list
-            cache = get_cache()
-            cache_key = VENDORS_CACHE_KEY.format(limit=limit)
-            cached_result = await cache.get(cache_key)
-            if cached_result is not None:
-                return cached_result
+            return _rows_to_vendors(rows)
 
-            # Cache miss - fetch from database
-            query = f"""
-                SELECT TOP (?)
-                    v.VendorId as id,
-                    LTRIM(RTRIM(v.Name)) as name,
-                    v.Code as code,
-                    COUNT(i.ItemId) as product_count
-                FROM Vendors v
-                LEFT JOIN Items i ON v.VendorId = i.VendorId AND i.Active = 1 AND i.ListPrice > 0
-                    AND i.Description IS NOT NULL AND i.Description != ''
-                WHERE v.Active = 1 AND {exclude_names} AND {exclude_eds}
-                GROUP BY v.VendorId, v.Name, v.Code
-                HAVING COUNT(i.ItemId) > 0
-                ORDER BY LTRIM(RTRIM(v.Name))
-            """
-            rows = execute_query(query, (limit,))
+        # Check cache for full vendor list
+        cache = get_cache()
+        cache_key = VENDORS_CACHE_KEY.format(limit=limit)
+        cached_result = await cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
 
-            result = [
-                Vendor(
-                    id=row["id"],
-                    name=row["name"] or "Unknown",
-                    code=row.get("code"),
-                    product_count=row.get("product_count", 0)
-                )
-                for row in rows
-            ]
+        # Cache miss - fetch from database
+        query = f"""
+            SELECT TOP (?)
+                v.VendorId as id,
+                LTRIM(RTRIM(v.Name)) as name,
+                v.Code as code,
+                COUNT(i.ItemId) as product_count
+            FROM Vendors v
+            LEFT JOIN Items i ON v.VendorId = i.VendorId AND i.Active = 1 AND i.ListPrice > 0
+                AND i.Description IS NOT NULL AND i.Description != ''
+            WHERE v.Active = 1 AND {_EXCLUDE_NAMES} AND {_EXCLUDE_EDS}
+            GROUP BY v.VendorId, v.Name, v.Code
+            HAVING COUNT(i.ItemId) > 0
+            ORDER BY LTRIM(RTRIM(v.Name))
+        """
+        rows = execute_query(query, (limit,))
+        result = _rows_to_vendors(rows)
 
-            # Cache for 30 minutes
-            await cache.set(cache_key, result, CACHE_TTL_MEDIUM)
+        # Cache for 30 minutes
+        await cache.set(cache_key, result, CACHE_TTL_MEDIUM)
 
-            return result
-
-        return [
-            Vendor(
-                id=row["id"],
-                name=row["name"] or "Unknown",
-                code=row.get("code"),
-                product_count=row.get("product_count", 0)
-            )
-            for row in rows
-        ]
+        return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error("Failed to fetch vendors: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to fetch vendors")
 
 
 @router.get("/{vendor_id}", response_model=Vendor)
@@ -140,4 +139,5 @@ async def get_vendor(vendor_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        logger.error("Failed to fetch vendor %s: %s", vendor_id, e)
+        raise HTTPException(status_code=500, detail="Failed to fetch vendor")
