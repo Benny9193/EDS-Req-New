@@ -15,10 +15,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Database Size | ~1.2 TB |
-| Tables | 438 |
-| Stored Procedures | 395 |
-| Views | 474 |
+| Database Size | ~1.4 TB |
+| Tables | 439 |
+| Stored Procedures | 396 |
+| Views | 475 |
 | Daily Users | 200+ |
 | Monthly Transactions | Millions |
 
