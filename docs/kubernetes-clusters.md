@@ -3,7 +3,7 @@
 **Last Updated:** 2026-03-05
 **Subscription:** Pay-As-You-Go (65c7cd1b-21ee-4be1-a85c-b72c5dfb12f0)
 **Tenant:** EDUCATIONAL DATA SERVICES (ed-data.com)
-**Kubernetes Version:** 1.32.10 (both clusters)
+**Kubernetes Version:** 1.32.11 (both clusters)
 **Region:** East US 2
 
 ---
@@ -168,12 +168,23 @@ kubens eds-web-app         # Example
 
 ### UAT-Only Namespaces
 - **districtmanager-uat** - District Manager app with nginx ingress (deployed 55 days ago)
-- **idiq-uat** - IDIQ (namespace exists, no deployments yet, 13 days old)
+- **idiq-uat** - IDIQ platform with active workloads:
+  - `uat-idiq-app` (2 replicas) — IDIQ application
+  - `uat-idiq-redis` (1 replica) — Redis backing store
+  - `uat-idiq-ingress` — Ingress at `idiq.ed-data-uat.com`
 
-### Cron Jobs (eds-sds namespace)
+### Cron Jobs
+
+**eds-cron namespace (prod):**
+- **cron-nodeindexer-index-data** — Daily at 7 AM UTC, node indexer data refresh
+
+**eds-sds namespace:**
 - **cron-sync-sds** - SDS sync cron job
   - Prod: 5 recent jobs, all **Running**
   - UAT: 5 recent jobs, all **Pending** (stuck on Windows node `aksnoinde000000`)
+
+**eds-web-app namespace (uat):**
+- **cron-check-system-logs** — Hourly system log check
 
 ---
 
