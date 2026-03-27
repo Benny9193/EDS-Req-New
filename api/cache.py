@@ -113,29 +113,30 @@ def cached(ttl: int = 3600, key_prefix: str = ""):
     Note: Only works for functions with no arguments or simple hashable arguments.
     For functions with complex arguments, use the cache directly.
     """
+    def _build_key(prefix: str, args: tuple, kwargs: dict) -> str:
+        """Build a cache key from prefix and function arguments."""
+        parts = [prefix]
+        if args:
+            parts.append("_".join(str(a) for a in args))
+        if kwargs:
+            parts.append("_".join(f"{k}={v}" for k, v in sorted(kwargs.items())))
+        return "_".join(parts)
+
     def decorator(func: Callable):
+        prefix = key_prefix or func.__name__
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            # Build cache key from function name and arguments
-            prefix = key_prefix or func.__name__
-
-            # Create key from args/kwargs (simple approach)
-            arg_str = ""
-            if args:
-                arg_str += "_" + "_".join(str(a) for a in args)
-            if kwargs:
-                arg_str += "_" + "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
-
-            cache_key = f"{prefix}{arg_str}"
+            cache_key = _build_key(prefix, args, kwargs)
 
             # Try to get from cache
             cached_value = await _cache.get(cache_key)
             if cached_value is not None:
-                logger.debug(f"Cache hit: {cache_key}")
+                logger.debug("Cache hit: %s", cache_key)
                 return cached_value
 
             # Cache miss - call function
-            logger.debug(f"Cache miss: {cache_key}")
+            logger.debug("Cache miss: %s", cache_key)
             result = await func(*args, **kwargs)
 
             # Store in cache
@@ -146,14 +147,7 @@ def cached(ttl: int = 3600, key_prefix: str = ""):
 
         # Add method to invalidate this function's cache
         async def invalidate(*args, **kwargs):
-            prefix = key_prefix or func.__name__
-            arg_str = ""
-            if args:
-                arg_str += "_" + "_".join(str(a) for a in args)
-            if kwargs:
-                arg_str += "_" + "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
-            cache_key = f"{prefix}{arg_str}"
-            await _cache.delete(cache_key)
+            await _cache.delete(_build_key(prefix, args, kwargs))
 
         wrapper.invalidate = invalidate
         return wrapper
