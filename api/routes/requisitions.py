@@ -11,6 +11,7 @@ import logging
 import math
 
 from api.database import get_db_cursor, execute_single, execute_query, transaction
+from api.middleware import SESSION_TIMEOUT_HOURS
 from api.routes.reports import invalidate_reports_cache
 from api.models import (
     RequisitionSubmission,
@@ -71,8 +72,8 @@ def get_user_from_session(session_id: int) -> Optional[dict]:
         LEFT JOIN Users u ON s.UserId = u.UserId
         WHERE s.SessionId = ?
         AND s.SessionEnd IS NULL
-        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < 8
-    """, (session_id,))
+        AND DATEDIFF(HOUR, s.SessionStart, GETDATE()) < ?
+    """, (session_id, SESSION_TIMEOUT_HOURS))
     return result
 
 
@@ -110,7 +111,7 @@ async def submit_requisition(request: RequisitionSubmission):
     # Validate session
     user_info = get_user_from_session(request.session_id)
     if not user_info:
-        logger.warning(f"Invalid session for requisition: {request.session_id}")
+        logger.warning("Invalid session for requisition: %s", request.session_id)
         raise_api_error(
             status.HTTP_401_UNAUTHORIZED,
             "SESSION_INVALID",
@@ -224,9 +225,8 @@ async def submit_requisition(request: RequisitionSubmission):
             # Transaction commits automatically on context exit
 
             logger.info(
-                f"Requisition {req_number} created: "
-                f"{len(request.items)} items, ${total_amount:.2f}, "
-                f"user={user_info['UserId']}"
+                "Requisition %s created: %d items, $%.2f, user=%s",
+                req_number, len(request.items), total_amount, user_info['UserId'],
             )
 
             # Invalidate reports cache for this district
@@ -244,7 +244,7 @@ async def submit_requisition(request: RequisitionSubmission):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Requisition submission error: {e}")
+        logger.error("Requisition submission error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "SUBMISSION_FAILED",
@@ -405,7 +405,7 @@ async def list_requisitions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"List requisitions error: {e}")
+        logger.error("List requisitions error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "LIST_FAILED",
@@ -492,7 +492,7 @@ async def get_requisition(requisition_id: int, session_id: str = Query(...)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get requisition error: {e}")
+        logger.error("Get requisition error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "RETRIEVAL_FAILED",
@@ -596,7 +596,7 @@ async def get_requisition_items(requisition_id: int, session_id: str = Query(...
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get requisition items error: {e}")
+        logger.error("Get requisition items error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "RETRIEVAL_FAILED",
@@ -685,14 +685,14 @@ async def update_requisition(
                 WHERE RequisitionId = ?
             """, tuple(params))
 
-        logger.info(f"Requisition {requisition_id} updated by user {user_info['UserId']}")
+        logger.info("Requisition %s updated by user %s", requisition_id, user_info['UserId'])
 
         return {"message": "Requisition updated successfully", "requisition_id": requisition_id}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Update requisition error: {e}")
+        logger.error("Update requisition error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "UPDATE_FAILED",
@@ -770,7 +770,7 @@ async def cancel_requisition(
                 requisition_id
             ))
 
-        logger.info(f"Requisition {current['RequisitionNumber']} cancelled by user {user_info['UserId']}")
+        logger.info("Requisition %s cancelled by user %s", current['RequisitionNumber'], user_info['UserId'])
         invalidate_reports_cache(user_info.get('DistrictId'))
 
         return {
@@ -782,7 +782,7 @@ async def cancel_requisition(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Cancel requisition error: {e}")
+        logger.error("Cancel requisition error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "CANCEL_FAILED",
@@ -895,7 +895,7 @@ async def list_pending_approvals(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"List pending approvals error: {e}")
+        logger.error("List pending approvals error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "LIST_FAILED",
@@ -986,7 +986,7 @@ async def approve_requisition(requisition_id: int, approval: RequisitionApproval
                 requisition_id
             ))
 
-        logger.info(f"Requisition {current['RequisitionNumber']} approved by {approver_name}")
+        logger.info("Requisition %s approved by %s", current['RequisitionNumber'], approver_name)
         invalidate_reports_cache(user_info.get('DistrictId'))
 
         return {
@@ -999,7 +999,7 @@ async def approve_requisition(requisition_id: int, approval: RequisitionApproval
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Approve requisition error: {e}")
+        logger.error("Approve requisition error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "APPROVAL_FAILED",
@@ -1084,7 +1084,7 @@ async def reject_requisition(requisition_id: int, rejection: RequisitionRejectio
                 requisition_id
             ))
 
-        logger.info(f"Requisition {current['RequisitionNumber']} rejected by {rejector_name}: {rejection.reason}")
+        logger.info("Requisition %s rejected by %s: %s", current['RequisitionNumber'], rejector_name, rejection.reason)
         invalidate_reports_cache(user_info.get('DistrictId'))
 
         return {
@@ -1097,7 +1097,7 @@ async def reject_requisition(requisition_id: int, rejection: RequisitionRejectio
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Reject requisition error: {e}")
+        logger.error("Reject requisition error: %s", e)
         raise_api_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "REJECTION_FAILED",
