@@ -109,12 +109,14 @@ async def get_dashboard_summary(
     try:
         orders_filter = "WHERE UserId = ?" if not is_demo else "WHERE 1=1"
         orders_params = [user_id] if not is_demo else []
+        orders_date_filter = "AND DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
         count_rows = execute_query(f"""
             SELECT StatusId, COUNT(*) AS cnt
             FROM Requisitions
             {orders_filter}
             AND Active = 1
             AND StatusId IN (?, ?, ?)
+            {orders_date_filter}
             GROUP BY StatusId
         """, tuple(orders_params + [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED]))
         total_active = 0
@@ -133,6 +135,7 @@ async def get_dashboard_summary(
         try:
             district_filter = "AND sc.DistrictId = ?" if not is_demo else ""
             district_params = [district_id] if not is_demo else []
+            date_filter = "AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
             pending = execute_single(f"""
                 SELECT
                     COUNT(*) AS cnt,
@@ -143,6 +146,7 @@ async def get_dashboard_summary(
                 WHERE r.StatusId IN (?, ?)
                 AND r.Active = 1
                 {district_filter}
+                {date_filter}
             """, tuple([STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] + district_params))
             if pending:
                 pending_approvals = {
