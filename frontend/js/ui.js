@@ -75,6 +75,43 @@ function uiModule() {
             return edsProduct.normalize(p);
         },
 
+        getBidIcon(name) {
+            if (!name) return 'fa-box-open';
+            const n = name.toLowerCase();
+            if (n.includes('classroom') || n.includes('teaching')) return 'fa-chalkboard-teacher';
+            if (n.includes('art')) return 'fa-palette';
+            if (n.includes('athletic') || n.includes('sport') || n.includes('physical ed')) return 'fa-running';
+            if (n.includes('science') || n.includes('lab')) return 'fa-flask';
+            if (n.includes('custodial') || n.includes('clean') || n.includes('janitorial')) return 'fa-broom';
+            if (n.includes('audio') || n.includes('visual') || n.includes('technology') || n.includes('computer')) return 'fa-tv';
+            if (n.includes('health') || n.includes('medical') || n.includes('nurse')) return 'fa-medkit';
+            if (n.includes('office') || n.includes('paper') || n.includes('toner') || n.includes('copier')) return 'fa-pen';
+            if (n.includes('music')) return 'fa-music';
+            if (n.includes('special need')) return 'fa-hands-helping';
+            if (n.includes('cafeteria') || n.includes('food')) return 'fa-utensils';
+            if (n.includes('furniture')) return 'fa-chair';
+            if (n.includes('library') || n.includes('book')) return 'fa-book';
+            if (n.includes('auto') || n.includes('vehicle')) return 'fa-car';
+            return 'fa-box-open';
+        },
+
+        getBidColor(name) {
+            if (!name) return 'var(--color-primary-500)';
+            const n = name.toLowerCase();
+            if (n.includes('classroom') || n.includes('teaching')) return '#8e44ad';
+            if (n.includes('art')) return '#e91e63';
+            if (n.includes('athletic') || n.includes('sport') || n.includes('physical ed')) return '#e74c3c';
+            if (n.includes('science') || n.includes('lab')) return '#1abc9c';
+            if (n.includes('custodial') || n.includes('clean')) return '#27ae60';
+            if (n.includes('audio') || n.includes('visual') || n.includes('technology')) return '#3498db';
+            if (n.includes('health') || n.includes('medical')) return '#f44336';
+            if (n.includes('office') || n.includes('paper')) return '#607d8b';
+            if (n.includes('music')) return '#9c27b0';
+            if (n.includes('special need')) return '#ff9800';
+            if (n.includes('cafeteria') || n.includes('food')) return '#f39c12';
+            return 'var(--color-primary-500)';
+        },
+
         getCategoryIcon(product) {
             const cat = (product.category || product.Category || '').toLowerCase();
             const desc = (product.Description || product.description || '').toLowerCase();

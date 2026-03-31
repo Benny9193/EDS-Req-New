@@ -1,6 +1,7 @@
 // Browse products - filtering, pagination, view modes
 function browseModule() {
     return {
+        browseSubView: 'picker',  // 'picker' = category selection, 'catalog' = product grid
         browseViewMode: 'grid',
         browseProducts: [],
         browseTotal: 0,
@@ -119,7 +120,9 @@ function browseModule() {
             this.browseMinPrice = '';
             this.browseMaxPrice = '';
             this.browseSortBy = 'name';
-            this.fetchBrowseProducts(true);
+            this.browseSubView = 'picker';
+            this.browseProducts = [];
+            this.browseTotal = 0;
         },
 
         browseRemoveFilter(key) {
@@ -129,6 +132,50 @@ function browseModule() {
             else if (key === 'bid') this.browseBidId = '';
             else if (key === 'price') { this.browseMinPrice = ''; this.browseMaxPrice = ''; }
             this.fetchBrowseProducts(true);
+        },
+
+        // --- Bid-centric "Create New Order" flow ---
+
+        selectBid(cat) {
+            // "Bid" is actually a supply category — sets the category filter
+            this.browseCategory = cat.name;
+            this.browseBidId = '';
+            this.browseSubView = 'catalog';
+            this.browseQuery = '';
+            this.browseVendor = '';
+            this.browseMinPrice = '';
+            this.browseMaxPrice = '';
+            this.fetchBrowseProducts(true);
+        },
+
+        browseBackToPicker() {
+            this.browseSubView = 'picker';
+            this.browseBidId = '';
+            this.browseCategory = '';
+            this.browseQuery = '';
+            this.browseProducts = [];
+            this.browseTotal = 0;
+        },
+
+        browseAllProducts() {
+            this.browseBidId = '';
+            this.browseSubView = 'catalog';
+            this.browseQuery = '';
+            this.fetchBrowseProducts(true);
+        },
+
+        pickerSearchSubmit() {
+            if (this.browseQuery.trim()) {
+                this.browseBidId = '';
+                this.browseSubView = 'catalog';
+                this.fetchBrowseProducts(true);
+            }
+        },
+
+        getSelectedBidName() {
+            if (this.browseCategory) return this.browseCategory;
+            if (this.browseQuery) return 'Search: ' + this.browseQuery;
+            return 'All Products';
         }
     };
 }

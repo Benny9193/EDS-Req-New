@@ -41,7 +41,7 @@
                 <i class="fas fa-home"></i> Dashboard
             </button>
             <button class="sidebar-nav-item" :class="{ active: activeView === 'browse' }" @click="switchView('browse'); mobileMenuOpen = false">
-                <i class="fas fa-store"></i> Browse Products
+                <i class="fas fa-plus-circle"></i> New Order
             </button>
             <button class="sidebar-nav-item" :class="{ active: activeView === 'orders' }" @click="switchView('orders'); mobileMenuOpen = false">
                 <i class="fas fa-clipboard-list"></i> My Orders
@@ -469,7 +469,7 @@
                         <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-3);">Quick Actions</h2>
                         <div class="flex gap-3" style="flex-wrap: wrap;">
                             <button class="btn btn-primary" @click="switchView('browse')">
-                                <i class="fas fa-store"></i> Browse Products
+                                <i class="fas fa-plus-circle"></i> Create New Order
                             </button>
                             <button class="btn btn-ghost" @click="switchView('orders')">
                                 <i class="fas fa-clipboard-list"></i> View Orders
@@ -543,11 +543,72 @@
             <!-- =============== BROWSE PRODUCTS VIEW =============== -->
             <template x-if="ready && activeView === 'browse'">
                 <div>
-                    <!-- Browse Header -->
+                    <!-- ===== CATEGORY PICKER (Sub-view A) ===== -->
+                    <div x-show="browseSubView === 'picker'">
+                        <div class="mb-6">
+                            <h1 style="font-size: var(--text-2xl);">Create New Order</h1>
+                            <p style="color: var(--text-secondary); margin-top: var(--space-1);">Select a supply category to get started</p>
+                        </div>
+
+                        <!-- Quick search bar -->
+                        <div class="card mb-6" style="padding: var(--space-4);">
+                            <div class="input-icon-wrapper" style="max-width:500px;">
+                                <i class="input-icon fas fa-search"></i>
+                                <input type="text" class="input input-with-icon" x-model="browseQuery"
+                                       @keydown.enter="pickerSearchSubmit()"
+                                       placeholder="Know what you need? Search all products...">
+                            </div>
+                        </div>
+
+                        <!-- Supply Category Cards Grid -->
+                        <div x-show="categories.length > 0" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:var(--space-4); margin-bottom:var(--space-6);">
+                            <template x-for="cat in categories.filter(c => c.product_count > 50)" :key="cat.id">
+                                <div class="card" style="padding:var(--space-5); cursor:pointer; transition:box-shadow 0.15s, transform 0.15s;"
+                                     @click="selectBid(cat)"
+                                     onmouseover="this.style.boxShadow='var(--shadow-md)'; this.style.transform='translateY(-2px)'"
+                                     onmouseout="this.style.boxShadow=''; this.style.transform=''">
+                                    <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-3);">
+                                        <div style="width:48px; height:48px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; flex-shrink:0;"
+                                             :style="'background:' + getBidColor(cat.name) + '15; color:' + getBidColor(cat.name)">
+                                            <i class="fas" :class="getBidIcon(cat.name)" style="font-size:1.25rem;"></i>
+                                        </div>
+                                        <div style="min-width:0;">
+                                            <div style="font-weight:var(--font-semibold); font-size:var(--text-base); line-height:var(--leading-tight);" x-text="cat.name"></div>
+                                            <div style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;" x-text="cat.product_count.toLocaleString() + ' products'"></div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; justify-content:flex-end;">
+                                        <i class="fas fa-chevron-right" style="font-size:var(--text-xs); color:var(--text-muted);"></i>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Loading state -->
+                        <div x-show="categories.length === 0" style="text-align:center; padding:var(--space-8); color:var(--text-muted);">
+                            <i class="fas fa-spinner fa-spin" style="font-size:var(--text-xl); margin-bottom:var(--space-2); display:block;"></i>
+                            Loading supply categories...
+                        </div>
+
+                        <!-- Browse All button -->
+                        <div style="text-align:center; padding:var(--space-4);">
+                            <button class="btn btn-ghost" @click="browseAllProducts()">
+                                <i class="fas fa-th-large"></i> Browse All Products
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===== PRODUCT CATALOG (Sub-view B) ===== -->
+                    <div x-show="browseSubView === 'catalog'">
+
+                    <!-- Back button + Browse Header -->
                     <div class="flex justify-between items-center mb-4" style="flex-wrap: wrap; gap: var(--space-3);">
                         <div>
-                            <h1 style="font-size: var(--text-2xl);">Browse Products</h1>
-                            <p style="color: var(--text-secondary); font-size: var(--text-sm);" x-text="browseTotal + ' products available'"></p>
+                            <button class="btn btn-ghost btn-sm" @click="browseBackToPicker()" style="margin-bottom:var(--space-2);">
+                                <i class="fas fa-arrow-left"></i> Back to Categories
+                            </button>
+                            <h1 style="font-size: var(--text-2xl);" x-text="getSelectedBidName()"></h1>
+                            <p style="color: var(--text-secondary); font-size: var(--text-sm);" x-text="browseTotal.toLocaleString() + ' products'"></p>
                         </div>
                         <div class="flex items-center gap-3">
                             <!-- View toggle -->
@@ -790,6 +851,8 @@
                                  x-text="'Showing ' + browseProducts.length + ' of ' + Number(browseTotal || 0).toLocaleString() + ' products'"></div>
                         </div>
                     </template>
+
+                    </div><!-- end catalog sub-view -->
                 </div>
             </template>
 
@@ -828,7 +891,7 @@
                             <h3 style="margin-bottom:var(--space-2);color:var(--text-primary);">No Orders Yet</h3>
                             <p style="color:var(--text-muted);margin-bottom:var(--space-4);">Orders you submit will appear here. Browse products to get started.</p>
                             <button class="btn btn-primary" @click="switchView('browse')">
-                                <i class="fas fa-shopping-bag" style="margin-right:var(--space-2);"></i> Browse Products
+                                <i class="fas fa-plus-circle" style="margin-right:var(--space-2);"></i> Create New Order
                             </button>
                         </div>
                     </template>

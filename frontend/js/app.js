@@ -249,8 +249,11 @@ function app() {
         switchView(view) {
             this.activeView = view;
             this.mobileMenuOpen = false;
-            if (view === 'browse' && this.browseProducts.length === 0) {
-                this.fetchBrowseProducts();
+            if (view === 'browse') {
+                this.browseSubView = 'picker';
+                this.browseBidId = '';
+                this.browseCategory = '';
+                if (this.categories.length === 0) this.fetchCategories();
             }
             if (view === 'approvals' && this.isAdmin) {
                 this.fetchPendingApprovals();
