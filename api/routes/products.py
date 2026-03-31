@@ -574,6 +574,8 @@ async def _try_es_search(
             "query": {"bool": bool_query},
             "from": (page - 1) * page_size,
             "size": page_size,
+            # Collapse by itemId to deduplicate the same product across bids
+            "collapse": {"field": "itemId"},
         }
 
         # Sort

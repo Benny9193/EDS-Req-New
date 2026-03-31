@@ -602,7 +602,7 @@
                     </div>
 
                     <!-- Loading -->
-                    <template x-if="browseLoading">
+                    <div x-show="browseLoading">
                         <div class="products-grid">
                             <template x-for="i in 6" :key="i">
                                 <div class="product-card">
@@ -615,13 +615,13 @@
                                 </div>
                             </template>
                         </div>
-                    </template>
+                    </div>
 
                     <!-- Products Grid View -->
-                    <template x-if="!browseLoading && browseViewMode === 'grid'">
+                    <div x-show="!browseLoading && browseViewMode === 'grid'">
                         <div>
                             <div class="products-grid" x-show="browseProducts.length > 0">
-                                <template x-for="product in browseProducts" :key="product.ItemNumber || product.item_number || product.id">
+                                <template x-for="(product, idx) in browseProducts" :key="(product.id || product.ItemNumber || idx) + '-' + idx">
                                     <div class="product-card">
                                         <div class="product-card-image" style="cursor:pointer;" @click="openProductModal(product)">
                                             <i class="fas" :class="getCategoryIcon(product)" :style="'font-size: 2.5rem; color: ' + getCategoryColor(product)"></i>
@@ -659,13 +659,13 @@
                                 <button class="btn btn-primary mt-4" @click="browseClearFilters()">Clear Filters</button>
                             </div>
                         </div>
-                    </template>
+                    </div>
 
                     <!-- Products List View -->
-                    <template x-if="!browseLoading && browseViewMode === 'list'">
+                    <div x-show="!browseLoading && browseViewMode === 'list'">
                         <div>
                             <div class="products-list" x-show="browseProducts.length > 0">
-                                <template x-for="product in browseProducts" :key="product.ItemNumber || product.item_number || product.id">
+                                <template x-for="(product, idx) in browseProducts" :key="(product.id || product.ItemNumber || idx) + '-' + idx">
                                     <div class="product-list-item">
                                         <div class="product-image" style="cursor:pointer; display:flex; align-items:center; justify-content:center;" @click="openProductModal(product)">
                                             <i class="fas" :class="getCategoryIcon(product)" :style="'font-size: 1.5rem; color: ' + getCategoryColor(product)"></i>
@@ -690,7 +690,7 @@
                                 </template>
                             </div>
                         </div>
-                    </template>
+                    </div>
 
                     <!-- Pagination -->
                     <template x-if="!browseLoading && browseTotalPages > 1">
