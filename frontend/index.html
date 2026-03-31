@@ -1196,53 +1196,85 @@
                     </template>
 
                     <!-- Approvals list -->
-                    <template x-if="approvalReqs.length > 0">
-                        <div>
-                            <div style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-3);">
-                                Showing <span x-text="approvalReqs.length"></span> of <span x-text="approvalsTotal"></span> pending requisitions
-                            </div>
+                    <div x-show="approvalReqs.length > 0">
+                        <div style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-3);">
+                            Showing <span x-text="approvalReqs.length"></span> of <span x-text="approvalsTotal.toLocaleString()"></span> pending requisitions
+                        </div>
 
-                            <div style="display:flex; flex-direction:column; gap: var(--space-3);">
-                                <template x-for="req in approvalReqs" :key="req.requisition_id">
-                                    <div class="card" style="padding: var(--space-4);">
-                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: var(--space-4); flex-wrap:wrap;">
-                                            <!-- Left: req info -->
-                                            <div style="flex:1; min-width:200px;">
-                                                <div style="display:flex; align-items:center; gap: var(--space-2); margin-bottom: var(--space-1);">
-                                                    <span style="font-weight: var(--font-bold); font-size: var(--text-md);" x-text="req.requisition_number || ('REQ-' + req.requisition_id)"></span>
-                                                    <span class="badge" :class="req.status === 'Submitted' ? 'badge-primary' : 'badge-warning'" x-text="req.status"></span>
-                                                </div>
-                                                <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
-                                                    Submitted by <strong x-text="req.submitted_by || 'Unknown'"></strong>
-                                                    <span style="color: var(--text-muted);" x-text="' \u2022 ' + approvalTimeAgo(req.created_at)"></span>
-                                                </div>
-                                                <div style="display:flex; gap: var(--space-4); font-size: var(--text-sm); color: var(--text-muted);">
-                                                    <span><i class="fas fa-box" style="margin-right:4px;"></i> <span x-text="(req.item_count || 0) + ' items'"></span></span>
-                                                    <span style="font-weight: var(--font-semibold); color: var(--color-primary-500);" x-text="formatPrice(req.total_amount)"></span>
-                                                </div>
-                                                <template x-if="req.notes_preview">
-                                                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2); font-style:italic;" x-text="req.notes_preview"></div>
+                        <div style="display:flex; flex-direction:column; gap: var(--space-3);">
+                            <template x-for="req in approvalReqs" :key="req.requisition_id">
+                                <div class="card" style="padding: var(--space-4);">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: var(--space-4); flex-wrap:wrap;">
+                                        <!-- Left: req info -->
+                                        <div style="flex:1; min-width:200px;">
+                                            <div style="display:flex; align-items:center; gap: var(--space-2); margin-bottom: var(--space-1);">
+                                                <span style="font-weight: var(--font-bold); font-size: var(--text-md);" x-text="req.requisition_number || ('REQ-' + req.requisition_id)"></span>
+                                                <span class="badge" :class="req.status === 'Submitted' ? 'badge-primary' : 'badge-warning'" x-text="req.status"></span>
+                                            </div>
+                                            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-1);">
+                                                Submitted by <strong x-text="req.submitted_by || 'Unknown'"></strong>
+                                                <span style="color: var(--text-muted);" x-text="' \u2022 ' + approvalTimeAgo(req.created_at)"></span>
+                                            </div>
+                                            <div x-show="req.school_name || req.district_name" style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-1);">
+                                                <i class="fas fa-school" style="margin-right:3px;"></i>
+                                                <span x-text="req.school_name || ''"></span>
+                                                <template x-if="req.school_name && req.district_name">
+                                                    <span style="color:var(--text-muted);"> &mdash; </span>
                                                 </template>
+                                                <span x-text="req.district_name || ''"></span>
                                             </div>
+                                            <div style="display:flex; gap: var(--space-4); font-size: var(--text-sm); color: var(--text-muted);">
+                                                <span><i class="fas fa-box" style="margin-right:4px;"></i> <span x-text="(req.item_count || 0) + ' items'"></span></span>
+                                                <span style="font-weight: var(--font-semibold); color: var(--color-primary-500);" x-text="formatPrice(req.total_amount)"></span>
+                                            </div>
+                                            <template x-if="req.notes_preview">
+                                                <div style="font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2); font-style:italic;" x-text="req.notes_preview"></div>
+                                            </template>
+                                        </div>
 
-                                            <!-- Right: action buttons -->
-                                            <div style="display:flex; gap: var(--space-2); align-items:center; flex-shrink:0;">
-                                                <button class="btn btn-ghost btn-sm" @click="openApprovalDetail(req)">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-primary btn-sm" @click="promptApprove(req)">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm" style="background: var(--color-accent-500); color: white; border-color: var(--color-accent-500);" @click="promptReject(req)">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            </div>
+                                        <!-- Right: action buttons -->
+                                        <div style="display:flex; gap: var(--space-2); align-items:center; flex-shrink:0;">
+                                            <button class="btn btn-ghost btn-sm" @click="openApprovalDetail(req)">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" @click="promptApprove(req)">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="btn btn-sm" style="background: var(--color-accent-500); color: white; border-color: var(--color-accent-500);" @click="promptReject(req)">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
                                         </div>
                                     </div>
-                                </template>
-                            </div>
+                                </div>
+                            </template>
                         </div>
-                    </template>
+
+                        <!-- Skeleton loading for infinite scroll -->
+                        <div x-show="approvalsLoadingMore" style="display:flex; flex-direction:column; gap:var(--space-3); margin-top:var(--space-3);">
+                            <template x-for="i in 3" :key="'skel-'+i">
+                                <div class="card" style="padding:var(--space-4);">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-4);">
+                                        <div style="flex:1;">
+                                            <div class="skeleton" style="height:18px; width:120px; margin-bottom:var(--space-2);"></div>
+                                            <div class="skeleton" style="height:14px; width:250px; margin-bottom:var(--space-2);"></div>
+                                            <div class="skeleton" style="height:12px; width:200px; margin-bottom:var(--space-2);"></div>
+                                            <div class="skeleton" style="height:14px; width:150px;"></div>
+                                        </div>
+                                        <div style="display:flex; gap:var(--space-2);">
+                                            <div class="skeleton" style="height:32px; width:60px; border-radius:var(--radius-md);"></div>
+                                            <div class="skeleton" style="height:32px; width:80px; border-radius:var(--radius-md);"></div>
+                                            <div class="skeleton" style="height:32px; width:70px; border-radius:var(--radius-md);"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- End of list indicator -->
+                        <div x-show="!approvalsLoadingMore && !approvalsHasMore && approvalReqs.length > 0" style="text-align:center; padding:var(--space-4); color:var(--text-muted); font-size:var(--text-sm);">
+                            All <span x-text="approvalReqs.length"></span> approvals loaded
+                        </div>
+                    </div>
 
                     <!-- ===== Approval Detail Modal ===== -->
                     <template x-if="showApprovalDetail && selectedApproval">

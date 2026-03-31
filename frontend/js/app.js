@@ -73,6 +73,10 @@ function app() {
             return [...new Set(pages)];
         },
 
+        get approvalsHasMore() {
+            return this.approvalReqs.length < this.approvalsTotal;
+        },
+
         get createListTotal() {
             return this.createListItems.reduce((sum, item) => {
                 return sum + (edsProduct.getPrice(item) * (item.quantity || 1));

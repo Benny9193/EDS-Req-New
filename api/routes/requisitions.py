@@ -849,10 +849,13 @@ async def list_pending_approvals(
                 r.DateEntered,
                 r.Comments,
                 ISNULL(NULLIF(RTRIM(u.FirstName + ' ' + u.LastName), ''), u.UserName) as SubmittedBy,
+                sc.Name as SchoolName,
+                d.Name as DistrictName,
                 (SELECT COUNT(*) FROM Detail d WHERE d.RequisitionId = r.RequisitionId) as ItemCount
             FROM Requisitions r
             JOIN Users u ON r.UserId = u.UserId
             JOIN School sc ON r.SchoolId = sc.SchoolId
+            JOIN District d ON sc.DistrictId = d.DistrictId
             LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
             WHERE r.StatusId IN (?, ?)
             AND r.Active = 1
@@ -890,6 +893,8 @@ async def list_pending_approvals(
                     "total_amount": float(row['TotalRequisitionCost'] or 0),
                     "item_count": row['ItemCount'] or 0,
                     "submitted_by": row['SubmittedBy'] or 'Unknown',
+                    "school_name": row.get('SchoolName') or None,
+                    "district_name": row.get('DistrictName') or None,
                     "created_at": row['DateEntered'].isoformat() if row['DateEntered'] else None,
                     "notes_preview": row['Comments'][:100] if row.get('Comments') else None
                 }

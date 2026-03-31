@@ -3,10 +3,12 @@ function approvalsModule() {
     return {
         approvalReqs: [],
         approvalsLoading: false,
+        approvalsLoadingMore: false,
         approvalsError: '',
         approvalsTotal: 0,
         approvalsPage: 1,
         approvalsPageSize: 20,
+        _approvalsScrollHandler: null,
 
         // Detail / action state
         selectedApproval: null,
@@ -26,11 +28,16 @@ function approvalsModule() {
         rejectReason: '',
         rejectSubmitting: false,
 
-        async fetchPendingApprovals() {
+        async fetchPendingApprovals(reset = true) {
             const sid = this._getSessionId();
             if (!sid) return;
-            this.approvalsLoading = true;
-            this.approvalsError = '';
+            if (reset) {
+                this.approvalsPage = 1;
+                this.approvalsLoading = true;
+                this.approvalsError = '';
+            } else {
+                this.approvalsLoadingMore = true;
+            }
             try {
                 const params = new URLSearchParams({
                     session_id: sid,
@@ -39,9 +46,15 @@ function approvalsModule() {
                 });
                 const result = await edsApi.get('/api/requisitions/pending/list?' + params.toString(), { silent: true });
                 if (result.ok) {
-                    this.approvalReqs = result.data.items || [];
+                    const items = result.data.items || [];
+                    if (reset) {
+                        this.approvalReqs = items;
+                    } else {
+                        this.approvalReqs = [...this.approvalReqs, ...items];
+                    }
                     this.approvalsTotal = result.data.total || 0;
                     this.pendingApprovalCount = this.approvalsTotal;
+                    this._setupApprovalsScroll();
                 } else if (result.status === 403) {
                     this.approvalsError = 'You do not have approval privileges.';
                     this.approvalReqs = [];
@@ -53,8 +66,27 @@ function approvalsModule() {
                 this.approvalsError = 'Network error loading approvals.';
             } finally {
                 this.approvalsLoading = false;
+                this.approvalsLoadingMore = false;
             }
         },
+
+        _setupApprovalsScroll() {
+            if (this._approvalsScrollHandler) return;
+            this._approvalsScrollHandler = () => {
+                if (this.activeView !== 'approvals') return;
+                if (this.approvalsLoadingMore || this.approvalsLoading) return;
+                if (this.approvalReqs.length >= this.approvalsTotal) return;
+                const scrollY = window.innerHeight + window.scrollY;
+                const threshold = document.body.offsetHeight - 400;
+                if (scrollY >= threshold) {
+                    this.approvalsPage++;
+                    this.fetchPendingApprovals(false);
+                }
+            };
+            window.addEventListener('scroll', this._approvalsScrollHandler, { passive: true });
+        },
+
+        // NOTE: approvalsHasMore getter lives in app.js (getters can't survive spread)
 
         async openApprovalDetail(req) {
             this.selectedApproval = req;
