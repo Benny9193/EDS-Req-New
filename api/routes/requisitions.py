@@ -837,6 +837,8 @@ async def list_pending_approvals(
         offset = (page - 1) * page_size
         district_filter = "AND sc.DistrictId = ?" if not is_demo else ""
         district_params = [user_info['DistrictId']] if not is_demo else []
+        # Demo mode: limit to last 2 years for realistic data
+        date_filter = "AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
         results = execute_query(f"""
             SELECT
                 r.RequisitionId,
@@ -846,7 +848,7 @@ async def list_pending_approvals(
                 r.TotalRequisitionCost,
                 r.DateEntered,
                 r.Comments,
-                u.UserName as SubmittedBy,
+                ISNULL(NULLIF(RTRIM(u.FirstName + ' ' + u.LastName), ''), u.UserName) as SubmittedBy,
                 (SELECT COUNT(*) FROM Detail d WHERE d.RequisitionId = r.RequisitionId) as ItemCount
             FROM Requisitions r
             JOIN Users u ON r.UserId = u.UserId
@@ -855,7 +857,8 @@ async def list_pending_approvals(
             WHERE r.StatusId IN (?, ?)
             AND r.Active = 1
             {district_filter}
-            ORDER BY r.DateEntered ASC
+            {date_filter}
+            ORDER BY r.DateEntered DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """, tuple(
             [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] +
@@ -870,6 +873,7 @@ async def list_pending_approvals(
             WHERE r.StatusId IN (?, ?)
             AND r.Active = 1
             {district_filter}
+            {date_filter}
         """, tuple(
             [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] +
             district_params
