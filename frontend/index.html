@@ -1392,8 +1392,15 @@
                                                 <template x-for="item in approvalDetailItems" :key="item.line_id || item.item_id || item.id">
                                                     <tr style="border-top: 1px solid var(--border-light);">
                                                         <td style="padding: var(--space-2) var(--space-3);">
-                                                            <div style="font-weight: var(--font-medium);" x-text="item.product_name || item.description || item.item_number || 'Item'"></div>
-                                                            <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.sku || item.item_number || ''"></div>
+                                                            <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                                                <div x-show="item.image_url" style="width:36px; height:36px; flex-shrink:0; border-radius:var(--radius-sm); overflow:hidden; background:var(--bg-subtle); display:flex; align-items:center; justify-content:center;">
+                                                                    <img :src="item.image_url" :alt="item.product_name" style="max-width:100%; max-height:100%; object-fit:contain;" loading="lazy" onerror="this.parentElement.style.display='none'">
+                                                                </div>
+                                                                <div>
+                                                                    <div style="font-weight: var(--font-medium);" x-text="item.product_name || item.description || item.item_number || 'Item'"></div>
+                                                                    <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.sku || item.item_number || ''"></div>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                         <td style="padding: var(--space-2) var(--space-3); text-align:center;" x-text="item.quantity || 1"></td>
                                                         <td style="padding: var(--space-2) var(--space-3); text-align:right;" x-text="formatPrice(item.unit_price || item.price || 0)"></td>
@@ -2242,11 +2249,18 @@
                                 <template x-for="item in orderDetailItems" :key="item.line_id">
                                     <tr>
                                         <td>
-                                            <div style="font-weight:var(--font-semibold);" x-text="item.product_name"></div>
-                                            <div style="font-size:var(--text-xs);color:var(--text-muted);">
-                                                <span x-show="item.vendor" x-text="item.vendor"></span>
-                                                <span x-show="item.vendor && item.sku"> &middot; </span>
-                                                <span x-show="item.sku" x-text="'SKU: ' + item.sku"></span>
+                                            <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                                <div x-show="item.image_url" style="width:40px; height:40px; flex-shrink:0; border-radius:var(--radius-sm); overflow:hidden; background:var(--bg-subtle); display:flex; align-items:center; justify-content:center;">
+                                                    <img :src="item.image_url" :alt="item.product_name" style="max-width:100%; max-height:100%; object-fit:contain;" loading="lazy" onerror="this.parentElement.style.display='none'">
+                                                </div>
+                                                <div style="min-width:0;">
+                                                    <div style="font-weight:var(--font-semibold);" x-text="item.product_name"></div>
+                                                    <div style="font-size:var(--text-xs);color:var(--text-muted);">
+                                                        <span x-show="item.vendor" x-text="item.vendor"></span>
+                                                        <span x-show="item.vendor && item.sku"> &middot; </span>
+                                                        <span x-show="item.sku" x-text="'SKU: ' + item.sku"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td style="text-align:center;" x-text="item.quantity"></td>

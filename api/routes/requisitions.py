@@ -566,7 +566,7 @@ async def get_requisition_items(requisition_id: int, session_id: str = Query(...
                     "Requisition not found"
                 )
 
-        # Get line items with product info
+        # Get line items with product info and images
         items = execute_query("""
             SELECT
                 d.DetailId as LineId,
@@ -576,10 +576,12 @@ async def get_requisition_items(requisition_id: int, session_id: str = Query(...
                 COALESCE(v.Name, '') as Vendor,
                 d.Quantity,
                 COALESCE(d.BidPrice, d.CatalogPrice, d.GrossPrice, 0) as UnitPrice,
-                d.Quantity * COALESCE(d.BidPrice, d.CatalogPrice, d.GrossPrice, 0) as ExtendedPrice
+                d.Quantity * COALESCE(d.BidPrice, d.CatalogPrice, d.GrossPrice, 0) as ExtendedPrice,
+                cr.ImageURL as ImageURL
             FROM Detail d
             LEFT JOIN Items i ON d.ItemId = i.ItemId
             LEFT JOIN Vendors v ON d.VendorId = v.VendorId
+            LEFT JOIN CrossRefs cr ON d.CrossRefId = cr.CrossRefId
             WHERE d.RequisitionId = ?
             ORDER BY d.DetailId
         """, (requisition_id,))
@@ -593,7 +595,8 @@ async def get_requisition_items(requisition_id: int, session_id: str = Query(...
                 vendor=item['Vendor'],
                 quantity=item['Quantity'] or 1,
                 unit_price=float(item['UnitPrice'] or 0),
-                extended_price=float(item['ExtendedPrice'] or 0)
+                extended_price=float(item['ExtendedPrice'] or 0),
+                image_url=item.get('ImageURL') or None,
             )
             for item in items
         ]

@@ -212,6 +212,7 @@ class RequisitionLineItem(BaseModel):
     quantity: int = Field(..., description="Quantity ordered")
     unit_price: float = Field(..., description="Unit price")
     extended_price: float = Field(..., description="Line total (qty * price)")
+    image_url: Optional[str] = Field(None, description="Product image URL")
 
 
 class RequisitionListItem(BaseModel):
