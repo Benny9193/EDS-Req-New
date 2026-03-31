@@ -40,6 +40,7 @@ STATUS_AT_EDS = 5           # I - At EDS
 
 # Map StatusId → display name (for API responses)
 STATUS_NAMES = {
+    None: "Draft",
     1: "On Hold",
     2: "Pending Approval",
     3: "Approved",
@@ -384,7 +385,7 @@ async def list_requisitions(
             RequisitionListItem(
                 requisition_id=row['RequisitionId'],
                 requisition_number=row['RequisitionNumber'],
-                status=row['StatusName'] or STATUS_NAMES.get(row['StatusId'], 'Unknown'),
+                status=row['StatusName'] or STATUS_NAMES.get(row['StatusId'], 'Draft'),
                 total_amount=float(row['TotalRequisitionCost'] or 0),
                 item_count=row['ItemCount'] or 0,
                 created_at=row['DateEntered'],
@@ -483,7 +484,7 @@ async def get_requisition(requisition_id: int, session_id: str = Query(...)):
         return {
             "requisition_id": result['RequisitionId'],
             "requisition_number": result['RequisitionNumber'],
-            "status": result['StatusName'] or STATUS_NAMES.get(result['StatusId'], 'Unknown'),
+            "status": result['StatusName'] or STATUS_NAMES.get(result['StatusId'], 'Draft'),
             "total_amount": float(result['TotalRequisitionCost'] or 0),
             "notes": result.get('Comments'),
             "created_at": result['DateEntered'].isoformat() if result.get('DateEntered') else None
@@ -878,7 +879,7 @@ async def list_pending_approvals(
                 {
                     "requisition_id": row['RequisitionId'],
                     "requisition_number": row['RequisitionNumber'],
-                    "status": row['StatusName'] or STATUS_NAMES.get(row['StatusId'], 'Unknown'),
+                    "status": row['StatusName'] or STATUS_NAMES.get(row['StatusId'], 'Draft'),
                     "total_amount": float(row['TotalRequisitionCost'] or 0),
                     "item_count": row['ItemCount'] or 0,
                     "submitted_by": row['SubmittedBy'] or 'Unknown',
