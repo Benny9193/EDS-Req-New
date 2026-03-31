@@ -1025,8 +1025,15 @@
                                         </template>
                                     </div>
                                     </div>
+                                    <select class="input" x-model="createListCategoryFilter" @change="if(createListSearch.trim().length >= 2) createListAutocomplete()"
+                                            style="max-width:170px; flex-shrink:0;">
+                                        <option value="">All Categories</option>
+                                        <template x-for="cat in categories" :key="cat.category_id || cat.name">
+                                            <option :value="cat.name" x-text="cat.name"></option>
+                                        </template>
+                                    </select>
                                     <select class="input" x-model="createListVendorFilter" @change="if(createListSearch.trim().length >= 2) createListAutocomplete()"
-                                            style="max-width:200px; flex-shrink:0;">
+                                            style="max-width:170px; flex-shrink:0;">
                                         <option value="">All Suppliers</option>
                                         <template x-for="v in vendors.slice(0, 50)" :key="v.vendor_id || v.name">
                                             <option :value="v.name" x-text="v.name"></option>

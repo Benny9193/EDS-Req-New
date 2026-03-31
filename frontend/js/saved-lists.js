@@ -11,6 +11,7 @@ function savedListsModule() {
         createListResults: [],
         createListLoading: false,
         createListVendorFilter: '',
+        createListCategoryFilter: '',
         _createListAbort: null,
         _createListTimer: null,
 
@@ -29,6 +30,7 @@ function savedListsModule() {
             this.createListSearch = '';
             this.createListResults = [];
             this.createListVendorFilter = '';
+            this.createListCategoryFilter = '';
         },
 
         createListAutocomplete() {
@@ -45,6 +47,7 @@ function savedListsModule() {
                 this._createListAbort = new AbortController();
                 let url = '/api/products/search/autocomplete?q=' + encodeURIComponent(q) + '&limit=10';
                 if (this.createListVendorFilter) url += '&vendor=' + encodeURIComponent(this.createListVendorFilter);
+                if (this.createListCategoryFilter) url += '&category=' + encodeURIComponent(this.createListCategoryFilter);
                 const r = await fetch(url, { signal: this._createListAbort.signal });
                 if (r.ok) {
                     const d = await r.json();
@@ -61,6 +64,8 @@ function savedListsModule() {
             const existing = this.createListItems.find(i => edsProduct.getId(i) === id);
             if (existing) {
                 existing.quantity = (existing.quantity || 1) + 1;
+                const name = (edsProduct.getName(product) || 'Item').substring(0, 40);
+                this.showToast(name + ' already in list — quantity increased to ' + existing.quantity, 'fas fa-layer-group', 'var(--color-warning-500)');
             } else {
                 this.createListItems.push({ ...product, quantity: 1 });
             }

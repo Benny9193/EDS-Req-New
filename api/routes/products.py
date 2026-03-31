@@ -275,7 +275,8 @@ async def get_products(
 async def autocomplete_search(
     q: str = Query(..., min_length=2, max_length=MAX_QUERY_LENGTH, description="Search query"),
     limit: int = Query(10, ge=1, le=20, description="Max results"),
-    vendor: Optional[str] = Query(None, description="Filter by vendor name")
+    vendor: Optional[str] = Query(None, description="Filter by vendor name"),
+    category: Optional[str] = Query(None, description="Filter by category name or ID")
 ) -> List[Product]:
     """
     Quick autocomplete search for products.
@@ -287,17 +288,19 @@ async def autocomplete_search(
         if not safe_q or len(safe_q) < 2:
             return []
         safe_vendor = sanitize_search_input(vendor) if vendor else None
+        safe_category = sanitize_search_input(category) if category else None
 
         # Try ES autocomplete first
         if ES_ENABLED:
-            es_result = await _try_es_autocomplete(safe_q, limit, vendor_filter=safe_vendor)
+            es_result = await _try_es_autocomplete(safe_q, limit, vendor_filter=safe_vendor, category_filter=safe_category)
             if es_result is not None:
                 return es_result
 
         # SQL fallback: Check cache first
         cache = get_cache()
         vendor_key = safe_vendor.lower() if safe_vendor else "all"
-        cache_key = f"autocomplete_{safe_q.lower()}_{vendor_key}_{limit}"
+        category_key = safe_category.lower() if safe_category else "all"
+        cache_key = f"autocomplete_{safe_q.lower()}_{vendor_key}_{category_key}_{limit}"
         cached_result = await cache.get(cache_key)
         if cached_result is not None:
             return cached_result
@@ -327,6 +330,13 @@ async def autocomplete_search(
         if safe_vendor:
             query += "    AND v.Name LIKE ?\n"
             params.append(f"%{safe_vendor}%")
+        if safe_category:
+            if safe_category.isdigit():
+                query += "    AND i.CategoryId = ?\n"
+                params.append(int(safe_category))
+            else:
+                query += "    AND c.Name LIKE ?\n"
+                params.append(f"%{safe_category}%")
         query += "    ORDER BY i.Description"
         params = tuple(params)
         rows = execute_query(query, params)
@@ -639,7 +649,7 @@ async def _try_es_search(
         return None
 
 
-async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None):
+async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None, category_filter: str = None):
     """Try ES autocomplete against existing pricing_consolidated index, return list of Products or None."""
     client = get_es_client()
     if client is None:
@@ -662,6 +672,11 @@ async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None):
         }]
         if vendor_filter:
             must_clauses.append({"match_phrase": {"vendorName": vendor_filter}})
+        if category_filter:
+            if category_filter.isdigit():
+                must_clauses.append({"term": {"categoryId": int(category_filter)}})
+            else:
+                must_clauses.append({"match_phrase": {"categoryName": category_filter}})
 
         body = {
             "size": limit * 3,  # fetch extra for dedup
