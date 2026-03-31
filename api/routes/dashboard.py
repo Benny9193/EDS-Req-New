@@ -143,6 +143,42 @@ async def get_dashboard_summary(
         user_budget = 50000.0  # Default budget
         breakdown = []
 
+    # Monthly spending trend (last 12 months)
+    monthly_spending = []
+    try:
+        if is_demo and demo_district_id:
+            monthly_rows = execute_query("""
+                SELECT
+                    FORMAT(r.DateEntered, 'yyyy-MM') as month,
+                    ISNULL(SUM(r.TotalRequisitionCost), 0) as amount,
+                    COUNT(*) as order_count
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                WHERE sc.DistrictId = ?
+                AND r.StatusId NOT IN (?, ?)
+                AND r.Active = 1
+                AND r.DateEntered >= DATEADD(MONTH, -12, GETDATE())
+                GROUP BY FORMAT(r.DateEntered, 'yyyy-MM')
+                ORDER BY FORMAT(r.DateEntered, 'yyyy-MM')
+            """, (demo_district_id, STATUS_REJECTED, STATUS_ON_HOLD))
+        else:
+            monthly_rows = execute_query("""
+                SELECT
+                    FORMAT(DateEntered, 'yyyy-MM') as month,
+                    ISNULL(SUM(TotalRequisitionCost), 0) as amount,
+                    COUNT(*) as order_count
+                FROM Requisitions
+                WHERE UserId = ?
+                AND StatusId NOT IN (?, ?)
+                AND Active = 1
+                AND DateEntered >= DATEADD(MONTH, -12, GETDATE())
+                GROUP BY FORMAT(DateEntered, 'yyyy-MM')
+                ORDER BY FORMAT(DateEntered, 'yyyy-MM')
+            """, (user_id, STATUS_REJECTED, STATUS_ON_HOLD))
+        monthly_spending = [{"month": row["month"], "amount": round(float(row["amount"]), 2), "orders": row["order_count"]} for row in monthly_rows]
+    except Exception as e:
+        logger.warning("Dashboard monthly spending query failed: %s", e)
+
     if user_budget > 0:
         budget_data = {
             "budget": round(user_budget, 2),
@@ -150,6 +186,8 @@ async def get_dashboard_summary(
             "remaining": round(user_budget - spent, 2),
             "percent": round(spent / user_budget * 100) if user_budget > 0 else 0,
             "breakdown": breakdown,
+            "monthly_spending": monthly_spending,
+            "district_name": district_name if is_demo else None,
         }
 
     # --- My Orders Status Counts ---
@@ -192,8 +230,15 @@ async def get_dashboard_summary(
     pending_approvals = {"count": 0, "urgent": 0, "oldest_days": 0}
     if approval_level >= 1:
         try:
-            district_filter = "AND sc.DistrictId = ?" if not is_demo else ""
-            district_params = [district_id] if not is_demo else []
+            if is_demo and demo_district_id:
+                district_filter = "AND sc.DistrictId = ?"
+                district_params = [demo_district_id]
+            elif not is_demo:
+                district_filter = "AND sc.DistrictId = ?"
+                district_params = [district_id]
+            else:
+                district_filter = ""
+                district_params = []
             date_filter = "AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
             pending = execute_single(f"""
                 SELECT
