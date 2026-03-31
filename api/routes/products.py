@@ -583,25 +583,41 @@ async def _try_es_search(
             filters.append({"range": {"bidPrice": price_filter}})
 
         if query and query.strip():
+            q = query.strip()
+            # For multi-word queries, require all terms to match (AND) to avoid
+            # "Dixon pencil" returning everything with just "pencil"
+            word_count = len(q.split())
             must_clause = [{
                 "multi_match": {
-                    "query": query.strip(),
+                    "query": q,
                     "fields": [
                         "shortDescription^3", "productNames^2.5",
-                        "allStringFields", "fullDescription",
-                        "itemCode^4", "vendorName^1.5",
-                        "vendorItemCode^2", "manufacturer^1.5",
-                        "keywords^2",
+                        "combinedTypeAheads^2",
+                        "itemCode^4", "vendorItemCode^2",
+                        "fullDescription",
                     ],
                     "type": "best_fields",
-                    "fuzziness": "AUTO",
+                    "operator": "and" if word_count > 1 else "or",
+                    "fuzziness": "AUTO" if word_count == 1 else "0",
                     "prefix_length": 2,
                 }
             }]
+            # Boost exact/phrase matches for better relevance ordering
+            should_clause = [
+                {"match_phrase": {"shortDescription": {"query": q, "boost": 10}}},
+                {"match_phrase": {"productNames": {"query": q, "boost": 8}}},
+                {"match_phrase": {"combinedTypeAheads": {"query": q, "boost": 8}}},
+            ]
+            # For single-word queries that look like item codes, boost prefix match
+            if word_count == 1:
+                should_clause.append({"prefix": {"itemCode": {"value": q.lower(), "boost": 15}}})
         else:
             must_clause = [{"match_all": {}}]
+            should_clause = []
 
         bool_query = {"must": must_clause}
+        if should_clause:
+            bool_query["should"] = should_clause
         if filters:
             bool_query["filter"] = filters
 
@@ -611,6 +627,8 @@ async def _try_es_search(
             "size": page_size,
             # Collapse by itemId to deduplicate the same product across bids
             "collapse": {"field": "itemId"},
+            # Get accurate unique product count after collapse
+            "aggs": {"unique_products": {"cardinality": {"field": "itemId"}}},
         }
 
         # Sort
@@ -624,7 +642,9 @@ async def _try_es_search(
 
         result = await client.search(index=ES_INDEX, body=body)
         hits = result.get("hits", {})
-        total = hits.get("total", {}).get("value", 0)
+        # Use cardinality aggregation for accurate unique count after collapse
+        aggs = result.get("aggregations", {})
+        total = aggs.get("unique_products", {}).get("value", hits.get("total", {}).get("value", 0))
         total_pages = max(1, (total + page_size - 1) // page_size)
 
         products = []
@@ -664,6 +684,21 @@ async def _try_es_search(
                 unit_price=price,
                 tags=[],
             ))
+
+        # Post-query dedup: same product can have different itemIds across catalogs.
+        # Keep the lowest-priced entry per name+vendor_item_code combo.
+        seen = {}
+        deduped = []
+        for p in products:
+            key = (p.name.lower().strip(), p.vendor_item_code.lower().strip()) if p.vendor_item_code else (p.name.lower().strip(), p.vendor.lower().strip())
+            if key not in seen:
+                seen[key] = p
+                deduped.append(p)
+            elif p.unit_price > 0 and (seen[key].unit_price == 0 or p.unit_price < seen[key].unit_price):
+                idx = deduped.index(seen[key])
+                deduped[idx] = p
+                seen[key] = p
+        products = deduped
 
         return ProductListResponse(
             products=products,
