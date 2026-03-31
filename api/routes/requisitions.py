@@ -12,6 +12,7 @@ import math
 
 from api.database import get_db_cursor, execute_single, execute_query, transaction
 from api.middleware import SESSION_TIMEOUT_HOURS
+import re
 from api.routes.reports import invalidate_reports_cache
 from api.models import (
     RequisitionSubmission,
@@ -801,6 +802,7 @@ async def cancel_requisition(
 @router.get("/pending/list")
 async def list_pending_approvals(
     session_id: str = Query(...),
+    search: Optional[str] = Query(None, description="Search by requisition number, school, district, or submitter"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100)
 ):
@@ -839,6 +841,24 @@ async def list_pending_approvals(
         district_params = [user_info['DistrictId']] if not is_demo else []
         # Demo mode: limit to last 2 years for realistic data
         date_filter = "AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
+        # Search filter across requisition number, school, district, submitter
+        search_filter = ""
+        search_params = []
+        if search:
+            safe_search = re.sub(r'[^\w\s\-.,\'\"()]', '', search).strip()[:100]
+            if safe_search:
+                search_filter = """AND (
+                    CAST(r.RequisitionNumber AS VARCHAR) LIKE ?
+                    OR sc.Name LIKE ?
+                    OR d.Name LIKE ?
+                    OR u.UserName LIKE ?
+                    OR u.FirstName LIKE ?
+                    OR u.LastName LIKE ?
+                )"""
+                pattern = f"%{safe_search}%"
+                search_params = [pattern] * 6
+
+        base_params = [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] + district_params + search_params
         results = execute_query(f"""
             SELECT
                 r.RequisitionId,
@@ -861,26 +881,23 @@ async def list_pending_approvals(
             AND r.Active = 1
             {district_filter}
             {date_filter}
+            {search_filter}
             ORDER BY r.DateEntered DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-        """, tuple(
-            [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] +
-            district_params +
-            [offset, page_size]
-        ))
+        """, tuple(base_params + [offset, page_size]))
 
         count_result = execute_single(f"""
             SELECT COUNT(*) as total
             FROM Requisitions r
+            JOIN Users u ON r.UserId = u.UserId
             JOIN School sc ON r.SchoolId = sc.SchoolId
+            JOIN District d ON sc.DistrictId = d.DistrictId
             WHERE r.StatusId IN (?, ?)
             AND r.Active = 1
             {district_filter}
             {date_filter}
-        """, tuple(
-            [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL] +
-            district_params
-        ))
+            {search_filter}
+        """, tuple(base_params))
 
         total = count_result['total'] if count_result else 0
 

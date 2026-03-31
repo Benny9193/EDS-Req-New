@@ -8,7 +8,9 @@ function approvalsModule() {
         approvalsTotal: 0,
         approvalsPage: 1,
         approvalsPageSize: 20,
+        approvalsSearch: '',
         _approvalsScrollHandler: null,
+        _approvalsSearchTimer: null,
 
         // Detail / action state
         selectedApproval: null,
@@ -44,6 +46,9 @@ function approvalsModule() {
                     page: this.approvalsPage,
                     page_size: this.approvalsPageSize
                 });
+                if (this.approvalsSearch.trim()) {
+                    params.set('search', this.approvalsSearch.trim());
+                }
                 const result = await edsApi.get('/api/requisitions/pending/list?' + params.toString(), { silent: true });
                 if (result.ok) {
                     const items = result.data.items || [];
@@ -84,6 +89,18 @@ function approvalsModule() {
                 }
             };
             window.addEventListener('scroll', this._approvalsScrollHandler, { passive: true });
+        },
+
+        approvalsSearchInput() {
+            clearTimeout(this._approvalsSearchTimer);
+            this._approvalsSearchTimer = setTimeout(() => {
+                this.fetchPendingApprovals(true);
+            }, 400);
+        },
+
+        clearApprovalsSearch() {
+            this.approvalsSearch = '';
+            this.fetchPendingApprovals(true);
         },
 
         // NOTE: approvalsHasMore getter lives in app.js (getters can't survive spread)
