@@ -251,8 +251,11 @@
                                  onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
                                 <div class="flex justify-between items-center" style="margin-bottom: var(--space-4);">
                                     <div style="display:flex; align-items:center; gap:var(--space-2);">
-                                        <h2 style="font-size: var(--text-lg); margin: 0;">My Budget</h2>
+                                        <h2 style="font-size: var(--text-lg); margin: 0;" x-text="dashboardBudget.scope === 'school' ? 'My School Budget' : 'District Budget'"></h2>
                                         <i class="fas fa-chevron-right" style="font-size:var(--text-xs); color:var(--text-muted); transition:transform 0.2s;" :style="showBudgetDetail ? 'transform:rotate(90deg)' : ''"></i>
+                                    </div>
+                                    <div x-show="dashboardBudget.school_name" style="font-size:var(--text-xs); color:var(--text-muted); margin-top:2px;">
+                                        <i class="fas fa-school" style="margin-right:2px;"></i> <span x-text="dashboardBudget.school_name"></span>
                                     </div>
                                     <span class="badge" :class="{
                                         'badge-success': budgetStatusLabel() === 'Healthy' || budgetStatusLabel() === 'On Track',
@@ -434,10 +437,16 @@
                                     <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-subtle); border-radius: var(--radius-md);">
                                         <i :class="activityStatusIcon(act.status)" :style="'color:' + activityStatusColor(act.status) + ';font-size:var(--text-lg);flex-shrink:0;width:20px;text-align:center;'"></i>
                                         <div style="flex: 1; min-width: 0;">
-                                            <div style="font-weight: var(--font-medium); font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" x-text="act.name"></div>
-                                            <div style="font-size: var(--text-xs); color: var(--text-muted);">
-                                                <span x-text="act.status"></span>
+                                            <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                                <span style="font-weight: var(--font-medium); font-size: var(--text-sm);" x-text="'#' + act.name"></span>
+                                                <span class="badge" style="font-size:var(--text-2xs);" :class="{
+                                                    'badge-success': act.status === 'Approved' || act.status === 'PO Printed',
+                                                    'badge-warning': act.status === 'Pending Approval' || act.status === 'On Hold',
+                                                    'badge-info': act.status === 'Draft' || act.status === 'At EDS',
+                                                    'badge-accent': act.status === 'Rejected' || act.status === 'Cancelled'
+                                                }" x-text="act.status"></span>
                                             </div>
+                                            <div x-show="act.amount > 0" style="font-size: var(--text-xs); color: var(--text-muted);" x-text="'$' + act.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})"></div>
                                         </div>
                                         <div style="font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; flex-shrink: 0;" x-text="act.time_label"></div>
                                     </div>

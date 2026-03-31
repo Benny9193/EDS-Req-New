@@ -82,8 +82,11 @@ async def get_dashboard_summary(
 
     # --- Budget & Spending ---
     budget_data = {"budget": 0, "spent": 0, "remaining": 0, "percent": 0, "breakdown": []}
+    demo_district_id = None
+    district_name = None
+    demo_school_name = None
     if is_demo:
-        # Demo: show a single representative district's budget (pick the busiest one)
+        # First, find the top-spending district for reference
         demo_budget = execute_single("""
             SELECT TOP 1
                 d.DistrictId as district_id,
@@ -100,12 +103,39 @@ async def get_dashboard_summary(
             HAVING SUM(r.TotalRequisitionCost) > 0
             ORDER BY SUM(r.TotalRequisitionCost) DESC
         """, (STATUS_REJECTED, STATUS_ON_HOLD))
-        spent = float(demo_budget["spent"]) if demo_budget else 0
         district_name = demo_budget["district_name"] if demo_budget else "Demo District"
         demo_district_id = demo_budget["district_id"] if demo_budget else None
-        user_budget = spent * 1.35  # 35% headroom
-        # Get top spending categories for breakdown (using each requisition's primary category)
-        breakdown_rows = execute_query("""
+
+        if approval_level >= 1:
+            # Approver: show district-level budget
+            spent = float(demo_budget["spent"]) if demo_budget else 0
+            user_budget = spent * 1.35
+            budget_label = district_name
+        else:
+            # Teacher: show a single school's budget within the district
+            school_budget = execute_single("""
+                SELECT TOP 1
+                    sc.Name as school_name,
+                    ISNULL(SUM(r.TotalRequisitionCost), 0) AS spent
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                WHERE sc.DistrictId = ?
+                AND r.StatusId NOT IN (?, ?)
+                AND r.Active = 1
+                AND r.DateEntered >= DATEADD(YEAR, -1, GETDATE())
+                GROUP BY sc.SchoolId, sc.Name
+                HAVING SUM(r.TotalRequisitionCost) > 0
+                ORDER BY SUM(r.TotalRequisitionCost) DESC
+            """, (demo_district_id, STATUS_REJECTED, STATUS_ON_HOLD))
+            spent = float(school_budget["spent"]) if school_budget else 0
+            demo_school_name = school_budget["school_name"] if school_budget else "My School"
+            user_budget = spent * 1.25  # Tighter school budget
+            budget_label = demo_school_name
+
+        # Get top spending categories for breakdown
+        scope_filter = "d.DistrictId = ?" if approval_level >= 1 else "sc.Name = ?"
+        scope_param = demo_district_id if approval_level >= 1 else demo_school_name
+        breakdown_rows = execute_query(f"""
             SELECT TOP 5 category, SUM(amount) as amount FROM (
                 SELECT
                     ISNULL(c.Name, 'Other') as category,
@@ -118,7 +148,7 @@ async def get_dashboard_summary(
                 ) top_item
                 LEFT JOIN Items i ON top_item.ItemId = i.ItemId
                 LEFT JOIN Category c ON i.CategoryId = c.CategoryId
-                WHERE d.Name = ?
+                WHERE {scope_filter}
                 AND r.StatusId NOT IN (?, ?)
                 AND r.Active = 1
                 AND r.TotalRequisitionCost > 0
@@ -126,7 +156,7 @@ async def get_dashboard_summary(
             ) sub
             GROUP BY category
             ORDER BY SUM(amount) DESC
-        """, (district_name, STATUS_REJECTED, STATUS_ON_HOLD))
+        """, (scope_param, STATUS_REJECTED, STATUS_ON_HOLD))
         breakdown = [{"category": row["category"], "amount": round(float(row["amount"]), 2)} for row in breakdown_rows]
     else:
         user_filter = "WHERE UserId = ?"
@@ -188,6 +218,8 @@ async def get_dashboard_summary(
             "breakdown": breakdown,
             "monthly_spending": monthly_spending,
             "district_name": district_name if is_demo else None,
+            "school_name": demo_school_name if is_demo and approval_level < 1 else None,
+            "scope": "school" if (is_demo and approval_level < 1) else "district",
         }
 
     # --- My Orders Status Counts ---
@@ -273,23 +305,42 @@ async def get_dashboard_summary(
     # --- Recent Activity (last 5 requisitions by update date) ---
     recent_activity = []
     try:
-        activity_filter = "WHERE r.UserId = ?" if not is_demo else "WHERE 1=1"
-        activity_params = [user_id] if not is_demo else []
-        activity_rows = execute_query(f"""
-            SELECT TOP 5
-                r.RequisitionId,
-                r.RequisitionNumber,
-                r.StatusId,
-                st.Name as StatusName,
-                r.DateUpdated,
-                DATEDIFF(MINUTE, r.DateUpdated, GETDATE()) AS minutes_ago
-            FROM Requisitions r
-            LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
-            {activity_filter}
-            AND r.DateUpdated IS NOT NULL
-            AND r.Active = 1
-            ORDER BY r.DateUpdated DESC
-        """, tuple(activity_params))
+        if is_demo and demo_district_id:
+            activity_rows = execute_query("""
+                SELECT TOP 5
+                    r.RequisitionId,
+                    r.RequisitionNumber,
+                    r.StatusId,
+                    st.Name as StatusName,
+                    r.TotalRequisitionCost,
+                    r.DateUpdated,
+                    DATEDIFF(MINUTE, r.DateUpdated, GETDATE()) AS minutes_ago
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
+                WHERE sc.DistrictId = ?
+                AND r.DateUpdated IS NOT NULL
+                AND r.Active = 1
+                AND r.StatusId IS NOT NULL
+                ORDER BY r.DateUpdated DESC
+            """, (demo_district_id,))
+        else:
+            activity_rows = execute_query("""
+                SELECT TOP 5
+                    r.RequisitionId,
+                    r.RequisitionNumber,
+                    r.StatusId,
+                    st.Name as StatusName,
+                    r.TotalRequisitionCost,
+                    r.DateUpdated,
+                    DATEDIFF(MINUTE, r.DateUpdated, GETDATE()) AS minutes_ago
+                FROM Requisitions r
+                LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
+                WHERE r.UserId = ?
+                AND r.DateUpdated IS NOT NULL
+                AND r.Active = 1
+                ORDER BY r.DateUpdated DESC
+            """, (user_id,))
         for r in activity_rows:
             mins = r["minutes_ago"] or 0
             if mins < 60:
@@ -298,10 +349,13 @@ async def get_dashboard_summary(
                 time_label = f"{mins // 60}h ago"
             else:
                 time_label = f"{mins // 1440}d ago"
+            status = r["StatusName"] or STATUS_NAMES.get(r["StatusId"], "Draft")
+            amount = float(r["TotalRequisitionCost"] or 0)
             recent_activity.append({
                 "id": r["RequisitionId"],
                 "name": r["RequisitionNumber"] or f"Req #{r['RequisitionId']}",
-                "status": r["StatusName"] or STATUS_NAMES.get(r["StatusId"], "Unknown"),
+                "status": status,
+                "amount": amount,
                 "time_label": time_label,
             })
     except Exception as e:
