@@ -295,7 +295,10 @@ async def list_requisitions(
         # Build WHERE clause
         where_clauses = ["r.Active = 1"]
         params = []
-        if not is_demo:
+        if is_demo:
+            # Demo mode: show orders with known statuses for a meaningful view
+            where_clauses.append("r.StatusId IN (1,2,3,4,5,6)")
+        else:
             where_clauses.append("r.UserId = ?")
             params.append(user_info['UserId'])
 

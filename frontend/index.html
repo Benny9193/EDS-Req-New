@@ -806,9 +806,9 @@
                                                 <td>
                                                     <span class="badge"
                                                           :class="{
-                                                              'badge-success': order.status === 'Approved' || order.status === 'Fulfilled',
-                                                              'badge-warning': order.status === 'Submitted' || order.status === 'Pending Approval',
-                                                              'badge-info': order.status === 'Draft',
+                                                              'badge-success': order.status === 'Approved' || order.status === 'Fulfilled' || order.status === 'PO Printed',
+                                                              'badge-warning': order.status === 'Submitted' || order.status === 'Pending Approval' || order.status === 'On Hold',
+                                                              'badge-info': order.status === 'Draft' || order.status === 'At EDS',
                                                               'badge-accent': order.status === 'Rejected' || order.status === 'Cancelled',
                                                               'badge-neutral': !order.status
                                                           }"
@@ -2074,9 +2074,9 @@
                     <h2 id="order-modal-title" style="font-size:var(--text-lg);font-weight:var(--font-bold);margin:0;" x-text="'Order ' + (selectedOrder.requisition_number || '#' + selectedOrder.requisition_id)"></h2>
                     <span class="badge" style="margin-top:var(--space-1);"
                           :class="{
-                              'badge-success': selectedOrder.status === 'Approved' || selectedOrder.status === 'Fulfilled',
-                              'badge-warning': selectedOrder.status === 'Submitted' || selectedOrder.status === 'Pending Approval',
-                              'badge-info': selectedOrder.status === 'Draft',
+                              'badge-success': selectedOrder.status === 'Approved' || selectedOrder.status === 'Fulfilled' || selectedOrder.status === 'PO Printed',
+                              'badge-warning': selectedOrder.status === 'Submitted' || selectedOrder.status === 'Pending Approval' || selectedOrder.status === 'On Hold',
+                              'badge-info': selectedOrder.status === 'Draft' || selectedOrder.status === 'At EDS',
                               'badge-accent': selectedOrder.status === 'Rejected' || selectedOrder.status === 'Cancelled'
                           }"
                           x-text="selectedOrder.status"></span>
@@ -2152,7 +2152,7 @@
                             <tfoot>
                                 <tr style="border-top:2px solid var(--border-default);">
                                     <td colspan="3" style="text-align:right;font-weight:var(--font-bold);">Order Total</td>
-                                    <td style="text-align:right;font-weight:var(--font-bold);color:var(--eds-primary);" x-text="formatPrice(selectedOrder.total_amount || 0)"></td>
+                                    <td style="text-align:right;font-weight:var(--font-bold);color:var(--eds-primary);" x-text="formatPrice(orderDetailItems.reduce((s, i) => s + (i.extended_price || 0), 0) || selectedOrder.total_amount || 0)"></td>
                                 </tr>
                             </tfoot>
                         </table>
