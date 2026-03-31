@@ -86,6 +86,7 @@ async def get_dashboard_summary(
         # Demo: show a single representative district's budget (pick the busiest one)
         demo_budget = execute_single("""
             SELECT TOP 1
+                d.DistrictId as district_id,
                 d.Name as district_name,
                 ISNULL(SUM(r.TotalRequisitionCost), 0) AS spent,
                 COUNT(*) as order_count
@@ -101,6 +102,7 @@ async def get_dashboard_summary(
         """, (STATUS_REJECTED, STATUS_ON_HOLD))
         spent = float(demo_budget["spent"]) if demo_budget else 0
         district_name = demo_budget["district_name"] if demo_budget else "Demo District"
+        demo_district_id = demo_budget["district_id"] if demo_budget else None
         user_budget = spent * 1.35  # 35% headroom
         # Get top spending categories for breakdown (using each requisition's primary category)
         breakdown_rows = execute_query("""
@@ -153,18 +155,29 @@ async def get_dashboard_summary(
     # --- My Orders Status Counts ---
     order_counts = {"on_hold": 0, "pending_approval": 0, "approved": 0, "total_active": 0}
     try:
-        orders_filter = "WHERE UserId = ?" if not is_demo else "WHERE 1=1"
-        orders_params = [user_id] if not is_demo else []
-        orders_date_filter = "AND DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
-        count_rows = execute_query(f"""
-            SELECT StatusId, COUNT(*) AS cnt
-            FROM Requisitions
-            {orders_filter}
-            AND Active = 1
-            AND StatusId IN (?, ?, ?)
-            {orders_date_filter}
-            GROUP BY StatusId
-        """, tuple(orders_params + [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED]))
+        if is_demo and demo_district_id:
+            # Demo: scope to the same district as the budget
+            count_rows = execute_query("""
+                SELECT r.StatusId, COUNT(*) AS cnt
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                WHERE sc.DistrictId = ?
+                AND r.Active = 1
+                AND r.StatusId IN (?, ?, ?)
+                AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())
+                GROUP BY r.StatusId
+            """, (demo_district_id, STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED))
+        else:
+            orders_filter = "WHERE UserId = ?"
+            orders_params = [user_id]
+            count_rows = execute_query(f"""
+                SELECT StatusId, COUNT(*) AS cnt
+                FROM Requisitions
+                {orders_filter}
+                AND Active = 1
+                AND StatusId IN (?, ?, ?)
+                GROUP BY StatusId
+            """, tuple(orders_params + [STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED]))
         total_active = 0
         for r in count_rows:
             sid = r["StatusId"]

@@ -301,6 +301,13 @@
                                     <template x-if="!dashboardBudget.breakdown || dashboardBudget.breakdown.length === 0">
                                         <p style="font-size:var(--text-sm); color:var(--text-muted);">No spending breakdown available.</p>
                                     </template>
+                                    <template x-if="canViewReports">
+                                        <div style="margin-top:var(--space-3); padding-top:var(--space-3); border-top:1px solid var(--border-light);">
+                                            <button class="btn btn-ghost btn-sm" @click.stop="switchView('reports')" style="width:100%;">
+                                                <i class="fas fa-chart-bar"></i> View Full Reports
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </template>
