@@ -434,7 +434,9 @@
                             </div>
                             <div style="display: flex; flex-direction: column; gap: var(--space-2);">
                                 <template x-for="(act, ai) in dashboardRecentActivity" :key="ai">
-                                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-subtle); border-radius: var(--radius-md);">
+                                    <div style="display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--bg-subtle); border-radius: var(--radius-md); cursor:pointer; transition:background 0.15s;"
+                                         @click="switchView('orders'); $nextTick(() => openOrderDetail({ requisition_id: act.id, requisition_number: act.name, status: act.status, total_amount: act.amount }))"
+                                         onmouseover="this.style.background='var(--bg-muted)'" onmouseout="this.style.background='var(--bg-subtle)'">
                                         <i :class="activityStatusIcon(act.status)" :style="'color:' + activityStatusColor(act.status) + ';font-size:var(--text-lg);flex-shrink:0;width:20px;text-align:center;'"></i>
                                         <div style="flex: 1; min-width: 0;">
                                             <div style="display:flex; align-items:center; gap:var(--space-2);">
@@ -446,9 +448,16 @@
                                                     'badge-accent': act.status === 'Rejected' || act.status === 'Cancelled'
                                                 }" x-text="act.status"></span>
                                             </div>
-                                            <div x-show="act.amount > 0" style="font-size: var(--text-xs); color: var(--text-muted);" x-text="'$' + act.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})"></div>
+                                            <div style="font-size: var(--text-xs); color: var(--text-muted);">
+                                                <span x-show="act.school_name" x-text="act.school_name"></span>
+                                                <span x-show="act.school_name && act.amount > 0"> &middot; </span>
+                                                <span x-show="act.amount > 0" x-text="'$' + act.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})"></span>
+                                            </div>
                                         </div>
-                                        <div style="font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; flex-shrink: 0;" x-text="act.time_label"></div>
+                                        <div style="display:flex; align-items:center; gap:var(--space-2); flex-shrink:0;">
+                                            <span style="font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap;" x-text="act.time_label"></span>
+                                            <i class="fas fa-chevron-right" style="font-size:var(--text-2xs); color:var(--text-muted);"></i>
+                                        </div>
                                     </div>
                                 </template>
                             </div>

@@ -313,6 +313,7 @@ async def get_dashboard_summary(
                     r.StatusId,
                     st.Name as StatusName,
                     r.TotalRequisitionCost,
+                    sc.Name as SchoolName,
                     r.DateUpdated,
                     DATEDIFF(MINUTE, r.DateUpdated, GETDATE()) AS minutes_ago
                 FROM Requisitions r
@@ -332,9 +333,11 @@ async def get_dashboard_summary(
                     r.StatusId,
                     st.Name as StatusName,
                     r.TotalRequisitionCost,
+                    sc.Name as SchoolName,
                     r.DateUpdated,
                     DATEDIFF(MINUTE, r.DateUpdated, GETDATE()) AS minutes_ago
                 FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
                 LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
                 WHERE r.UserId = ?
                 AND r.DateUpdated IS NOT NULL
@@ -356,6 +359,7 @@ async def get_dashboard_summary(
                 "name": r["RequisitionNumber"] or f"Req #{r['RequisitionId']}",
                 "status": status,
                 "amount": amount,
+                "school_name": r.get("SchoolName") or None,
                 "time_label": time_label,
             })
     except Exception as e:
