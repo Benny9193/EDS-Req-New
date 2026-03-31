@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Default to the existing EDS-ES Azure VM (20.122.81.233)
 ES_URL = os.getenv("ES_URL", "http://20.122.81.233:9200")
 ES_ENABLED = os.getenv("ES_ENABLED", "true").lower() in ("true", "1", "yes")
-ES_INDEX = os.getenv("ES_INDEX", "pricing_consolidated_63")
+ES_INDEX = os.getenv("ES_INDEX", "pricing_consolidated_active")
 
 # Singleton client
 _es_client: Optional[AsyncElasticsearch] = None

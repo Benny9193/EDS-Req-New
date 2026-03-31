@@ -448,7 +448,7 @@ ANTHROPIC_API_KEY=            # Claude API key (required when LLM_PROVIDER=claud
 OLLAMA_HOST=http://localhost:11434  # Ollama server URL
 ES_ENABLED=true              # Enable/disable Elasticsearch integration
 ES_URL=http://20.122.81.233:9200   # EDS-ES VM (Azure, eastus2)
-ES_INDEX=pricing_consolidated_60    # Production pricing index
+ES_INDEX=pricing_consolidated_active    # Alias pointing to active pricing index
 ```
 
 ## Authentication Flow
