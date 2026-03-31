@@ -306,25 +306,6 @@
                                     <template x-if="!dashboardBudget.breakdown || dashboardBudget.breakdown.length === 0">
                                         <p style="font-size:var(--text-sm); color:var(--text-muted);">No spending breakdown available.</p>
                                     </template>
-                                    <!-- Monthly Spending Trend -->
-                                    <template x-if="dashboardBudget.monthly_spending && dashboardBudget.monthly_spending.length > 0">
-                                        <div style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-light);">
-                                            <h3 style="font-size:var(--text-sm); font-weight:var(--font-semibold); margin-bottom:var(--space-3);">Monthly Spending Trend</h3>
-                                            <div style="display:flex; align-items:flex-end; gap:3px; height:120px;" x-ref="spendChart">
-                                                <template x-for="m in dashboardBudget.monthly_spending" :key="m.month">
-                                                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0;" :title="m.month + ': $' + m.amount.toLocaleString() + ' (' + m.orders + ' orders)'">
-                                                        <div :style="'width:100%; border-radius:3px 3px 0 0; min-height:4px; background:' + (m.amount === Math.max(...dashboardBudget.monthly_spending.map(x => x.amount)) ? 'var(--color-primary-600)' : 'var(--color-primary-400)') + '; height:' + Math.max(4, Math.sqrt(m.amount / Math.max(...dashboardBudget.monthly_spending.map(x => x.amount))) * 100) + '%'"></div>
-                                                        <div style="font-size:8px; color:var(--text-muted); white-space:nowrap;" x-text="m.month.split('-')[1]"></div>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                            <div style="display:flex; justify-content:space-between; margin-top:var(--space-1); font-size:var(--text-2xs); color:var(--text-muted);">
-                                                <span x-text="dashboardBudget.monthly_spending[0]?.month || ''"></span>
-                                                <span>Monthly avg: <strong x-text="'$' + Math.round(dashboardBudget.monthly_spending.reduce((s,m) => s + m.amount, 0) / dashboardBudget.monthly_spending.length).toLocaleString()"></strong></span>
-                                                <span x-text="dashboardBudget.monthly_spending[dashboardBudget.monthly_spending.length - 1]?.month || ''"></span>
-                                            </div>
-                                        </div>
-                                    </template>
                                     <template x-if="canViewReports">
                                         <div style="margin-top:var(--space-3); padding-top:var(--space-3); border-top:1px solid var(--border-light);">
                                             <button class="btn btn-ghost btn-sm" @click.stop="switchView('reports')" style="width:100%;">
