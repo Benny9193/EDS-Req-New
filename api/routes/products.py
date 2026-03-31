@@ -274,7 +274,8 @@ async def get_products(
 @router.get("/search/autocomplete")
 async def autocomplete_search(
     q: str = Query(..., min_length=2, max_length=MAX_QUERY_LENGTH, description="Search query"),
-    limit: int = Query(10, ge=1, le=20, description="Max results")
+    limit: int = Query(10, ge=1, le=20, description="Max results"),
+    vendor: Optional[str] = Query(None, description="Filter by vendor name")
 ) -> List[Product]:
     """
     Quick autocomplete search for products.
@@ -285,16 +286,18 @@ async def autocomplete_search(
         safe_q = sanitize_search_input(q)
         if not safe_q or len(safe_q) < 2:
             return []
+        safe_vendor = sanitize_search_input(vendor) if vendor else None
 
         # Try ES autocomplete first
         if ES_ENABLED:
-            es_result = await _try_es_autocomplete(safe_q, limit)
+            es_result = await _try_es_autocomplete(safe_q, limit, vendor_filter=safe_vendor)
             if es_result is not None:
                 return es_result
 
         # SQL fallback: Check cache first
         cache = get_cache()
-        cache_key = f"autocomplete_{safe_q.lower()}_{limit}"
+        vendor_key = safe_vendor.lower() if safe_vendor else "all"
+        cache_key = f"autocomplete_{safe_q.lower()}_{vendor_key}_{limit}"
         cached_result = await cache.get(cache_key)
         if cached_result is not None:
             return cached_result
@@ -319,13 +322,13 @@ async def autocomplete_search(
             WHERE i.Active = 1
             AND i.ListPrice > 0
             AND i.Description LIKE ?
-            ORDER BY i.Description
         """
-        # Contains match for better autocomplete results
-        params = (
-            limit,
-            f"%{safe_q}%"
-        )
+        params = [limit, f"%{safe_q}%"]
+        if safe_vendor:
+            query += "    AND v.Name LIKE ?\n"
+            params.append(f"%{safe_vendor}%")
+        query += "    ORDER BY i.Description"
+        params = tuple(params)
         rows = execute_query(query, params)
         result = [map_row_to_product(row) for row in rows]
 
@@ -634,13 +637,30 @@ async def _try_es_search(
         return None
 
 
-async def _try_es_autocomplete(q: str, limit: int):
+async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None):
     """Try ES autocomplete against existing pricing_consolidated index, return list of Products or None."""
     client = get_es_client()
     if client is None:
         return None
 
     try:
+        must_clauses = [{
+            "multi_match": {
+                "query": q,
+                "fields": [
+                    "combinedTypeAheads.suggestion^3",
+                    "combinedTypeAheads.suggestion._2gram^2",
+                    "shortDescription^2",
+                    "itemCode^4",
+                    "vendorName",
+                    "productNames^2",
+                ],
+                "type": "best_fields",
+            }
+        }]
+        if vendor_filter:
+            must_clauses.append({"match_phrase": {"vendorName": vendor_filter}})
+
         body = {
             "size": limit * 3,  # fetch extra for dedup
             "_source": [
@@ -654,20 +674,7 @@ async def _try_es_autocomplete(q: str, limit: int):
             ],
             "query": {
                 "bool": {
-                    "must": [{
-                        "multi_match": {
-                            "query": q,
-                            "fields": [
-                                "combinedTypeAheads.suggestion^3",
-                                "combinedTypeAheads.suggestion._2gram^2",
-                                "shortDescription^2",
-                                "itemCode^4",
-                                "vendorName",
-                                "productNames^2",
-                            ],
-                            "type": "best_fields",
-                        }
-                    }],
+                    "must": must_clauses,
                     "should": [
                         # Boost products where the query matches as a whole word in the name
                         {"match_phrase": {"shortDescription": {"query": q, "boost": 10}}},

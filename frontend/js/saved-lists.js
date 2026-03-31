@@ -10,6 +10,7 @@ function savedListsModule() {
         createListSearch: '',
         createListResults: [],
         createListLoading: false,
+        createListVendorFilter: '',
         _createListAbort: null,
         _createListTimer: null,
 
@@ -27,6 +28,7 @@ function savedListsModule() {
             this.createListName = '';
             this.createListSearch = '';
             this.createListResults = [];
+            this.createListVendorFilter = '';
         },
 
         createListAutocomplete() {
@@ -41,7 +43,9 @@ function savedListsModule() {
         async _doCreateListSearch(q) {
             try {
                 this._createListAbort = new AbortController();
-                const r = await fetch('/api/products/search/autocomplete?q=' + encodeURIComponent(q) + '&limit=10', { signal: this._createListAbort.signal });
+                let url = '/api/products/search/autocomplete?q=' + encodeURIComponent(q) + '&limit=10';
+                if (this.createListVendorFilter) url += '&vendor=' + encodeURIComponent(this.createListVendorFilter);
+                const r = await fetch(url, { signal: this._createListAbort.signal });
                 if (r.ok) {
                     const d = await r.json();
                     if (this.createListSearch.trim() === q) {
@@ -134,6 +138,26 @@ function savedListsModule() {
             this.cancelCreateList();
         },
 
+        _loadExpandedState() {
+            try { return JSON.parse(localStorage.getItem('eds_saved_lists_expanded') || '{}'); } catch { return {}; }
+        },
+
+        _saveExpandedState() {
+            const state = {};
+            this.savedLists.forEach(l => { if (l._expanded) state[l.name] = true; });
+            localStorage.setItem('eds_saved_lists_expanded', JSON.stringify(state));
+        },
+
+        _applyExpandedState() {
+            const state = this._loadExpandedState();
+            this.savedLists.forEach(l => { l._expanded = !!state[l.name]; });
+        },
+
+        toggleListExpanded(list) {
+            list._expanded = !list._expanded;
+            this._saveExpandedState();
+        },
+
         async _initSavedLists() {
             // Try loading from server first, fall back to localStorage
             const sid = this._getSessionId();
@@ -144,6 +168,7 @@ function savedListsModule() {
                         const d = await r.json();
                         if (d.lists && d.lists.length > 0) {
                             this.savedLists = d.lists;
+                            this._applyExpandedState();
                             return;
                         }
                     }
@@ -151,6 +176,7 @@ function savedListsModule() {
             }
             // Fallback: load from localStorage
             try { this.savedLists = JSON.parse(localStorage.getItem('eds_saved_lists') || '[]'); } catch { this.savedLists = []; }
+            this._applyExpandedState();
             // Migrate any localStorage lists to server
             if (this.savedLists.length > 0 && sid) {
                 this.savedLists.forEach(list => {

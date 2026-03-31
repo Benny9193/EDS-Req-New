@@ -993,14 +993,15 @@
                             <!-- Product search -->
                             <div style="margin-bottom: var(--space-4); position:relative; z-index:10;">
                                 <label style="font-size: var(--text-sm); font-weight: var(--font-medium); display:block; margin-bottom: var(--space-1);">Search Products to Add</label>
-                                <div style="position: relative; max-width: 500px;">
-                                    <div class="input-icon-wrapper">
-                                        <i class="input-icon" :class="createListLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
-                                        <input type="text" class="input input-with-icon" x-model="createListSearch"
-                                               @input="createListAutocomplete()"
-                                               @keydown.escape="createListResults = []"
-                                               placeholder="Search by product name, SKU, or keyword...">
-                                    </div>
+                                <div style="display:flex; gap:var(--space-2); align-items:stretch;">
+                                    <div style="position: relative; flex:1; max-width:500px;">
+                                        <div class="input-icon-wrapper">
+                                            <i class="input-icon" :class="createListLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
+                                            <input type="text" class="input input-with-icon" x-model="createListSearch"
+                                                   @input="createListAutocomplete()"
+                                                   @keydown.escape="createListResults = []"
+                                                   placeholder="Search by product name, SKU, or keyword...">
+                                        </div>
 
                                     <!-- Search results dropdown -->
                                     <div x-show="createListResults.length > 0" @click.outside="createListResults = []"
@@ -1023,6 +1024,14 @@
                                             </button>
                                         </template>
                                     </div>
+                                    </div>
+                                    <select class="input" x-model="createListVendorFilter" @change="if(createListSearch.trim().length >= 2) createListAutocomplete()"
+                                            style="max-width:200px; flex-shrink:0;">
+                                        <option value="">All Suppliers</option>
+                                        <template x-for="v in vendors.slice(0, 50)" :key="v.vendor_id || v.name">
+                                            <option :value="v.name" x-text="v.name"></option>
+                                        </template>
+                                    </select>
                                 </div>
                             </div>
 
@@ -1097,7 +1106,7 @@
                         <template x-for="list in savedLists" :key="list.name">
                             <div class="card" style="padding: var(--space-4);">
                                 <div class="flex justify-between items-center">
-                                    <div style="flex:1; min-width:0; cursor:pointer;" @click="list._expanded = !list._expanded">
+                                    <div style="flex:1; min-width:0; cursor:pointer;" @click="toggleListExpanded(list)">
                                         <div style="display:flex; align-items:center; gap:var(--space-2);">
                                             <i class="fas fa-chevron-right" style="font-size:var(--text-xs); color:var(--text-muted); transition:transform 0.2s;" :style="list._expanded ? 'transform:rotate(90deg)' : ''"></i>
                                             <span style="font-weight: var(--font-semibold); font-size: var(--text-base);" x-text="list.name"></span>
