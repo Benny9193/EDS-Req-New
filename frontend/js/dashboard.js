@@ -10,6 +10,7 @@ function dashboardModule() {
         dashboardOrderCounts: {},
         dashboardApproverInfo: null,
         dashboardRecentActivity: [],
+        showBudgetDetail: false,
         _dashboardRefreshInterval: null,
 
         async fetchDashboardSummary() {

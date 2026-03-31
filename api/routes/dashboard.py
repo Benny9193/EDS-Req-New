@@ -81,27 +81,73 @@ async def get_dashboard_summary(
     is_demo = user_id == 0
 
     # --- Budget & Spending ---
-    budget_data = {"budget": 0, "spent": 0, "remaining": 0, "percent": 0}
-    user_filter = "WHERE UserId = ?" if not is_demo else "WHERE 1=1"
-    user_params = [user_id] if not is_demo else []
-    actual_spend = execute_single(f"""
-        SELECT ISNULL(SUM(TotalRequisitionCost), 0) AS spent
-        FROM Requisitions
-        {user_filter}
-        AND StatusId NOT IN (?, ?)
-        AND Active = 1
-        AND DateEntered >= DATEADD(YEAR, -1, GETDATE())
-    """, tuple(user_params + [STATUS_REJECTED, STATUS_ON_HOLD]))
-    spent = float(actual_spend["spent"]) if actual_spend else 0
-    # Use a default budget of 50000 if not set (Users table doesn't have Budget column)
-    # For demo mode, estimate budget as 175% of actual spend (matches reports logic)
-    user_budget = spent * 1.75 if is_demo and spent > 0 else 50000.0
+    budget_data = {"budget": 0, "spent": 0, "remaining": 0, "percent": 0, "breakdown": []}
+    if is_demo:
+        # Demo: show a single representative district's budget (pick the busiest one)
+        demo_budget = execute_single("""
+            SELECT TOP 1
+                d.Name as district_name,
+                ISNULL(SUM(r.TotalRequisitionCost), 0) AS spent,
+                COUNT(*) as order_count
+            FROM Requisitions r
+            JOIN School sc ON r.SchoolId = sc.SchoolId
+            JOIN District d ON sc.DistrictId = d.DistrictId
+            WHERE r.StatusId NOT IN (?, ?)
+            AND r.Active = 1
+            AND r.DateEntered >= DATEADD(YEAR, -1, GETDATE())
+            GROUP BY d.DistrictId, d.Name
+            HAVING SUM(r.TotalRequisitionCost) > 0
+            ORDER BY SUM(r.TotalRequisitionCost) DESC
+        """, (STATUS_REJECTED, STATUS_ON_HOLD))
+        spent = float(demo_budget["spent"]) if demo_budget else 0
+        district_name = demo_budget["district_name"] if demo_budget else "Demo District"
+        user_budget = spent * 1.35  # 35% headroom
+        # Get top spending categories for breakdown (using each requisition's primary category)
+        breakdown_rows = execute_query("""
+            SELECT TOP 5 category, SUM(amount) as amount FROM (
+                SELECT
+                    ISNULL(c.Name, 'Other') as category,
+                    r.TotalRequisitionCost as amount
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                JOIN District d ON sc.DistrictId = d.DistrictId
+                CROSS APPLY (
+                    SELECT TOP 1 dt.ItemId FROM Detail dt WHERE dt.RequisitionId = r.RequisitionId
+                ) top_item
+                LEFT JOIN Items i ON top_item.ItemId = i.ItemId
+                LEFT JOIN Category c ON i.CategoryId = c.CategoryId
+                WHERE d.Name = ?
+                AND r.StatusId NOT IN (?, ?)
+                AND r.Active = 1
+                AND r.TotalRequisitionCost > 0
+                AND r.DateEntered >= DATEADD(YEAR, -1, GETDATE())
+            ) sub
+            GROUP BY category
+            ORDER BY SUM(amount) DESC
+        """, (district_name, STATUS_REJECTED, STATUS_ON_HOLD))
+        breakdown = [{"category": row["category"], "amount": round(float(row["amount"]), 2)} for row in breakdown_rows]
+    else:
+        user_filter = "WHERE UserId = ?"
+        user_params = [user_id]
+        actual_spend = execute_single(f"""
+            SELECT ISNULL(SUM(TotalRequisitionCost), 0) AS spent
+            FROM Requisitions
+            {user_filter}
+            AND StatusId NOT IN (?, ?)
+            AND Active = 1
+            AND DateEntered >= DATEADD(YEAR, -1, GETDATE())
+        """, tuple(user_params + [STATUS_REJECTED, STATUS_ON_HOLD]))
+        spent = float(actual_spend["spent"]) if actual_spend else 0
+        user_budget = 50000.0  # Default budget
+        breakdown = []
+
     if user_budget > 0:
         budget_data = {
             "budget": round(user_budget, 2),
-            "spent": spent,
+            "spent": round(spent, 2),
             "remaining": round(user_budget - spent, 2),
             "percent": round(spent / user_budget * 100) if user_budget > 0 else 0,
+            "breakdown": breakdown,
         }
 
     # --- My Orders Status Counts ---
