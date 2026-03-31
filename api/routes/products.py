@@ -533,6 +533,28 @@ async def get_product_images(product_ids: List[str]) -> dict:
 # ELASTICSEARCH HELPERS (transparent fallback)
 # ===========================================
 
+def _pick_es_title(src: dict) -> str:
+    """Pick the best product title from ES source fields.
+    Prefers combinedTypeAheads (clean title-cased names) over raw descriptions."""
+    # combinedTypeAheads has clean, title-cased product names
+    type_aheads = src.get("combinedTypeAheads", [])
+    if isinstance(type_aheads, list) and type_aheads:
+        return type_aheads[0]
+    # productNames is a fallback (lowercase but still a proper name)
+    product_names = src.get("productNames", [])
+    if isinstance(product_names, list) and product_names:
+        return product_names[0].title()
+    # shortDescriptionNative has proper case
+    native = src.get("shortDescriptionNative", "")
+    if native:
+        return native
+    # Last resort: shortDescription (may be lowercase)
+    short = src.get("shortDescription", "")
+    if isinstance(short, list):
+        short = short[0] if short else ""
+    return short
+
+
 async def _try_es_search(
     query, category, vendor, min_price, max_price,
     sort_by, sort_order, page, page_size
@@ -605,12 +627,16 @@ async def _try_es_search(
         products = []
         for hit in hits.get("hits", []):
             src = hit["_source"]
-            name = src.get("shortDescription") or src.get("shortDescriptionNative", "")
-            if isinstance(name, list):
-                name = name[0] if name else ""
-            desc = src.get("fullDescription") or src.get("fullDescriptionNative", "")
-            if isinstance(desc, list):
-                desc = desc[0] if desc else ""
+            # Product name: prefer combinedTypeAheads (clean title-cased name),
+            # fall back to shortDescriptionNative (proper case), then shortDescription
+            title = _pick_es_title(src)
+            desc = src.get("shortDescriptionNative") or ""
+            if not desc:
+                desc = src.get("shortDescription") or src.get("fullDescriptionNative", "")
+                if isinstance(desc, list):
+                    desc = desc[0] if desc else ""
+            # Truncate description to keep cards clean
+            desc = desc[:120].rstrip() + ("..." if len(desc) > 120 else "")
             item_code = src.get("itemCode", "")
             if isinstance(item_code, list):
                 item_code = item_code[0] if item_code else ""
@@ -624,7 +650,7 @@ async def _try_es_search(
 
             products.append(Product(
                 id=str(src.get("itemId") or src.get("pricingConsolidatedId", hit["_id"])),
-                name=clean_string(name),
+                name=clean_string(title),
                 description=clean_string(desc),
                 vendor=clean_string(vendor_name),
                 vendor_item_code=vendor_code or item_code,
@@ -682,6 +708,7 @@ async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None, ca
             "size": limit * 3,  # fetch extra for dedup
             "_source": [
                 "itemId", "pricingConsolidatedId",
+                "combinedTypeAheads", "productNames",
                 "shortDescription", "shortDescriptionNative",
                 "vendorName", "vendorNameNative",
                 "vendorItemCode", "vendorItemCodeNative",
@@ -708,9 +735,7 @@ async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None, ca
         products = []
         for hit in result.get("hits", {}).get("hits", []):
             src = hit["_source"]
-            name = src.get("shortDescription") or src.get("shortDescriptionNative", "")
-            if isinstance(name, list):
-                name = name[0] if name else ""
+            title = _pick_es_title(src)
             vendor_name = src.get("vendorName") or src.get("vendorNameNative", "Unknown Vendor")
             vendor_code = src.get("vendorItemCode") or src.get("vendorItemCodeNative", "")
             if isinstance(vendor_code, list):
@@ -724,7 +749,7 @@ async def _try_es_autocomplete(q: str, limit: int, vendor_filter: str = None, ca
 
             products.append(Product(
                 id=str(src.get("itemId") or src.get("pricingConsolidatedId", hit["_id"])),
-                name=clean_string(name),
+                name=clean_string(title),
                 description="",
                 vendor=clean_string(vendor_name),
                 vendor_item_code=vendor_code or item_code,
