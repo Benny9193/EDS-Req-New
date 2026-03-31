@@ -226,17 +226,29 @@ async def get_dashboard_summary(
     order_counts = {"on_hold": 0, "pending_approval": 0, "approved": 0, "total_active": 0}
     try:
         if is_demo and demo_district_id:
-            # Demo: scope to the same district as the budget
-            count_rows = execute_query("""
-                SELECT r.StatusId, COUNT(*) AS cnt
-                FROM Requisitions r
-                JOIN School sc ON r.SchoolId = sc.SchoolId
-                WHERE sc.DistrictId = ?
-                AND r.Active = 1
-                AND r.StatusId IN (?, ?, ?)
-                AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())
-                GROUP BY r.StatusId
-            """, (demo_district_id, STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED))
+            # Demo: scope teacher to school, approver to district
+            if approval_level < 1 and demo_school_name:
+                count_rows = execute_query("""
+                    SELECT r.StatusId, COUNT(*) AS cnt
+                    FROM Requisitions r
+                    JOIN School sc ON r.SchoolId = sc.SchoolId
+                    WHERE sc.Name = ?
+                    AND r.Active = 1
+                    AND r.StatusId IN (?, ?, ?)
+                    AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())
+                    GROUP BY r.StatusId
+                """, (demo_school_name, STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED))
+            else:
+                count_rows = execute_query("""
+                    SELECT r.StatusId, COUNT(*) AS cnt
+                    FROM Requisitions r
+                    JOIN School sc ON r.SchoolId = sc.SchoolId
+                    WHERE sc.DistrictId = ?
+                    AND r.Active = 1
+                    AND r.StatusId IN (?, ?, ?)
+                    AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())
+                    GROUP BY r.StatusId
+                """, (demo_district_id, STATUS_ON_HOLD, STATUS_PENDING_APPROVAL, STATUS_APPROVED))
         else:
             orders_filter = "WHERE UserId = ?"
             orders_params = [user_id]
@@ -306,7 +318,14 @@ async def get_dashboard_summary(
     recent_activity = []
     try:
         if is_demo and demo_district_id:
-            activity_rows = execute_query("""
+            # Teacher: scope to school; Approver: scope to district
+            if approval_level < 1 and demo_school_name:
+                activity_scope_filter = "sc.Name = ?"
+                activity_scope_param = demo_school_name
+            else:
+                activity_scope_filter = "sc.DistrictId = ?"
+                activity_scope_param = demo_district_id
+            activity_rows = execute_query(f"""
                 SELECT TOP 5
                     r.RequisitionId,
                     r.RequisitionNumber,
@@ -319,12 +338,12 @@ async def get_dashboard_summary(
                 FROM Requisitions r
                 JOIN School sc ON r.SchoolId = sc.SchoolId
                 LEFT JOIN StatusTable st ON r.StatusId = st.StatusId
-                WHERE sc.DistrictId = ?
+                WHERE {activity_scope_filter}
                 AND r.DateUpdated IS NOT NULL
                 AND r.Active = 1
                 AND r.StatusId IS NOT NULL
                 ORDER BY r.DateUpdated DESC
-            """, (demo_district_id,))
+            """, (activity_scope_param,))
         else:
             activity_rows = execute_query("""
                 SELECT TOP 5

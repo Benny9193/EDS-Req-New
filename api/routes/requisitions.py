@@ -835,10 +835,25 @@ async def list_pending_approvals(
             )
 
     try:
-        # Get pending requisitions (filtered by district for real users, all for demo)
+        # Get pending requisitions (filtered by district for real users, top district for demo)
         offset = (page - 1) * page_size
-        district_filter = "AND sc.DistrictId = ?" if not is_demo else ""
-        district_params = [user_info['DistrictId']] if not is_demo else []
+        if is_demo:
+            # Scope demo to the top-spending district for consistency with dashboard
+            top_district = execute_single("""
+                SELECT TOP 1 d.DistrictId
+                FROM Requisitions r
+                JOIN School sc ON r.SchoolId = sc.SchoolId
+                JOIN District d ON sc.DistrictId = d.DistrictId
+                WHERE r.Active = 1 AND r.DateEntered >= DATEADD(YEAR, -1, GETDATE())
+                GROUP BY d.DistrictId
+                ORDER BY SUM(r.TotalRequisitionCost) DESC
+            """)
+            demo_district_id = top_district["DistrictId"] if top_district else None
+            district_filter = "AND sc.DistrictId = ?" if demo_district_id else ""
+            district_params = [demo_district_id] if demo_district_id else []
+        else:
+            district_filter = "AND sc.DistrictId = ?"
+            district_params = [user_info['DistrictId']]
         # Demo mode: limit to last 2 years for realistic data
         date_filter = "AND r.DateEntered >= DATEADD(YEAR, -2, GETDATE())" if is_demo else ""
         # Search filter across requisition number, school, district, submitter
