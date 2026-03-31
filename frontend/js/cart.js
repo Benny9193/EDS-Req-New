@@ -33,6 +33,13 @@ function cartModule() {
             if (!silent) {
                 const name = (edsProduct.getName(product) || 'Item').substring(0, 40);
                 this.showToast(name + ' added to cart', 'fas fa-cart-plus');
+                // Warn if cart now exceeds remaining budget
+                const remaining = this.budgetRemaining();
+                if (remaining !== null && edsCart.total(this.cart) > remaining) {
+                    setTimeout(() => {
+                        this.showToast('Cart total exceeds your remaining budget', 'fas fa-exclamation-triangle', 'var(--color-accent-500)');
+                    }, 400);
+                }
             }
         },
 
@@ -53,6 +60,35 @@ function cartModule() {
         showSaveListFromCart() {
             this.showSaveListDialog = true;
             this.newListName = '';
+        },
+
+        // --- Budget-aware cart helpers ---
+
+        budgetRemaining() {
+            if (!this.dashboardBudget?.remaining) return null;
+            return this.dashboardBudget.remaining;
+        },
+
+        cartOverBudget() {
+            const remaining = this.budgetRemaining();
+            if (remaining === null) return false;
+            return this.cartTotal > remaining;
+        },
+
+        cartBudgetPercent() {
+            const remaining = this.budgetRemaining();
+            if (remaining === null || remaining <= 0) return 0;
+            return Math.round((this.cartTotal / remaining) * 100);
+        },
+
+        cartBudgetWarningLevel() {
+            if (!this.dashboardBudget) return 'none';
+            const remaining = this.budgetRemaining();
+            if (remaining === null) return 'none';
+            if (this.cartTotal > remaining) return 'over';
+            if (this.cartTotal > remaining * 0.9) return 'critical';
+            if (this.cartTotal > remaining * 0.75) return 'warning';
+            return 'none';
         }
     };
 }

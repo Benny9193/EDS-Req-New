@@ -508,7 +508,7 @@
                                 </div>
                                 <div class="item-info">
                                     <div class="item-name" x-text="item.Description || item.name"></div>
-                                    <div class="item-vendor" x-text="item.VendorName || item.vendor || 'Unknown Vendor'"></div>
+                                    <div class="item-vendor" x-text="item.VendorName || item.vendor || 'Unknown Supplier'"></div>
                                     <div class="item-price" x-text="formatPrice(item.Price || item.price) + ' / unit'"></div>
                                 </div>
                                 <div class="item-actions">
@@ -525,8 +525,25 @@
 
                         <div class="summary-bar">
                             <span class="total-label"><span x-text="totalItems"></span> items</span>
-                            <span class="total-amount" x-text="formatPrice(cartTotal)"></span>
+                            <span class="total-amount" :style="cartOverBudget() ? 'color: var(--color-accent-500)' : ''" x-text="formatPrice(cartTotal)"></span>
                         </div>
+                        <!-- Budget warning -->
+                        <template x-if="budgetRemaining() !== null">
+                            <div style="margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: var(--text-sm); display: flex; align-items: flex-start; gap: 0.5rem;"
+                                 :style="cartOverBudget()
+                                    ? 'background: var(--color-accent-50); border: 1px solid var(--color-accent-200); color: var(--color-accent-700);'
+                                    : 'background: var(--color-primary-50); border: 1px solid var(--color-primary-100); color: var(--color-primary-700);'">
+                                <i class="fas" :class="cartOverBudget() ? 'fa-exclamation-circle' : 'fa-info-circle'" style="margin-top: 2px;"></i>
+                                <div>
+                                    <template x-if="cartOverBudget()">
+                                        <span>This order is <strong x-text="formatPrice(cartTotal - budgetRemaining())"></strong> over your remaining <strong x-text="formatPrice(budgetRemaining())"></strong> budget. It may require additional approval.</span>
+                                    </template>
+                                    <template x-if="!cartOverBudget()">
+                                        <span>Remaining budget: <strong x-text="formatPrice(budgetRemaining())"></strong> &mdash; <strong x-text="formatPrice(budgetRemaining() - cartTotal)"></strong> will remain after this order.</span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -584,14 +601,14 @@
 
             <div class="checkout-nav">
                 <button class="btn-back" @click="step = 1"><i class="fas fa-arrow-left"></i> Back</button>
-                <button class="btn-next" @click="step = 3" :disabled="!shipping.location || !shipping.attentionTo">Next: Notes <i class="fas fa-arrow-right"></i></button>
+                <button class="btn-next" @click="step = 3" :disabled="!shipping.location || !shipping.attentionTo">Next: Details <i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
 
         <!-- Step 3: Notes -->
         <div x-show="step === 3">
             <div class="checkout-section">
-                <h2 class="section-title"><i class="fas fa-clipboard"></i> Requisition Notes</h2>
+                <h2 class="section-title"><i class="fas fa-clipboard"></i> Order Details</h2>
 
                 <div class="checkout-form-group">
                     <label>Purpose / Justification *</label>
@@ -639,6 +656,18 @@
                         <span class="label">Shipping</span>
                         <span class="value" x-text="shipping.preference === 'standard' ? 'Free' : 'Expedited'"></span>
                     </div>
+                    <template x-if="budgetRemaining() !== null">
+                        <div class="review-row" style="border-top: 1px solid var(--border-light); padding-top: 0.75rem; margin-top: 0.25rem;">
+                            <span class="label">Remaining Budget</span>
+                            <span class="value" :style="cartOverBudget() ? 'color: var(--color-accent-500)' : 'color: var(--color-success-600)'" x-text="formatPrice(budgetRemaining())"></span>
+                        </div>
+                    </template>
+                    <template x-if="cartOverBudget()">
+                        <div class="review-row">
+                            <span class="label" style="color: var(--color-accent-600); font-weight: 600;">Over Budget By</span>
+                            <span class="value" style="color: var(--color-accent-500);" x-text="formatPrice(cartTotal - budgetRemaining())"></span>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Shipping -->

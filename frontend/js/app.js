@@ -46,10 +46,10 @@ function app() {
         get browseActiveFilters() {
             const filters = [];
             if (this.browseCategory) filters.push({ key: 'category', label: 'Category: ' + this.browseCategory });
-            if (this.browseVendor) filters.push({ key: 'vendor', label: 'Vendor: ' + this.browseVendor });
+            if (this.browseVendor) filters.push({ key: 'vendor', label: 'Supplier: ' + this.browseVendor });
             if (this.browseBidId) {
                 const bid = this.availableBids.find(b => String(b.bid_id) === String(this.browseBidId));
-                filters.push({ key: 'bid', label: 'Contract: ' + (bid ? bid.bid_name : this.browseBidId) });
+                filters.push({ key: 'bid', label: 'Program: ' + (bid ? bid.bid_name : this.browseBidId) });
             }
             if (this.browseQuery.trim()) filters.push({ key: 'query', label: 'Search: ' + this.browseQuery.trim() });
             if (this.browseMinPrice !== '' || this.browseMaxPrice !== '') {
@@ -71,6 +71,12 @@ function app() {
             if (pages.length > 0 && pages[0] > 1) pages.unshift(1);
             if (pages.length > 0 && pages[pages.length - 1] < total) pages.push(total);
             return [...new Set(pages)];
+        },
+
+        get createListTotal() {
+            return this.createListItems.reduce((sum, item) => {
+                return sum + (edsProduct.getPrice(item) * (item.quantity || 1));
+            }, 0);
         },
 
         get filteredTemplates() {

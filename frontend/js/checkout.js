@@ -2,9 +2,10 @@
 function checkout() {
     return {
         step: 1,
-        stepNames: ['Review', 'Shipping', 'Notes', 'Confirm'],
+        stepNames: ['Review', 'Shipping', 'Details', 'Confirm'],
         cart: [],
         session: null,
+        budget: null,
         isSubmitting: false,
         submitError: '',
         confirmationId: '',
@@ -35,10 +36,40 @@ function checkout() {
                 : '';
 
             this.loadCart();
+            this.fetchBudget();
         },
 
         async loadCart() {
             this.cart = await edsCart.loadFromServer();
+        },
+
+        async fetchBudget() {
+            try {
+                const sid = this.session?.session_id;
+                if (!sid) return;
+                const hdrs = { 'X-Session-ID': sid };
+                if (sid === 'demo') {
+                    try {
+                        const s = JSON.parse(localStorage.getItem('eds-session'));
+                        const lvl = s.session?.approval_level;
+                        if (lvl !== undefined && lvl !== null) hdrs['X-Demo-Approval-Level'] = String(lvl);
+                    } catch { /* ignore */ }
+                }
+                const r = await fetch(`${API_BASE}/api/dashboard/summary`, { headers: hdrs });
+                if (!r.ok) return;
+                const d = await r.json();
+                this.budget = d.budget || null;
+            } catch { /* budget display is best-effort */ }
+        },
+
+        budgetRemaining() {
+            return this.budget?.remaining ?? null;
+        },
+
+        cartOverBudget() {
+            const remaining = this.budgetRemaining();
+            if (remaining === null) return false;
+            return this.cartTotal > remaining;
         },
 
         saveCart() {

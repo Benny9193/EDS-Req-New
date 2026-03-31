@@ -98,7 +98,7 @@
         <header class="top-header">
             <div class="search-box input-icon-wrapper" style="position:relative" @click.outside="showGlobalAutocomplete = false">
                 <i class="input-icon" :class="globalAutocompleteLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
-                <input type="text" class="input" placeholder="Search products, vendors, categories..."
+                <input type="text" class="input" placeholder="Search for supplies..."
                        x-model="globalSearch"
                        @input="globalAutocomplete()"
                        @keydown.enter="globalSearchSubmit()"
@@ -517,7 +517,7 @@
                             <!-- Search -->
                             <div class="input-icon-wrapper" style="flex: 1; min-width: 200px; position: relative;" @click.outside="showBrowseAutocomplete = false">
                                 <i class="fas fa-search input-icon"></i>
-                                <input type="text" class="input" placeholder="Search products..."
+                                <input type="text" class="input" placeholder="Search for supplies..."
                                        x-model="browseQuery"
                                        @input="browseAutocomplete()"
                                        @keydown.enter="browseSearchSubmit()"
@@ -552,32 +552,35 @@
                                 </div>
                             </div>
 
-                            <!-- Contract/Bid dropdown -->
-                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseBidId" @change="browseApplyFilters()">
-                                <option value="">All Contracts</option>
+                            <!-- Purchasing program dropdown -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseBidId" @change="browseApplyFilters()"
+                                    title="Filter by district purchasing program — items from approved contracts with pre-negotiated pricing">
+                                <option value="">All Programs</option>
                                 <template x-for="bid in availableBids" :key="bid.bid_id">
                                     <option :value="bid.bid_id" x-text="bid.bid_name + ' (' + bid.product_count + ')'"></option>
                                 </template>
                             </select>
 
                             <!-- Category dropdown -->
-                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseCategory" @change="browseApplyFilters()">
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseCategory" @change="browseApplyFilters()"
+                                    title="Filter by product type (e.g. Art Supplies, Science Equipment, Office Supplies)">
                                 <option value="">All Categories</option>
                                 <template x-for="cat in categories" :key="cat.id || cat.name">
                                     <option :value="cat.name" x-text="cat.name + (cat.product_count ? ' (' + cat.product_count + ')' : '')"></option>
                                 </template>
                             </select>
 
-                            <!-- Vendor dropdown (filtered by category if selected) -->
-                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseVendor" @change="browseApplyFilters()">
-                                <option value="">All Vendors</option>
+                            <!-- Supplier dropdown -->
+                            <select class="input" style="width: auto; min-width: 160px;" x-model="browseVendor" @change="browseApplyFilters()"
+                                    title="Filter by supplier company (e.g. School Specialty, Lakeshore Learning)">
+                                <option value="">All Suppliers</option>
                                 <template x-for="v in filteredVendorList" :key="v.id || v.name">
                                     <option :value="v.name" x-text="v.name + (v.product_count ? ' (' + v.product_count + ')' : '')"></option>
                                 </template>
                             </select>
 
                             <!-- Price range -->
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2" title="Set a minimum and/or maximum price to narrow results">
                                 <input type="number" class="input" style="width: 80px;" placeholder="Min $" x-model="browseMinPrice" @change="browseApplyFilters()">
                                 <span style="color: var(--text-muted);">-</span>
                                 <input type="number" class="input" style="width: 80px;" placeholder="Max $" x-model="browseMaxPrice" @change="browseApplyFilters()">
@@ -781,11 +784,12 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th>Requisition #</th>
+                                            <th>Order #</th>
                                             <th>Date</th>
                                             <th>Items</th>
                                             <th>Total</th>
                                             <th>Status</th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -806,6 +810,11 @@
                                                           }"
                                                           x-text="order.status || 'Unknown'">
                                                     </span>
+                                                </td>
+                                                <td @click.stop>
+                                                    <button class="btn btn-ghost btn-sm" title="Reorder these items" @click="openOrderDetail(order); $nextTick(() => reorderItems())">
+                                                        <i class="fas fa-redo"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         </template>
@@ -958,32 +967,169 @@
                 <div>
                     <div class="flex justify-between items-center mb-4">
                         <h1 style="font-size: var(--text-2xl);">Saved Lists</h1>
+                        <button class="btn btn-primary" @click="startCreateList()" x-show="!createListMode">
+                            <i class="fas fa-plus"></i> Create New List
+                        </button>
                     </div>
 
-                    <template x-if="savedLists.length === 0">
-                        <div class="empty-state">
-                            <div class="empty-state-icon"><i class="fas fa-bookmark"></i></div>
-                            <div class="empty-state-title">No saved lists yet</div>
-                            <p>Save product lists while browsing to quickly reorder them later.</p>
-                            <button class="btn btn-primary mt-4" @click="switchView('browse')">Browse Products</button>
+                    <!-- ===== Create List Builder ===== -->
+                    <template x-if="createListMode">
+                        <div class="card" style="padding: var(--space-5); margin-bottom: var(--space-4);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-4);">
+                                <h2 style="font-size: var(--text-lg); font-weight: var(--font-semibold);">
+                                    <i class="fas fa-plus-circle" style="color: var(--color-primary-500);"></i> Create New List
+                                </h2>
+                                <button class="btn btn-ghost btn-sm" @click="cancelCreateList()">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+
+                            <!-- List name -->
+                            <div style="margin-bottom: var(--space-4);">
+                                <label style="font-size: var(--text-sm); font-weight: var(--font-medium); display:block; margin-bottom: var(--space-1);">List Name</label>
+                                <input type="text" class="input" x-model="createListName" placeholder="e.g., Art Room Supplies, Lab Equipment..." style="max-width: 400px;">
+                            </div>
+
+                            <!-- Product search -->
+                            <div style="margin-bottom: var(--space-4); position:relative; z-index:10;">
+                                <label style="font-size: var(--text-sm); font-weight: var(--font-medium); display:block; margin-bottom: var(--space-1);">Search Products to Add</label>
+                                <div style="position: relative; max-width: 500px;">
+                                    <div class="input-icon-wrapper">
+                                        <i class="input-icon" :class="createListLoading ? 'fas fa-spinner fa-spin' : 'fas fa-search'"></i>
+                                        <input type="text" class="input input-with-icon" x-model="createListSearch"
+                                               @input="createListAutocomplete()"
+                                               @keydown.escape="createListResults = []"
+                                               placeholder="Search by product name, SKU, or keyword...">
+                                    </div>
+
+                                    <!-- Search results dropdown -->
+                                    <div x-show="createListResults.length > 0" @click.outside="createListResults = []"
+                                         style="position:absolute; top:100%; left:0; right:0; z-index:30; background:var(--color-neutral-0); border:1px solid var(--border-default); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); max-height:320px; overflow-y:auto; margin-top:4px;">
+                                        <template x-for="result in createListResults" :key="edsProduct.getId(result)">
+                                            <button @click="createListAddItem(result); createListResults = []; createListSearch = '';"
+                                                    style="display:flex; align-items:center; gap:var(--space-3); width:100%; padding:var(--space-2) var(--space-3); border:none; background:var(--color-neutral-0); text-align:left; cursor:pointer; border-bottom:1px solid var(--border-light); font-size:var(--text-sm);"
+                                                    onmouseover="this.style.background='var(--bg-muted)'" onmouseout="this.style.background='var(--color-neutral-0)'">
+                                                <i class="fas fa-box" style="color:var(--text-muted); width:16px; text-align:center;"></i>
+                                                <div style="flex:1; min-width:0;">
+                                                    <div style="font-weight:var(--font-medium); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" x-text="edsProduct.getName(result)"></div>
+                                                    <div style="font-size:var(--text-xs); color:var(--text-muted);">
+                                                        <span x-text="edsProduct.getVendor(result) || 'No vendor'"></span>
+                                                        <span> &middot; </span>
+                                                        <span x-text="edsProduct.getId(result)"></span>
+                                                    </div>
+                                                </div>
+                                                <div style="font-weight:var(--font-semibold); color:var(--color-primary-500); white-space:nowrap;" x-text="formatPrice(edsProduct.getPrice(result))"></div>
+                                                <i class="fas fa-plus-circle" style="color:var(--color-success-500);"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Items in the list being built -->
+                            <div style="margin-bottom: var(--space-4);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-2);">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium);">
+                                        Items <span style="color:var(--text-muted);" x-text="'(' + createListItems.length + ')'"></span>
+                                    </label>
+                                    <template x-if="createListItems.length > 0">
+                                        <span style="font-size:var(--text-sm); font-weight:var(--font-semibold); color:var(--color-primary-500);" x-text="'Total: ' + formatPrice(createListTotal)"></span>
+                                    </template>
+                                </div>
+
+                                <template x-if="createListItems.length === 0">
+                                    <div style="padding:var(--space-6); text-align:center; border:2px dashed var(--border-default); border-radius:var(--radius-md); color:var(--text-muted);">
+                                        <i class="fas fa-search" style="font-size:var(--text-xl); margin-bottom:var(--space-2); display:block;"></i>
+                                        <p style="font-size:var(--text-sm);">Search above to add products to your list</p>
+                                    </div>
+                                </template>
+
+                                <template x-if="createListItems.length > 0">
+                                    <div style="border:1px solid var(--border-light); border-radius:var(--radius-md); overflow:hidden;">
+                                        <template x-for="(item, idx) in createListItems" :key="edsProduct.getId(item) + '-' + idx">
+                                            <div :style="'display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2) var(--space-3); font-size:var(--text-sm);' + (idx < createListItems.length - 1 ? ' border-bottom:1px solid var(--border-light);' : '')">
+                                                <div style="flex:1; min-width:0; overflow:hidden;">
+                                                    <div style="font-weight:var(--font-medium); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;" x-text="edsProduct.getName(item)"></div>
+                                                    <div style="font-size:var(--text-xs); color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" x-text="edsProduct.getVendor(item)"></div>
+                                                </div>
+                                                <div style="display:flex; align-items:center; gap:var(--space-1); flex-shrink:0;">
+                                                    <button class="btn btn-ghost btn-sm" style="padding:2px 6px; min-width:auto;" @click="createListUpdateQty(idx, -1)">
+                                                        <i class="fas fa-minus" style="font-size:10px;"></i>
+                                                    </button>
+                                                    <span style="min-width:24px; text-align:center; font-weight:var(--font-semibold);" x-text="item.quantity || 1"></span>
+                                                    <button class="btn btn-ghost btn-sm" style="padding:2px 6px; min-width:auto;" @click="createListUpdateQty(idx, 1)">
+                                                        <i class="fas fa-plus" style="font-size:10px;"></i>
+                                                    </button>
+                                                </div>
+                                                <div style="width:70px; text-align:right; font-weight:var(--font-semibold); flex-shrink:0;" x-text="formatPrice(edsProduct.getPrice(item) * (item.quantity || 1))"></div>
+                                                <button class="btn btn-ghost btn-sm" style="padding:2px 6px; min-width:auto; color:var(--color-accent-500); flex-shrink:0;" @click="createListRemoveItem(idx)">
+                                                    <i class="fas fa-trash" style="font-size:11px;"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Save / Cancel actions -->
+                            <div style="display:flex; gap:var(--space-2); justify-content:flex-end; padding-top:var(--space-3); border-top:1px solid var(--border-light);">
+                                <button class="btn btn-ghost" @click="cancelCreateList()">Cancel</button>
+                                <button class="btn btn-primary" @click="saveCreatedList()" :disabled="createListItems.length === 0 || !createListName.trim()">
+                                    <i class="fas fa-bookmark"></i> Save List
+                                </button>
+                            </div>
                         </div>
                     </template>
 
-                    <div class="flex flex-col gap-3">
+                    <template x-if="!createListMode && savedLists.length === 0">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-bookmark"></i></div>
+                            <div class="empty-state-title">No saved lists yet</div>
+                            <p>Create a custom list or save product lists while browsing to quickly reorder them later.</p>
+                            <div style="display:flex; gap:var(--space-2); justify-content:center; margin-top:var(--space-4);">
+                                <button class="btn btn-primary" @click="startCreateList()"><i class="fas fa-plus"></i> Create New List</button>
+                                <button class="btn btn-ghost" @click="switchView('browse')">Browse Products</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="flex flex-col gap-3" x-show="!createListMode">
                         <template x-for="list in savedLists" :key="list.name">
                             <div class="card" style="padding: var(--space-4);">
                                 <div class="flex justify-between items-center">
-                                    <div>
-                                        <div style="font-weight: var(--font-semibold); font-size: var(--text-base);" x-text="list.name"></div>
-                                        <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="list.count + ' items &middot; Saved ' + list.savedAt"></div>
+                                    <div style="flex:1; min-width:0; cursor:pointer;" @click="list._expanded = !list._expanded">
+                                        <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                            <i class="fas fa-chevron-right" style="font-size:var(--text-xs); color:var(--text-muted); transition:transform 0.2s;" :style="list._expanded ? 'transform:rotate(90deg)' : ''"></i>
+                                            <span style="font-weight: var(--font-semibold); font-size: var(--text-base);" x-text="list.name"></span>
+                                        </div>
+                                        <div style="font-size: var(--text-xs); color: var(--text-muted); margin-left:22px;" x-text="list.count + ' items &middot; Saved ' + list.savedAt"></div>
                                     </div>
-                                    <div class="flex gap-2">
+                                    <div class="flex gap-2" style="flex-shrink:0;">
+                                        <button class="btn btn-ghost btn-sm" @click="editSavedList(list)" title="Edit list">
+                                            <i class="fas fa-pen"></i> Edit
+                                        </button>
                                         <button class="btn btn-primary btn-sm" @click="addListToCart(list)">
                                             <i class="fas fa-cart-plus"></i> Add to Cart
                                         </button>
                                         <button class="btn btn-ghost btn-sm" @click="deleteSavedList(list.name)">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                    </div>
+                                </div>
+                                <!-- Expandable item preview -->
+                                <div x-show="list._expanded" x-collapse style="margin-top:var(--space-3); border-top:1px solid var(--border-light); padding-top:var(--space-3);">
+                                    <template x-for="item in list.items" :key="item.ItemNumber || item.Description">
+                                        <div style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-1) 0; font-size:var(--text-sm);">
+                                            <div style="flex:1; min-width:0; overflow:hidden;">
+                                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;" x-text="item.Description || item.name || 'Item'"></span>
+                                            </div>
+                                            <span style="color:var(--text-muted); flex-shrink:0; font-size:var(--text-xs);" x-text="'x' + (item.quantity || 1)"></span>
+                                            <span style="font-weight:var(--font-semibold); flex-shrink:0; min-width:65px; text-align:right;" x-text="formatPrice((item.Price || 0) * (item.quantity || 1))"></span>
+                                        </div>
+                                    </template>
+                                    <div style="display:flex; justify-content:flex-end; padding-top:var(--space-2); border-top:1px solid var(--border-light); margin-top:var(--space-2);">
+                                        <span style="font-size:var(--text-sm); font-weight:var(--font-bold); color:var(--color-primary-500);"
+                                              x-text="'Total: ' + formatPrice(list.items.reduce((s, i) => s + ((i.Price || 0) * (i.quantity || 1)), 0))"></span>
                                     </div>
                                 </div>
                             </div>
@@ -1117,15 +1263,15 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <template x-for="item in approvalDetailItems" :key="item.item_number || item.id">
+                                                <template x-for="item in approvalDetailItems" :key="item.line_id || item.item_id || item.id">
                                                     <tr style="border-top: 1px solid var(--border-light);">
                                                         <td style="padding: var(--space-2) var(--space-3);">
-                                                            <div style="font-weight: var(--font-medium);" x-text="item.description || item.item_number || 'Item'"></div>
-                                                            <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.item_number || ''"></div>
+                                                            <div style="font-weight: var(--font-medium);" x-text="item.product_name || item.description || item.item_number || 'Item'"></div>
+                                                            <div style="font-size: var(--text-xs); color: var(--text-muted);" x-text="item.sku || item.item_number || ''"></div>
                                                         </td>
                                                         <td style="padding: var(--space-2) var(--space-3); text-align:center;" x-text="item.quantity || 1"></td>
-                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right;" x-text="formatPrice(item.price || item.unit_price || 0)"></td>
-                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right; font-weight: var(--font-semibold);" x-text="formatPrice((item.price || item.unit_price || 0) * (item.quantity || 1))"></td>
+                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right;" x-text="formatPrice(item.unit_price || item.price || 0)"></td>
+                                                        <td style="padding: var(--space-2) var(--space-3); text-align:right; font-weight: var(--font-semibold);" x-text="formatPrice(item.extended_price || (item.unit_price || item.price || 0) * (item.quantity || 1))"></td>
                                                     </tr>
                                                 </template>
                                             </tbody>
@@ -1709,10 +1855,41 @@
         </template>
     </div>
     <div class="cart-drawer-footer" x-show="cart.length > 0">
+        <!-- Budget warning banner -->
+        <template x-if="cartBudgetWarningLevel() !== 'none' && budgetRemaining() !== null">
+            <div style="padding: var(--space-3); border-radius: var(--radius-lg); margin-bottom: var(--space-3); font-size: var(--text-sm); display: flex; align-items: flex-start; gap: var(--space-2);"
+                 :style="cartBudgetWarningLevel() === 'over'
+                    ? 'background: var(--color-accent-50); border: 1px solid var(--color-accent-200); color: var(--color-accent-700);'
+                    : cartBudgetWarningLevel() === 'critical'
+                        ? 'background: var(--color-warning-50); border: 1px solid var(--color-warning-200); color: var(--color-warning-700);'
+                        : 'background: var(--color-warning-50); border: 1px solid var(--color-warning-100); color: var(--color-warning-600);'">
+                <i class="fas" :class="cartBudgetWarningLevel() === 'over' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle'" style="margin-top: 2px;"></i>
+                <div>
+                    <template x-if="cartBudgetWarningLevel() === 'over'">
+                        <span><strong>Over budget</strong> — your cart is <strong x-text="formatPrice(cartTotal - budgetRemaining())"></strong> over your remaining <strong x-text="formatPrice(budgetRemaining())"></strong> budget.</span>
+                    </template>
+                    <template x-if="cartBudgetWarningLevel() === 'critical'">
+                        <span>Cart is <strong x-text="cartBudgetPercent() + '%'"></strong> of your remaining budget.</span>
+                    </template>
+                    <template x-if="cartBudgetWarningLevel() === 'warning'">
+                        <span>Cart is <strong x-text="cartBudgetPercent() + '%'"></strong> of your remaining budget.</span>
+                    </template>
+                </div>
+            </div>
+        </template>
         <div class="flex justify-between items-center mb-4">
             <span style="font-weight: var(--font-semibold);">Subtotal</span>
-            <span style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--color-primary-500);" x-text="formatPrice(cartTotal)"></span>
+            <span style="font-size: var(--text-xl); font-weight: var(--font-bold);"
+                  :style="cartOverBudget() ? 'color: var(--color-accent-500);' : 'color: var(--color-primary-500);'"
+                  x-text="formatPrice(cartTotal)"></span>
         </div>
+        <!-- Budget remaining context line -->
+        <template x-if="budgetRemaining() !== null">
+            <div class="flex justify-between items-center" style="margin-bottom: var(--space-3); font-size: var(--text-xs); color: var(--text-muted);">
+                <span>Remaining budget</span>
+                <span x-text="formatPrice(budgetRemaining())"></span>
+            </div>
+        </template>
         <div class="flex gap-2">
             <button class="btn btn-ghost w-full" @click="showSaveListFromCart()">
                 <i class="fas fa-bookmark"></i> Save List
@@ -1846,10 +2023,10 @@
                 <!-- Vendor info -->
                 <template x-if="selectedProduct.VendorName">
                     <div style="background:var(--bg-subtle);border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-6);">
-                        <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-2);">Vendor Information</div>
+                        <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-2);">Supplier</div>
                         <div style="font-weight:var(--font-semibold);margin-bottom:var(--space-1);" x-text="selectedProduct.VendorName"></div>
                         <template x-if="selectedProduct.VendorNumber || selectedProduct.vendor_number">
-                            <div style="font-size:var(--text-sm);color:var(--text-secondary);">Vendor # <span x-text="selectedProduct.VendorNumber || selectedProduct.vendor_number"></span></div>
+                            <div style="font-size:var(--text-sm);color:var(--text-secondary);">Supplier # <span x-text="selectedProduct.VendorNumber || selectedProduct.vendor_number"></span></div>
                         </template>
                     </div>
                 </template>
@@ -1963,7 +2140,10 @@
                 </template>
             </div>
             <!-- Footer -->
-            <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--border-light);display:flex;justify-content:flex-end;">
+            <div style="padding:var(--space-4) var(--space-6);border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+                <button class="btn btn-primary btn-sm" @click="reorderItems()" :disabled="orderDetailLoading || orderDetailItems.length === 0">
+                    <i class="fas fa-redo" style="margin-right:var(--space-1);"></i> Reorder These Items
+                </button>
                 <button class="btn btn-ghost" @click="showOrderDetail = false">Close</button>
             </div>
         </div>

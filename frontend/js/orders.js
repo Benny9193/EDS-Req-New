@@ -51,6 +51,22 @@ function ordersModule() {
                 }
             } catch (e) { console.error('Order detail fetch error:', e); }
             finally { this.orderDetailLoading = false; }
+        },
+
+        reorderItems() {
+            if (!this.orderDetailItems || this.orderDetailItems.length === 0) return;
+            let added = 0;
+            this.orderDetailItems.forEach(item => {
+                this.addToCart({
+                    ItemNumber: item.sku || item.item_number || '',
+                    Description: item.product_name || item.description || '',
+                    Price: item.unit_price || 0,
+                    VendorName: item.vendor || '',
+                    quantity: 1
+                }, true);
+                added++;
+            });
+            this.showToast('Added ' + added + ' items from previous order to cart', 'fas fa-redo');
         }
     };
 }

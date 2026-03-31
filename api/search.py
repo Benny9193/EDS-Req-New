@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Default to the existing EDS-ES Azure VM (20.122.81.233)
 ES_URL = os.getenv("ES_URL", "http://20.122.81.233:9200")
 ES_ENABLED = os.getenv("ES_ENABLED", "true").lower() in ("true", "1", "yes")
-ES_INDEX = os.getenv("ES_INDEX", "pricing_consolidated_60")
+ES_INDEX = os.getenv("ES_INDEX", "pricing_consolidated_63")
 
 # Singleton client
 _es_client: Optional[AsyncElasticsearch] = None
@@ -55,9 +55,10 @@ async def es_healthy() -> bool:
     if client is None:
         return False
     try:
-        return await client.ping()
+        info = await client.info()
+        return True
     except Exception as e:
-        logger.warning("Elasticsearch health check failed: %s", e)
+        logger.warning(f"Elasticsearch health check failed: {e}")
         return False
 
 
@@ -229,11 +230,11 @@ async def ensure_index():
         exists = await client.indices.exists(index=ES_INDEX)
         if not exists:
             await client.indices.create(index=ES_INDEX, body=PRODUCT_INDEX_SETTINGS)
-            logger.info("Created Elasticsearch index: %s", ES_INDEX)
+            logger.info(f"Created Elasticsearch index: {ES_INDEX}")
         else:
-            logger.info("Elasticsearch index already exists: %s", ES_INDEX)
+            logger.info(f"Elasticsearch index already exists: {ES_INDEX}")
     except Exception as e:
-        logger.error("Failed to create ES index: %s", e)
+        logger.error(f"Failed to create ES index: {e}")
 
 
 async def recreate_index():
@@ -245,8 +246,8 @@ async def recreate_index():
         exists = await client.indices.exists(index=ES_INDEX)
         if exists:
             await client.indices.delete(index=ES_INDEX)
-            logger.info("Deleted existing index: %s", ES_INDEX)
+            logger.info(f"Deleted existing index: {ES_INDEX}")
         await client.indices.create(index=ES_INDEX, body=PRODUCT_INDEX_SETTINGS)
-        logger.info("Recreated Elasticsearch index: %s", ES_INDEX)
+        logger.info(f"Recreated Elasticsearch index: {ES_INDEX}")
     except Exception as e:
-        logger.error("Failed to recreate ES index: %s", e)
+        logger.error(f"Failed to recreate ES index: {e}")
