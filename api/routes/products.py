@@ -129,8 +129,8 @@ async def get_products(
         if min_price is not None and max_price is not None and min_price > max_price:
             raise HTTPException(status_code=400, detail="min_price cannot be greater than max_price")
 
-        # Try Elasticsearch first when enabled and a search query is present
-        if ES_ENABLED and query:
+        # Try Elasticsearch first when enabled (for search queries and default browse)
+        if ES_ENABLED:
             es_result = await _try_es_search(
                 query, category, vendor, min_price, max_price,
                 sort_by, sort_order, page, page_size
@@ -582,8 +582,8 @@ async def _try_es_search(
         if price_filter:
             filters.append({"range": {"bidPrice": price_filter}})
 
-        bool_query = {
-            "must": [{
+        if query and query.strip():
+            must_clause = [{
                 "multi_match": {
                     "query": query.strip(),
                     "fields": [
@@ -597,8 +597,11 @@ async def _try_es_search(
                     "fuzziness": "AUTO",
                     "prefix_length": 2,
                 }
-            }],
-        }
+            }]
+        else:
+            must_clause = [{"match_all": {}}]
+
+        bool_query = {"must": must_clause}
         if filters:
             bool_query["filter"] = filters
 
