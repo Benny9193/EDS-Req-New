@@ -69,6 +69,7 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
         logger.info("No agent_config.yaml found, using defaults")
 
     config = _apply_env_overrides(config)
+    _validate_config(config)
     _config = config
     return config
 
@@ -89,6 +90,47 @@ def get_default_provider() -> str:
     """Get the default LLM provider name."""
     config = load_config()
     return config.get("llm", {}).get("default_provider", "ollama")
+
+
+_KNOWN_TOP_KEYS = {"llm", "rag", "memory", "security", "tools", "audit", "cli", "monitoring", "documentation", "database", "reports"}
+_KNOWN_LLM_PROVIDERS = {"claude", "openai", "ollama"}
+
+
+def _validate_config(config: Dict[str, Any]) -> None:
+    """Validate config and log warnings for unknown keys or common mistakes."""
+    # Check for unknown top-level keys
+    unknown = set(config.keys()) - _KNOWN_TOP_KEYS
+    for key in unknown:
+        logger.warning("Unknown config key '%s' — will be ignored", key)
+
+    # Check LLM provider is valid
+    llm = config.get("llm", {})
+    provider = llm.get("default_provider")
+    if provider and provider not in _KNOWN_LLM_PROVIDERS:
+        logger.warning(
+            "Unknown LLM provider '%s' — valid: %s",
+            provider, ", ".join(sorted(_KNOWN_LLM_PROVIDERS)),
+        )
+
+    # Check security settings
+    security = config.get("security", {})
+    allowed_dbs = security.get("allowed_databases", [])
+    if allowed_dbs and not isinstance(allowed_dbs, list):
+        logger.warning("security.allowed_databases should be a list, got %s", type(allowed_dbs).__name__)
+
+    # Check memory paths
+    memory = config.get("memory", {})
+    sessions_dir = memory.get("sessions_dir")
+    if sessions_dir:
+        p = Path(sessions_dir)
+        if not p.exists():
+            logger.info("Sessions directory '%s' will be created on first use", sessions_dir)
+
+    # Check audit settings
+    audit = config.get("audit", {})
+    retention = audit.get("retention_days")
+    if retention is not None and (not isinstance(retention, int) or retention < 1):
+        logger.warning("audit.retention_days should be a positive integer, got %s", retention)
 
 
 def reset_config() -> None:
