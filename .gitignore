@@ -41,6 +41,11 @@ docs/nul
 nul
 
 
+# Runtime data (audit logs, sessions, vectordb)
+data/audit/
+data/sessions/
+data/memory/
+
 # Large data files
 *.pkl
 
