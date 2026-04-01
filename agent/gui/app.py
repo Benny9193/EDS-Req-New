@@ -168,25 +168,42 @@ def create_app():
         _render_messages(chat_container)
 
         try:
-            # Use non-streaming chat to get tool calls
-            response = await asyncio.to_thread(
-                agent.chat, text, session_id=state.current_session_id,
-            )
+            # Try streaming for a responsive feel
+            streaming_el = None
+            streamed_text = ""
 
-            # Display tool calls if any
-            if response.tool_calls:
+            def _stream_gen():
+                return agent.chat_stream(text, session_id=state.current_session_id)
+
+            try:
+                gen = await asyncio.to_thread(lambda: list(_stream_gen()))
+                streamed_text = "".join(gen)
+
+                if streamed_text:
+                    state.messages.append(Message(
+                        role="assistant", content=streamed_text,
+                    ))
+                else:
+                    raise ValueError("Empty stream")
+
+            except Exception:
+                # Fall back to non-streaming (supports tool calls)
+                response = await asyncio.to_thread(
+                    agent.chat, text, session_id=state.current_session_id,
+                )
+
+                if response.tool_calls:
+                    state.messages.append(Message(
+                        role="tool_calls",
+                        content=f"{len(response.tool_calls)} tool(s) called",
+                        metadata={"tool_calls": response.tool_calls},
+                    ))
+
+                content = response.content or response.error or "No response"
                 state.messages.append(Message(
-                    role="tool_calls",
-                    content=f"{len(response.tool_calls)} tool(s) called",
-                    metadata={"tool_calls": response.tool_calls},
+                    role="assistant", content=content,
+                    metadata=response.metadata,
                 ))
-
-            # Display response
-            content = response.content or response.error or "No response"
-            state.messages.append(Message(
-                role="assistant", content=content,
-                metadata=response.metadata,
-            ))
 
         except Exception as e:
             state.messages.append(Message(role="assistant", content=f"Error: {e}"))

@@ -111,6 +111,7 @@ generate-dashboard = "scripts.generate_alert_dashboard:main"
 # EDS DBA Agent
 eds-agent = "agent.main:main"
 eds-agent-gui = "agent.gui.app:run_app"
+eds-agent-mcp = "agent.mcp.server:main"
 # Universal Requisition API
 eds-api = "api.main:app"
 

@@ -200,6 +200,22 @@ def sessions(limit, delete_id):
         )
 
 
+# ── mcp ──────────────────────────────────────────────────────────────
+
+
+@cli.command("mcp")
+@click.option("--sse", is_flag=True, help="Use SSE transport instead of stdio.")
+def mcp_server(sse):
+    """Start the MCP (Model Context Protocol) server."""
+    _setup_logging()
+    from agent.mcp.server import mcp as mcp_app
+
+    if sse:
+        mcp_app.run(transport="sse")
+    else:
+        mcp_app.run(transport="stdio")
+
+
 # ── status ───────────────────────────────────────────────────────────
 
 
