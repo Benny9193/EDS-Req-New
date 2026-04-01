@@ -107,6 +107,9 @@ class EDSAgent:
         self._session_manager = None
         self._learned_context = None
 
+        # User context (set via set_user_context)
+        self._user_context = None
+
         # In-memory conversation history (fallback when no session_id)
         self._history: List[Message] = []
         self._mode: AgentMode = AgentMode.CHAT
@@ -186,6 +189,49 @@ class EDSAgent:
         self._provider_name = provider_name
         self.logger.info("Switched to %s provider", provider_name)
 
+    def set_user_context(
+        self,
+        user_id: int,
+        approval_level: int,
+        district_id: int = None,
+        school_id: int = None,
+        user_name: str = "",
+        district_name: str = "",
+        school_name: str = "",
+    ) -> None:
+        """Set the current user's context for role-aware behavior.
+
+        This controls what the agent tells the user they can do,
+        and restricts SQL execution and write operations based on level.
+        """
+        from agent.security.roles import UserContext, Permission
+
+        self._user_context = UserContext(
+            user_id=user_id,
+            approval_level=approval_level,
+            district_id=district_id,
+            school_id=school_id,
+            user_name=user_name,
+            district_name=district_name,
+            school_name=school_name,
+        )
+
+        # Adjust SQL validator based on user level
+        if self._tool_registry:
+            sql_tool = self._tool_registry.get("sql_executor")
+            if sql_tool and hasattr(sql_tool, "_validator"):
+                sql_tool._validator.allow_writes = self._user_context.can_write_sql()
+
+        self.logger.info(
+            "User context set: %s (level %d)",
+            self._user_context.level_label,
+            approval_level,
+        )
+
+    @property
+    def user_context(self):
+        return self._user_context
+
     def _get_llm_tools(self) -> Optional[List[Dict]]:
         """Get tool definitions formatted for the current LLM provider."""
         if self.tools.tool_count == 0:
@@ -204,6 +250,10 @@ class EDSAgent:
         mode_extra = MODE_PROMPTS.get(self._mode, "")
         if mode_extra:
             system += mode_extra
+
+        # Inject user context if set
+        if self._user_context:
+            system += f"\n\nCurrent user context:\n{self._user_context.to_prompt_context()}"
 
         # Inject learned context if available
         try:
@@ -429,7 +479,7 @@ class EDSAgent:
         tool_count = self._tool_registry.tool_count if self._tool_registry else 0
         tool_names = list(self._tool_registry) if self._tool_registry else []
 
-        return {
+        status = {
             "provider": provider_name,
             "model": model,
             "mode": self._mode.value,
@@ -438,3 +488,14 @@ class EDSAgent:
             "tools": tool_names,
             "available_providers": ["claude", "openai", "ollama"],
         }
+
+        if self._user_context:
+            status["user"] = {
+                "name": self._user_context.user_name,
+                "level": self._user_context.approval_level,
+                "role": self._user_context.level_label,
+                "district_id": self._user_context.district_id,
+                "school_id": self._user_context.school_id,
+            }
+
+        return status
