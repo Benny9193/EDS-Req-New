@@ -106,6 +106,9 @@ class EDSAgent:
         self._audit_logger = None
         self._session_manager = None
         self._learned_context = None
+        self._context_manager = None
+        self._summarizer = None
+        self._conversation_summary: Optional[str] = None
 
         # User context (set via set_user_context)
         self._user_context = None
@@ -182,6 +185,19 @@ class EDSAgent:
             )
         return self._learned_context
 
+    @property
+    def context_manager(self):
+        """Lazy-load the context window manager."""
+        if self._context_manager is None:
+            from agent.memory.summarizer import ContextWindowManager
+            memory_config = self._config.get("memory", {})
+            self._context_manager = ContextWindowManager(
+                total_budget=memory_config.get("context_budget", 100_000),
+                doc_budget=memory_config.get("doc_budget", 15_000),
+                history_budget=memory_config.get("history_budget", 60_000),
+            )
+        return self._context_manager
+
     def set_provider(self, provider_name: str) -> None:
         """Switch to a different LLM provider."""
         provider_config = get_llm_config(provider_name)
@@ -255,10 +271,11 @@ class EDSAgent:
         if self._user_context:
             system += f"\n\nCurrent user context:\n{self._user_context.to_prompt_context()}"
 
-        # Inject learned context if available
+        # Inject learned context if available (trimmed to budget)
         try:
             context = self.learned_context.get_context_for_prompt()
             if context:
+                context = self.context_manager.trim_learned_context(context)
                 system += f"\n\nLearned context:\n{context}"
         except Exception:
             pass  # Don't fail the chat if learned context is unavailable
@@ -266,15 +283,47 @@ class EDSAgent:
         messages = [Message(role=MessageRole.SYSTEM, content=system)]
 
         # Load history from session if provided, otherwise use in-memory
+        history_msgs: List[Dict] = []
         if session_id:
-            session_msgs = self.sessions.get_recent_context(session_id, n_messages=20)
-            for sm in session_msgs:
-                messages.append(Message(
-                    role=MessageRole(sm.role) if sm.role in ("user", "assistant", "system", "tool") else MessageRole.USER,
-                    content=sm.content,
-                ))
+            session_msgs = self.sessions.get_recent_context(session_id, n_messages=40)
+            history_msgs = [{"role": sm.role, "content": sm.content} for sm in session_msgs]
         else:
-            messages.extend(self._history)
+            history_msgs = [{"role": m.role.value, "content": m.content} for m in self._history]
+
+        # Check if summarization is needed
+        if history_msgs:
+            from agent.memory.summarizer import ConversationSummarizer
+            summarizer = ConversationSummarizer(
+                provider_name=self._provider_name or "ollama"
+            )
+            if summarizer.should_summarize(history_msgs):
+                try:
+                    # Summarize older messages, keep recent ones
+                    split = len(history_msgs) // 2
+                    old_msgs = history_msgs[:split]
+                    recent_msgs = history_msgs[split:]
+                    self._conversation_summary = summarizer.summarize(old_msgs)
+                    history_msgs = recent_msgs
+                    self.logger.info(
+                        "Summarized %d messages, keeping %d recent",
+                        split, len(recent_msgs),
+                    )
+                except Exception as e:
+                    self.logger.warning("Summarization failed: %s", e)
+
+            # Trim history to budget
+            history_msgs = self.context_manager.trim_history(
+                history_msgs, summary=self._conversation_summary,
+            )
+
+        for hm in history_msgs:
+            role_str = hm.get("role", "user")
+            try:
+                role = MessageRole(role_str)
+            except ValueError:
+                role = MessageRole.USER
+            messages.append(Message(role=role, content=hm.get("content", "")))
+
         messages.append(Message(role=MessageRole.USER, content=user_message))
         return messages
 
