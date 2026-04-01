@@ -35,7 +35,8 @@ class TestInfrastructureData:
     def test_elasticsearch_info(self):
         es = ElasticsearchInfo()
         assert es.version == "7.15.2"
-        assert es.active_index == "pricing_consolidated_60"
+        assert es.active_alias == "pricing_consolidated_active"
+        assert es.active_underlying_index == "pricing_consolidated_60"
         assert "18.6M" in es.active_docs
 
     def test_databases_populated(self):
@@ -127,6 +128,7 @@ class TestInfrastructurePrompt:
 
     def test_prompt_contains_elasticsearch(self):
         prompt = get_infrastructure_prompt()
+        assert "pricing_consolidated_active" in prompt
         assert "pricing_consolidated_60" in prompt
 
     def test_prompt_contains_usage_patterns(self):

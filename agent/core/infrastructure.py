@@ -152,7 +152,8 @@ class ElasticsearchInfo:
     host: str = "20.122.81.233"
     port: int = 9200
     version: str = "7.15.2"
-    active_index: str = "pricing_consolidated_60"
+    active_alias: str = "pricing_consolidated_active"
+    active_underlying_index: str = "pricing_consolidated_60"
     active_docs: str = "18.6M"
     active_size: str = "73.2 GB"
     total_indices: int = 44
@@ -271,7 +272,8 @@ def get_infrastructure_prompt() -> str:
     lines.extend([
         "",
         f"Elasticsearch: {es.host}:{es.port} (v{es.version})",
-        f"  Active index: {es.active_index} ({es.active_docs} docs, {es.active_size})",
+        f"  Active alias: {es.active_alias} → {es.active_underlying_index} ({es.active_docs} docs, {es.active_size})",
+        f"  Always use the alias '{es.active_alias}' in queries, never the underlying index name.",
         f"  WARNING: {es.auth}",
         "",
         "Kubernetes: 2 AKS clusters (prod: 13 nodes, uat: 12 nodes) in East US 2",
