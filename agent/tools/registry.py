@@ -161,6 +161,7 @@ def register_all_tools(config: Optional[Dict[str, Any]] = None) -> ToolRegistry:
         ("agent.tools.schema_introspector", "create_schema_tools"),
         ("agent.tools.catalog_search", "create_catalog_tools"),
         ("agent.tools.report_generator", "create_report_tools"),
+        ("agent.tools.infrastructure", "create_infrastructure_tools"),
     ]
 
     for module_name, factory_name in _loaders:

@@ -267,6 +267,13 @@ class EDSAgent:
         if mode_extra:
             system += mode_extra
 
+        # Inject infrastructure context
+        try:
+            from agent.core.infrastructure import get_infrastructure_prompt
+            system += f"\n\n{get_infrastructure_prompt()}"
+        except Exception:
+            pass
+
         # Inject user context if set
         if self._user_context:
             system += f"\n\nCurrent user context:\n{self._user_context.to_prompt_context()}"

@@ -214,6 +214,29 @@ def chat_with_agent(message: str, mode: str = "chat") -> str:
     return result
 
 
+@mcp.tool()
+def lookup_infrastructure(
+    query_type: str, detail_id: str = "",
+) -> str:
+    """Look up EDS infrastructure details.
+
+    Args:
+        query_type: One of: sql_server, databases, critical_tables, known_issues,
+            kubernetes, elasticsearch, services, accounts, usage_patterns,
+            monitoring_thresholds, issue_detail
+        detail_id: Specific ID for detail lookups (e.g. 'KI-001' for issue_detail)
+    """
+    from agent.tools.infrastructure import InfrastructureTool
+
+    tool = InfrastructureTool()
+    result = tool.execute(query_type=query_type, detail_id=detail_id)
+
+    if result.success:
+        return json.dumps(result.data, default=str, indent=2)
+    else:
+        return f"Error: {result.error}"
+
+
 # ── Resources ────────────────────────────────────────────────────────
 
 
