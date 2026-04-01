@@ -21,6 +21,7 @@ Commands:
   /new        Start a new session
   /sessions   List recent sessions
   /load ID    Resume a session by ID
+  /history N  Show last N messages (default 10)
   /provider X Switch provider (claude|openai|ollama)
   /status     Show agent status
   /help       Show this help
@@ -191,6 +192,22 @@ def start_repl(
                             )
                         else:
                             _print_colored(f"Session {target_id} not found.", "red")
+
+                elif cmd == "/history":
+                    n = 10
+                    if len(parts) > 1 and parts[1].isdigit():
+                        n = int(parts[1])
+                    recent = agent.sessions.get_recent_context(session_id, n_messages=n)
+                    if not recent:
+                        _print_colored("No messages in this session.", "dim")
+                    else:
+                        _print_colored(f"Last {len(recent)} messages:", "cyan")
+                        for msg in recent:
+                            role = msg.role.upper()
+                            content = msg.content[:120]
+                            if len(msg.content) > 120:
+                                content += "..."
+                            _print_colored(f"  [{role}] {content}", "dim")
 
                 elif cmd == "/status":
                     s = agent.get_status()

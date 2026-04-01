@@ -5,7 +5,6 @@ from the EDS and dpa_EDSAdmin databases via system catalog views.
 """
 
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 from agent.tools.base import (
@@ -144,19 +143,9 @@ class SchemaIntrospectorTool(BaseTool):
             return ToolResult(success=False, error=f"Introspection error: {e}")
 
     def _run_query(self, sql: str, database: str, params: list) -> tuple:
-        import pyodbc
+        from agent.tools.db_connection import get_connection
 
-        server = os.environ.get("DB_SERVER", "localhost")
-        username = os.environ.get("DB_USERNAME", "")
-        password = os.environ.get("DB_PASSWORD", "")
-
-        conn_str = (
-            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-            f"SERVER={server};DATABASE={database};"
-            f"UID={username};PWD={password};"
-        )
-
-        with pyodbc.connect(conn_str, timeout=30) as conn:
+        with get_connection(database, timeout=30) as conn:
             cursor = conn.cursor()
             if params:
                 cursor.execute(sql, params)

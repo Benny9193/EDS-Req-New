@@ -5,7 +5,6 @@ and school/district directory in the EDS database.
 """
 
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 from agent.tools.base import (
@@ -20,30 +19,33 @@ logger = logging.getLogger(__name__)
 
 _SEARCH_QUERIES = {
     "products": """
-        SELECT TOP(@limit) i.ItemId, i.ItemNumber, i.Description,
+        SELECT TOP(?) i.ItemId, i.ItemNumber, i.Description,
                i.UnitOfMeasure, v.VendorName
         FROM Items i
         JOIN Vendors v ON i.VendorId = v.VendorId
-        WHERE i.Description LIKE '%' + @search + '%'
-           OR i.ItemNumber LIKE '%' + @search + '%'
+        WHERE i.Description LIKE '%' + ? + '%'
+           OR i.ItemNumber LIKE '%' + ? + '%'
         ORDER BY i.Description
     """,
     "vendors": """
-        SELECT TOP(@limit) v.VendorId, v.VendorCode, v.VendorName
+        SELECT TOP(?) v.VendorId, v.VendorCode, v.VendorName
         FROM Vendors v
-        WHERE v.VendorName LIKE '%' + @search + '%'
-           OR v.VendorCode LIKE '%' + @search + '%'
+        WHERE v.VendorName LIKE '%' + ? + '%'
+           OR v.VendorCode LIKE '%' + ? + '%'
         ORDER BY v.VendorName
     """,
     "schools": """
-        SELECT TOP(@limit) s.SchoolId, s.SchoolName, d.DistrictName
+        SELECT TOP(?) s.SchoolId, s.SchoolName, d.DistrictName
         FROM Schools s
         JOIN Districts d ON s.DistrictId = d.DistrictId
-        WHERE s.SchoolName LIKE '%' + @search + '%'
-           OR d.DistrictName LIKE '%' + @search + '%'
+        WHERE s.SchoolName LIKE '%' + ? + '%'
+           OR d.DistrictName LIKE '%' + ? + '%'
         ORDER BY d.DistrictName, s.SchoolName
     """,
 }
+
+# Number of search_term params per query (limit is always first)
+_SEARCH_PARAM_COUNTS = {"products": 2, "vendors": 2, "schools": 2}
 
 
 class CatalogSearchTool(BaseTool):
@@ -121,23 +123,15 @@ class CatalogSearchTool(BaseTool):
             return ToolResult(success=False, error=f"Search error: {e}")
 
     def _run_search(self, catalog: str, search_term: str, limit: int) -> tuple:
-        import pyodbc
-
-        server = os.environ.get("DB_SERVER", "localhost")
-        username = os.environ.get("DB_USERNAME", "")
-        password = os.environ.get("DB_PASSWORD", "")
-
-        conn_str = (
-            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-            f"SERVER={server};DATABASE=EDS;"
-            f"UID={username};PWD={password};"
-        )
+        from agent.tools.db_connection import get_connection
 
         sql = _SEARCH_QUERIES[catalog]
+        n_search_params = _SEARCH_PARAM_COUNTS.get(catalog, 2)
+        params = [limit] + [search_term] * n_search_params
 
-        with pyodbc.connect(conn_str, timeout=30) as conn:
+        with get_connection("EDS", timeout=30) as conn:
             cursor = conn.cursor()
-            cursor.execute(sql, {"search": search_term, "limit": limit})
+            cursor.execute(sql, params)
 
             if cursor.description is None:
                 return [], []

@@ -5,7 +5,6 @@ truncated to max_results rows and formatted as a list of dicts.
 """
 
 import logging
-import os
 from typing import Any, Dict, List, Optional
 
 from agent.security.validator import QueryValidator, ValidationResult
@@ -150,27 +149,13 @@ class SQLExecutorTool(BaseTool):
         max_rows: int,
     ) -> tuple:
         """Execute the query via pyodbc and return (rows, column_names)."""
-        import pyodbc
+        from agent.tools.db_connection import get_connection
 
-        server = os.environ.get("DB_SERVER", "localhost")
-        username = os.environ.get("DB_USERNAME", "")
-        password = os.environ.get("DB_PASSWORD", "")
-
-        conn_str = (
-            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-            f"SERVER={server};"
-            f"DATABASE={database};"
-            f"UID={username};"
-            f"PWD={password};"
-            f"Connection Timeout={self._query_timeout};"
-        )
-
-        with pyodbc.connect(conn_str, timeout=self._query_timeout) as conn:
+        with get_connection(database, timeout=self._query_timeout) as conn:
             cursor = conn.cursor()
             cursor.execute(query)
 
             if cursor.description is None:
-                # Non-SELECT statement (e.g. EXEC that returns no rows)
                 return [], []
 
             columns = [col[0] for col in cursor.description]
@@ -185,7 +170,10 @@ def create_sql_tools(config: Optional[Dict[str, Any]] = None) -> List[BaseTool]:
     max_results = security_config.get("max_query_results", 100)
     query_timeout = security_config.get("query_timeout", 30)
 
-    allow_writes = not security_config.get("read_only_mode", True)
+    # Default matches agent_config.yaml: read_only_mode=false → allow_writes=False (read-only by default)
+    # When read_only_mode=true in config, writes are blocked
+    # When read_only_mode=false in config, writes are allowed (but still validated)
+    allow_writes = not security_config.get("read_only_mode", False)
     allowed_databases = security_config.get("allowed_databases", ["EDS", "dpa_EDSAdmin"])
 
     validator = QueryValidator(

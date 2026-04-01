@@ -96,4 +96,32 @@ eds-agent report DESCRIPTION [--provider] [--preview]
 eds-agent sessions [--limit] [--delete ID]
 eds-agent status
 eds-agent index-docs [--rebuild] [--file]
+eds-agent mcp [--sse]                          # Start MCP server
+```
+
+## MCP Server
+
+The agent can run as a Model Context Protocol server for Claude Desktop or Claude Code.
+
+```bash
+eds-agent mcp                # stdio transport (for Claude Desktop)
+eds-agent mcp --sse          # SSE transport (for web clients)
+eds-agent-mcp                # Direct entry point
+```
+
+**Exposed MCP tools:** `execute_sql`, `generate_sql`, `search_docs`, `introspect_schema`, `search_catalog`, `run_script`, `chat_with_agent`
+
+**Resources:** `eds://status`, `eds://approval-levels`
+
+**Prompts:** `sql_query`, `investigate_table`, `vendor_report`
+
+To use with Claude Desktop, add to `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "eds-dba-agent": {
+      "command": "eds-agent-mcp"
+    }
+  }
+}
 ```
