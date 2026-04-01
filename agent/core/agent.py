@@ -8,6 +8,7 @@ whose results are fed back for a follow-up response.
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, Generator, List, Optional
@@ -102,6 +103,7 @@ class EDSAgent:
         self._llm_provider = None
         self._provider_name: Optional[str] = None
         self._tool_registry = None
+        self._audit_logger = None
 
         # In-memory conversation history (will be replaced by SessionManager)
         self._history: List[Message] = []
@@ -142,6 +144,14 @@ class EDSAgent:
             )
         return self._tool_registry
 
+    @property
+    def audit(self):
+        """Lazy-load the audit logger."""
+        if self._audit_logger is None:
+            from agent.audit.logger import get_audit_logger
+            self._audit_logger = get_audit_logger(self._config)
+        return self._audit_logger
+
     def set_provider(self, provider_name: str) -> None:
         """Switch to a different LLM provider."""
         provider_config = get_llm_config(provider_name)
@@ -174,6 +184,7 @@ class EDSAgent:
     def _execute_tool_calls(
         self,
         tool_calls: List[Dict],
+        session_id: Optional[str] = None,
     ) -> List[Dict]:
         """Execute tool calls and return results as dicts."""
         results = []
@@ -183,6 +194,7 @@ class EDSAgent:
             call_id = tc.get("id", "")
 
             self.logger.info("Executing tool: %s(%s)", tool_name, tool_input)
+            start = time.perf_counter()
 
             try:
                 result = self.tools.execute(tool_name, **tool_input)
@@ -196,11 +208,24 @@ class EDSAgent:
                 content = f"Error: {e}"
                 result = None
 
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            success = result.success if result else False
+
+            # Audit log the tool call
+            self.audit.log_tool_call(
+                tool_name=tool_name,
+                params=tool_input,
+                session_id=session_id,
+                success=success,
+                error=None if success else content,
+                duration_ms=round(elapsed_ms, 2),
+            )
+
             results.append({
                 "call_id": call_id,
                 "tool_name": tool_name,
                 "content": content,
-                "success": result.success if result else False,
+                "success": success,
                 "metadata": result.metadata if result else {},
             })
 
@@ -228,11 +253,25 @@ class EDSAgent:
 
         for _round in range(MAX_TOOL_ROUNDS):
             try:
+                llm_start = time.perf_counter()
                 response: LLMResponse = self.llm.complete(
                     messages, tools=llm_tools
                 )
+                llm_elapsed = (time.perf_counter() - llm_start) * 1000
+
+                # Audit log the LLM call
+                usage = response.usage or {}
+                self.audit.log_llm_call(
+                    provider=self._provider_name or "unknown",
+                    model=response.model,
+                    tokens_in=usage.get("input_tokens", 0),
+                    tokens_out=usage.get("output_tokens", 0),
+                    duration_ms=round(llm_elapsed, 2),
+                    session_id=session_id,
+                )
             except Exception as e:
                 self.logger.error("LLM call failed: %s", e)
+                self.audit.log_error(str(e), session_id=session_id)
                 return AgentResponse(content="", error=f"LLM error: {e}")
 
             # If no tool calls, we have the final response
@@ -240,7 +279,9 @@ class EDSAgent:
                 break
 
             # Execute requested tools
-            tool_results = self._execute_tool_calls(response.tool_calls)
+            tool_results = self._execute_tool_calls(
+                response.tool_calls, session_id=session_id
+            )
             all_tool_calls.extend(tool_results)
 
             # Track generated SQL from query_generator results
