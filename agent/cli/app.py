@@ -119,3 +119,27 @@ def status():
             marker = click.style("✗", fg="red")
         active = " (active)" if name == provider_name else ""
         click.echo(f"  {marker} {name}{active}")
+
+
+@cli.command("index-docs")
+@click.option("--rebuild", is_flag=True, help="Drop and rebuild the entire index.")
+@click.option("--file", "specific_file", type=str, default=None, help="Index a specific file.")
+def index_docs(rebuild, specific_file):
+    """Build or rebuild the RAG documentation index."""
+    import logging
+    logging.basicConfig(level=logging.INFO)
+
+    from agent.config import load_config
+    from agent.rag.indexer import index_all
+
+    config = load_config()
+    stats = index_all(config, rebuild=rebuild, specific_file=specific_file)
+
+    click.secho("Indexing Complete", fg="cyan", bold=True)
+    click.echo(f"  Files processed: {stats['files_processed']}")
+    click.echo(f"  Chunks created:  {stats['chunks_created']}")
+    click.echo(f"  Chunks indexed:  {stats['chunks_indexed']}")
+    if stats["errors"]:
+        click.secho(f"  Errors: {len(stats['errors'])}", fg="red")
+        for err in stats["errors"]:
+            click.echo(f"    - {err}")
