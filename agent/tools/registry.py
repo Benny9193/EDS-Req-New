@@ -157,6 +157,10 @@ def register_all_tools(config: Optional[Dict[str, Any]] = None) -> ToolRegistry:
         ("agent.tools.sql_executor", "create_sql_tools"),
         ("agent.tools.query_generator", "create_query_tools"),
         ("agent.tools.doc_retriever", "create_doc_tools"),
+        ("agent.tools.script_runner", "create_script_tools"),
+        ("agent.tools.schema_introspector", "create_schema_tools"),
+        ("agent.tools.catalog_search", "create_catalog_tools"),
+        ("agent.tools.report_generator", "create_report_tools"),
     ]
 
     for module_name, factory_name in _loaders:

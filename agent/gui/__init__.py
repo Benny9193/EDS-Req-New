@@ -1,1 +1,1 @@
-"""GUI application (placeholder for future implementation)."""
+"""NiceGUI desktop application for the EDS DBA Agent."""
