@@ -1,11 +1,11 @@
 """Core EDSAgent orchestrator.
 
-This is the main agent class that coordinates LLM calls, tool execution,
-and conversation management. In this initial vertical slice, it handles
-direct chat via the LLM provider. Tool calling, RAG, memory, and security
-layers will be added incrementally.
+Coordinates LLM calls, tool execution, and conversation management.
+The agent supports a tool-calling loop: the LLM can request tool executions,
+whose results are fed back for a follow-up response.
 """
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -17,6 +17,8 @@ from agent.llm.base import LLMResponse, Message, MessageRole
 from agent.llm.registry import get_provider
 
 logger = logging.getLogger(__name__)
+
+MAX_TOOL_ROUNDS = 5  # Safety limit on consecutive tool-call rounds
 
 
 class AgentMode(str, Enum):
@@ -58,13 +60,15 @@ When generating SQL:
 - Use BidHeaderId (not BidHeaderKey) for bid references
 - Default date range is the most recent completed budget year (Dec 1 – Nov 30)
 
+You have access to tools. Use them when the user asks you to execute queries, generate SQL, or perform other actions that require tools. When you use a tool, you will receive the result and can then respond to the user.
+
 Be concise, accurate, and helpful. If you're unsure about a schema detail, say so."""
 
 MODE_PROMPTS = {
     AgentMode.SQL: (
         "\n\nYou are in SQL generation mode. Focus on generating correct, "
-        "efficient SQL Server queries. Show the query, explain it briefly, "
-        "and ask if the user wants to execute it."
+        "efficient SQL Server queries. Use the query_generator tool to produce SQL, "
+        "and the sql_executor tool to run it if the user requests execution."
     ),
     AgentMode.DOCS: (
         "\n\nYou are in documentation search mode. Help the user find "
@@ -85,8 +89,9 @@ _TOOL_JSON_RE = re.compile(
 class EDSAgent:
     """Main agent orchestrator.
 
-    Coordinates LLM calls, manages conversation history within a session,
-    and will eventually orchestrate tool calls, RAG retrieval, and memory.
+    Coordinates LLM calls with tool-calling loop. When the LLM requests
+    tool execution, the agent runs the tool and feeds the result back
+    for up to MAX_TOOL_ROUNDS iterations.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -96,6 +101,7 @@ class EDSAgent:
         # Lazy-init subsystem slots
         self._llm_provider = None
         self._provider_name: Optional[str] = None
+        self._tool_registry = None
 
         # In-memory conversation history (will be replaced by SessionManager)
         self._history: List[Message] = []
@@ -125,12 +131,33 @@ class EDSAgent:
             )
         return self._llm_provider
 
+    @property
+    def tools(self):
+        """Lazy-load the tool registry."""
+        if self._tool_registry is None:
+            from agent.tools.registry import register_all_tools
+            self._tool_registry = register_all_tools(self._config)
+            self.logger.info(
+                "Loaded %d tools", self._tool_registry.tool_count
+            )
+        return self._tool_registry
+
     def set_provider(self, provider_name: str) -> None:
         """Switch to a different LLM provider."""
         provider_config = get_llm_config(provider_name)
         self._llm_provider = get_provider(provider_name, provider_config)
         self._provider_name = provider_name
         self.logger.info("Switched to %s provider", provider_name)
+
+    def _get_llm_tools(self) -> Optional[List[Dict]]:
+        """Get tool definitions formatted for the current LLM provider."""
+        if self.tools.tool_count == 0:
+            return None
+
+        provider_name = self._provider_name or get_default_provider()
+        fmt = "anthropic" if provider_name == "claude" else "openai"
+        tool_defs = self.tools.get_tools_for_llm(format=fmt)
+        return tool_defs if tool_defs else None
 
     def _build_messages(self, user_message: str) -> List[Message]:
         """Build the message list for the LLM call."""
@@ -144,32 +171,104 @@ class EDSAgent:
         messages.append(Message(role=MessageRole.USER, content=user_message))
         return messages
 
+    def _execute_tool_calls(
+        self,
+        tool_calls: List[Dict],
+    ) -> List[Dict]:
+        """Execute tool calls and return results as dicts."""
+        results = []
+        for tc in tool_calls:
+            tool_name = tc.get("name", "")
+            tool_input = tc.get("input", {})
+            call_id = tc.get("id", "")
+
+            self.logger.info("Executing tool: %s(%s)", tool_name, tool_input)
+
+            try:
+                result = self.tools.execute(tool_name, **tool_input)
+                # Serialize result data for the LLM
+                if result.success:
+                    content = json.dumps(result.data, default=str)
+                else:
+                    content = f"Error: {result.error}"
+            except Exception as e:
+                self.logger.error("Tool execution failed: %s", e)
+                content = f"Error: {e}"
+                result = None
+
+            results.append({
+                "call_id": call_id,
+                "tool_name": tool_name,
+                "content": content,
+                "success": result.success if result else False,
+                "metadata": result.metadata if result else {},
+            })
+
+        return results
+
     def chat(
         self,
         message: str,
         session_id: Optional[str] = None,
         mode: Optional[AgentMode] = None,
     ) -> AgentResponse:
-        """Send a message and get a response.
+        """Send a message and get a response, with tool-calling loop.
 
-        Args:
-            message: The user's message.
-            session_id: Optional session ID (for future session management).
-            mode: Optional mode override for this call.
+        If the LLM requests tool execution, the agent runs the tools and
+        feeds results back for up to MAX_TOOL_ROUNDS iterations.
         """
         if mode is not None:
             self._mode = mode
 
         messages = self._build_messages(message)
+        llm_tools = self._get_llm_tools()
 
-        try:
-            response: LLMResponse = self.llm.complete(messages)
-        except Exception as e:
-            self.logger.error("LLM call failed: %s", e)
-            return AgentResponse(
-                content="",
-                error=f"LLM error: {e}",
+        all_tool_calls = []
+        sql_generated = None
+
+        for _round in range(MAX_TOOL_ROUNDS):
+            try:
+                response: LLMResponse = self.llm.complete(
+                    messages, tools=llm_tools
+                )
+            except Exception as e:
+                self.logger.error("LLM call failed: %s", e)
+                return AgentResponse(content="", error=f"LLM error: {e}")
+
+            # If no tool calls, we have the final response
+            if not response.tool_calls:
+                break
+
+            # Execute requested tools
+            tool_results = self._execute_tool_calls(response.tool_calls)
+            all_tool_calls.extend(tool_results)
+
+            # Track generated SQL from query_generator results
+            for tr in tool_results:
+                if tr["tool_name"] == "query_generator" and tr["success"]:
+                    sql_generated = tr["content"]
+
+            # Append assistant message with tool calls to conversation
+            messages.append(
+                Message(
+                    role=MessageRole.ASSISTANT,
+                    content=response.content or "",
+                    tool_calls=response.tool_calls,
+                )
             )
+
+            # Append tool results for each call
+            for tc, tr in zip(response.tool_calls, tool_results):
+                messages.append(
+                    Message(
+                        role=MessageRole.TOOL,
+                        content=tr["content"],
+                        tool_call_id=tc.get("id", ""),
+                    )
+                )
+        else:
+            # Exhausted tool rounds
+            self.logger.warning("Hit MAX_TOOL_ROUNDS (%d)", MAX_TOOL_ROUNDS)
 
         # Store conversation in history
         self._history.append(Message(role=MessageRole.USER, content=message))
@@ -183,12 +282,14 @@ class EDSAgent:
 
         return AgentResponse(
             content=response.content,
-            tool_calls=response.tool_calls,
+            tool_calls=all_tool_calls,
+            sql_generated=sql_generated,
             metadata={
                 "model": response.model,
                 "finish_reason": response.finish_reason,
                 "usage": response.usage,
                 "provider": self._provider_name,
+                "tool_rounds": _round + 1 if response.tool_calls else 0,
             },
         )
 
@@ -199,7 +300,8 @@ class EDSAgent:
     ) -> Generator[str, None, None]:
         """Stream a response from the agent.
 
-        Yields text chunks as they arrive. Does not support tool calls.
+        Yields text chunks as they arrive. Does not support tool calls —
+        use chat() for tool-calling interactions.
         """
         messages = self._build_messages(message)
 
@@ -231,10 +333,15 @@ class EDSAgent:
         provider_name = self._provider_name or get_default_provider()
         model = self._llm_provider.model_name if self._llm_provider else "not initialized"
 
+        tool_count = self._tool_registry.tool_count if self._tool_registry else 0
+        tool_names = list(self._tool_registry) if self._tool_registry else []
+
         return {
             "provider": provider_name,
             "model": model,
             "mode": self._mode.value,
             "history_length": len(self._history),
+            "tools_loaded": tool_count,
+            "tools": tool_names,
             "available_providers": ["claude", "openai", "ollama"],
         }
