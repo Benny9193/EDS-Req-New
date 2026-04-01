@@ -104,8 +104,10 @@ class EDSAgent:
         self._provider_name: Optional[str] = None
         self._tool_registry = None
         self._audit_logger = None
+        self._session_manager = None
+        self._learned_context = None
 
-        # In-memory conversation history (will be replaced by SessionManager)
+        # In-memory conversation history (fallback when no session_id)
         self._history: List[Message] = []
         self._mode: AgentMode = AgentMode.CHAT
 
@@ -152,6 +154,31 @@ class EDSAgent:
             self._audit_logger = get_audit_logger(self._config)
         return self._audit_logger
 
+    @property
+    def sessions(self):
+        """Lazy-load the session manager."""
+        if self._session_manager is None:
+            from agent.memory.session import SessionManager
+            memory_config = self._config.get("memory", {})
+            self._session_manager = SessionManager(
+                sessions_dir=memory_config.get("sessions_dir", "data/sessions"),
+                max_sessions=memory_config.get("max_sessions", 100),
+            )
+        return self._session_manager
+
+    @property
+    def learned_context(self):
+        """Lazy-load the learned context database."""
+        if self._learned_context is None:
+            from agent.memory.learned_context import LearnedContextDB
+            memory_config = self._config.get("memory", {})
+            self._learned_context = LearnedContextDB(
+                db_path=memory_config.get(
+                    "learned_context_db", "data/memory/knowledge.sqlite"
+                ),
+            )
+        return self._learned_context
+
     def set_provider(self, provider_name: str) -> None:
         """Switch to a different LLM provider."""
         provider_config = get_llm_config(provider_name)
@@ -169,15 +196,35 @@ class EDSAgent:
         tool_defs = self.tools.get_tools_for_llm(format=fmt)
         return tool_defs if tool_defs else None
 
-    def _build_messages(self, user_message: str) -> List[Message]:
+    def _build_messages(
+        self, user_message: str, session_id: Optional[str] = None,
+    ) -> List[Message]:
         """Build the message list for the LLM call."""
         system = SYSTEM_PROMPT
         mode_extra = MODE_PROMPTS.get(self._mode, "")
         if mode_extra:
             system += mode_extra
 
+        # Inject learned context if available
+        try:
+            context = self.learned_context.get_context_for_prompt()
+            if context:
+                system += f"\n\nLearned context:\n{context}"
+        except Exception:
+            pass  # Don't fail the chat if learned context is unavailable
+
         messages = [Message(role=MessageRole.SYSTEM, content=system)]
-        messages.extend(self._history)
+
+        # Load history from session if provided, otherwise use in-memory
+        if session_id:
+            session_msgs = self.sessions.get_recent_context(session_id, n_messages=20)
+            for sm in session_msgs:
+                messages.append(Message(
+                    role=MessageRole(sm.role) if sm.role in ("user", "assistant", "system", "tool") else MessageRole.USER,
+                    content=sm.content,
+                ))
+        else:
+            messages.extend(self._history)
         messages.append(Message(role=MessageRole.USER, content=user_message))
         return messages
 
@@ -245,7 +292,7 @@ class EDSAgent:
         if mode is not None:
             self._mode = mode
 
-        messages = self._build_messages(message)
+        messages = self._build_messages(message, session_id=session_id)
         llm_tools = self._get_llm_tools()
 
         all_tool_calls = []
@@ -311,15 +358,20 @@ class EDSAgent:
             # Exhausted tool rounds
             self.logger.warning("Hit MAX_TOOL_ROUNDS (%d)", MAX_TOOL_ROUNDS)
 
-        # Store conversation in history
-        self._history.append(Message(role=MessageRole.USER, content=message))
-        self._history.append(
-            Message(role=MessageRole.ASSISTANT, content=response.content)
-        )
-
-        # Trim history to avoid unbounded growth (keep last 40 messages)
-        if len(self._history) > 40:
-            self._history = self._history[-40:]
+        # Persist to session if session_id provided, otherwise use in-memory history
+        if session_id:
+            self.sessions.add_message(session_id, "user", message)
+            self.sessions.add_message(
+                session_id, "assistant", response.content,
+                tool_calls=all_tool_calls,
+            )
+        else:
+            self._history.append(Message(role=MessageRole.USER, content=message))
+            self._history.append(
+                Message(role=MessageRole.ASSISTANT, content=response.content)
+            )
+            if len(self._history) > 40:
+                self._history = self._history[-40:]
 
         return AgentResponse(
             content=response.content,
