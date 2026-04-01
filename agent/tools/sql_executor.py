@@ -82,6 +82,25 @@ class SQLExecutorTool(BaseTool):
         # Validate the query
         validation = self._validator.validate(query, target_database=database)
         if not validation.is_valid:
+            # Audit log blocked queries
+            try:
+                from agent.audit.logger import get_audit_logger
+                get_audit_logger().log_blocked_query(
+                    sql=query,
+                    reason="; ".join(validation.errors),
+                )
+                if validation.risk_level == "high":
+                    get_audit_logger().log_security_alert(
+                        alert_type="blocked_query",
+                        details={
+                            "sql": query[:500],
+                            "risk_level": validation.risk_level,
+                            "errors": validation.errors,
+                        },
+                    )
+            except Exception:
+                pass  # Don't fail the rejection if audit logging fails
+
             return ToolResult(
                 success=False,
                 error=f"Query rejected: {'; '.join(validation.errors)}",

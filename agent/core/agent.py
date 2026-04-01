@@ -446,7 +446,7 @@ class EDSAgent:
         Yields text chunks as they arrive. Does not support tool calls —
         use chat() for tool-calling interactions.
         """
-        messages = self._build_messages(message)
+        messages = self._build_messages(message, session_id=session_id)
 
         try:
             full_response = ""
@@ -454,14 +454,17 @@ class EDSAgent:
                 full_response += chunk
                 yield chunk
 
-            # Store in history after streaming completes
-            self._history.append(Message(role=MessageRole.USER, content=message))
-            self._history.append(
-                Message(role=MessageRole.ASSISTANT, content=full_response)
-            )
-
-            if len(self._history) > 40:
-                self._history = self._history[-40:]
+            # Persist to session or in-memory history
+            if session_id:
+                self.sessions.add_message(session_id, "user", message)
+                self.sessions.add_message(session_id, "assistant", full_response)
+            else:
+                self._history.append(Message(role=MessageRole.USER, content=message))
+                self._history.append(
+                    Message(role=MessageRole.ASSISTANT, content=full_response)
+                )
+                if len(self._history) > 40:
+                    self._history = self._history[-40:]
 
         except Exception as e:
             self.logger.error("Stream failed: %s", e)

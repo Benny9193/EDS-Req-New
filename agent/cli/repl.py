@@ -7,20 +7,24 @@ from agent.core.agent import AgentMode, EDSAgent
 
 
 WELCOME = """
-╔══════════════════════════════════════════════╗
-║          EDS DBA Agent v0.1.0                ║
-║  AI-powered database assistant               ║
-╚══════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════╗
+║            EDS DBA Agent v0.1.0                  ║
+║    AI-powered database assistant                 ║
+╚══════════════════════════════════════════════════╝
 
 Commands:
-  /sql      - Switch to SQL generation mode
-  /docs     - Switch to documentation search mode
-  /analyze  - Switch to analysis mode
-  /chat     - Switch to general chat mode
-  /clear    - Clear conversation history
-  /status   - Show agent status
-  /help     - Show this help
-  /exit     - Exit the session
+  /sql        Switch to SQL generation mode
+  /docs       Switch to documentation search mode
+  /analyze    Switch to analysis mode
+  /chat       Switch to general chat mode
+  /clear      Clear conversation history
+  /new        Start a new session
+  /sessions   List recent sessions
+  /load ID    Resume a session by ID
+  /provider X Switch provider (claude|openai|ollama)
+  /status     Show agent status
+  /help       Show this help
+  /exit       Exit the session
 
 Type your question or command below.
 """
@@ -33,12 +37,12 @@ MODE_LABELS = {
 }
 
 
-def _get_prompt(mode: AgentMode) -> str:
-    return f"[{MODE_LABELS[mode]}] > "
+def _get_prompt(mode: AgentMode, session_id: Optional[str] = None) -> str:
+    sid = session_id[:6] if session_id else "no-session"
+    return f"[{MODE_LABELS[mode]}:{sid}] > "
 
 
 def _print_colored(text: str, color: str) -> None:
-    """Print with ANSI color codes."""
     colors = {
         "cyan": "\033[96m",
         "green": "\033[92m",
@@ -54,7 +58,6 @@ def _print_colored(text: str, color: str) -> None:
 
 
 def _try_rich_print(text: str) -> None:
-    """Try to use rich for markdown rendering, fall back to plain print."""
     try:
         from rich.console import Console
         from rich.markdown import Markdown
@@ -66,7 +69,9 @@ def _try_rich_print(text: str) -> None:
 
 def start_repl(
     provider: Optional[str] = None,
+    model: Optional[str] = None,
     mode: AgentMode = AgentMode.CHAT,
+    session_id: Optional[str] = None,
     debug: bool = False,
 ) -> None:
     """Start the interactive REPL session."""
@@ -78,13 +83,30 @@ def start_repl(
             agent.set_provider(provider)
         except Exception as e:
             _print_colored(f"Failed to set provider '{provider}': {e}", "red")
-            _print_colored(f"Falling back to default provider.", "yellow")
+            _print_colored("Falling back to default provider.", "yellow")
+
+    # Resume or create a session
+    if session_id:
+        existing = agent.sessions.get_session(session_id)
+        if existing:
+            _print_colored(f"Resumed session {session_id} ({len(existing.messages)} messages)", "green")
+        else:
+            _print_colored(f"Session {session_id} not found, creating new.", "yellow")
+            session_id = None
+
+    if not session_id:
+        provider_name = agent._provider_name or "ollama"
+        session = agent.sessions.create_session(
+            mode=mode.value, provider=provider_name,
+        )
+        session_id = session.id
 
     print(WELCOME)
 
     status = agent.get_status()
     _print_colored(
-        f"Provider: {status['provider']} | Model: {status['model']} | Mode: {status['mode']}",
+        f"Provider: {status['provider']} | Model: {status['model']} "
+        f"| Mode: {status['mode']} | Session: {session_id}",
         "dim",
     )
     print()
@@ -96,17 +118,17 @@ def start_repl(
         import os
 
         history_path = os.path.expanduser("~/.eds_agent_history")
-        session = PromptSession(history=FileHistory(history_path))
+        pt_session = PromptSession(history=FileHistory(history_path))
 
         def get_input(prompt_str):
-            return session.prompt(prompt_str)
+            return pt_session.prompt(prompt_str)
     except ImportError:
         def get_input(prompt_str):
             return input(prompt_str)
 
     while True:
         try:
-            prompt_str = _get_prompt(agent.mode)
+            prompt_str = _get_prompt(agent.mode, session_id)
             user_input = get_input(prompt_str).strip()
 
             if not user_input:
@@ -115,6 +137,7 @@ def start_repl(
             # Handle commands
             if user_input.startswith("/"):
                 cmd = user_input.lower().split()[0]
+                parts = user_input.split()
 
                 if cmd in ("/exit", "/quit", "/q"):
                     _print_colored("Goodbye!", "cyan")
@@ -122,55 +145,97 @@ def start_repl(
 
                 elif cmd == "/help":
                     print(WELCOME)
-                    continue
 
                 elif cmd == "/clear":
                     agent.clear_history()
-                    _print_colored("Conversation history cleared.", "green")
-                    continue
+                    # Create a fresh session
+                    session = agent.sessions.create_session(
+                        mode=agent.mode.value,
+                        provider=agent._provider_name or "ollama",
+                    )
+                    session_id = session.id
+                    _print_colored(f"History cleared. New session: {session_id}", "green")
+
+                elif cmd == "/new":
+                    session = agent.sessions.create_session(
+                        mode=agent.mode.value,
+                        provider=agent._provider_name or "ollama",
+                    )
+                    session_id = session.id
+                    agent.clear_history()
+                    _print_colored(f"New session: {session_id}", "green")
+
+                elif cmd == "/sessions":
+                    sessions_list = agent.sessions.list_sessions(limit=10)
+                    if not sessions_list:
+                        _print_colored("No sessions found.", "dim")
+                    else:
+                        _print_colored("Recent sessions:", "cyan")
+                        for s in sessions_list:
+                            marker = " *" if s.id == session_id else ""
+                            print(f"  {s.id}  {s.mode:<8} {len(s.messages):>3} msgs  "
+                                  f"{s.updated_at[:19]}{marker}")
+
+                elif cmd == "/load":
+                    if len(parts) < 2:
+                        _print_colored("Usage: /load <session-id>", "yellow")
+                    else:
+                        target_id = parts[1]
+                        existing = agent.sessions.get_session(target_id)
+                        if existing:
+                            session_id = target_id
+                            agent.clear_history()
+                            _print_colored(
+                                f"Loaded session {target_id} ({len(existing.messages)} messages)",
+                                "green",
+                            )
+                        else:
+                            _print_colored(f"Session {target_id} not found.", "red")
 
                 elif cmd == "/status":
                     s = agent.get_status()
                     _print_colored("Agent Status:", "cyan")
                     for k, v in s.items():
-                        print(f"  {k}: {v}")
-                    continue
+                        if isinstance(v, dict):
+                            print(f"  {k}:")
+                            for sk, sv in v.items():
+                                print(f"    {sk}: {sv}")
+                        elif isinstance(v, list):
+                            print(f"  {k}: {', '.join(str(x) for x in v)}")
+                        else:
+                            print(f"  {k}: {v}")
+                    print(f"  session: {session_id}")
 
                 elif cmd == "/sql":
                     agent.mode = AgentMode.SQL
                     _print_colored("Switched to SQL generation mode.", "green")
-                    continue
 
                 elif cmd == "/docs":
                     agent.mode = AgentMode.DOCS
                     _print_colored("Switched to documentation search mode.", "green")
-                    continue
 
                 elif cmd == "/analyze":
                     agent.mode = AgentMode.ANALYZE
                     _print_colored("Switched to analysis mode.", "green")
-                    continue
 
                 elif cmd == "/chat":
                     agent.mode = AgentMode.CHAT
                     _print_colored("Switched to general chat mode.", "green")
-                    continue
 
                 elif cmd == "/provider":
-                    parts = user_input.split()
                     if len(parts) < 2:
                         _print_colored("Usage: /provider <claude|openai|ollama>", "yellow")
-                        continue
-                    try:
-                        agent.set_provider(parts[1])
-                        _print_colored(f"Switched to {parts[1]} provider.", "green")
-                    except Exception as e:
-                        _print_colored(f"Failed to switch provider: {e}", "red")
-                    continue
+                    else:
+                        try:
+                            agent.set_provider(parts[1])
+                            _print_colored(f"Switched to {parts[1]} provider.", "green")
+                        except Exception as e:
+                            _print_colored(f"Failed to switch provider: {e}", "red")
 
                 else:
                     _print_colored(f"Unknown command: {cmd}. Type /help for commands.", "yellow")
-                    continue
+
+                continue
 
             # Send to agent
             _print_colored("Thinking...", "dim")
@@ -179,9 +244,8 @@ def start_repl(
                 # Try streaming first
                 full_response = ""
                 first_chunk = True
-                for chunk in agent.chat_stream(user_input):
+                for chunk in agent.chat_stream(user_input, session_id=session_id):
                     if first_chunk:
-                        # Clear the "Thinking..." line
                         sys.stdout.write("\033[A\033[K")
                         first_chunk = False
                     sys.stdout.write(chunk)
@@ -189,20 +253,25 @@ def start_repl(
                     full_response += chunk
 
                 if first_chunk:
-                    # No chunks received, clear "Thinking..."
                     sys.stdout.write("\033[A\033[K")
 
-                print()  # newline after response
-                print()  # blank line for readability
+                print()
+                print()
 
-            except (NotImplementedError, Exception) as e:
+            except (NotImplementedError, Exception):
                 # Fall back to non-streaming
-                sys.stdout.write("\033[A\033[K")  # Clear "Thinking..."
-                response = agent.chat(user_input)
+                sys.stdout.write("\033[A\033[K")
+                response = agent.chat(user_input, session_id=session_id)
                 if response.error:
                     _print_colored(f"Error: {response.error}", "red")
                 else:
                     _try_rich_print(response.content)
+
+                    # Show tool calls if any
+                    if response.tool_calls:
+                        _print_colored(
+                            f"  [{len(response.tool_calls)} tool call(s)]", "dim",
+                        )
                 print()
 
         except KeyboardInterrupt:
