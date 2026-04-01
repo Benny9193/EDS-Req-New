@@ -39,7 +39,7 @@ htmlcov/
 .coverage
 docs/nul
 nul
-/agent
+
 
 # Large data files
 *.pkl

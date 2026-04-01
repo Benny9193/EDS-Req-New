@@ -138,7 +138,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["scripts", "api"]
+source = ["scripts", "api", "agent"]
 omit = [
     "scripts/__init__.py",
     "api/__init__.py",
