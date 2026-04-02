@@ -184,12 +184,16 @@ class RequisitionItem(BaseModel):
 
 class RequisitionSubmission(BaseModel):
     """Request to submit a requisition from cart."""
-    session_id: int = Field(..., description="User's session ID for authentication")
+    session_id: Union[int, str] = Field(..., description="User's session ID for authentication")
     items: List[RequisitionItem] = Field(..., min_length=1, max_length=100, description="Line items to order")
     notes: Optional[str] = Field(None, max_length=2000, description="Order notes")
     shipping_location: Optional[str] = Field(None, max_length=200, description="Delivery location")
     attention_to: Optional[str] = Field(None, max_length=100, description="Attention to recipient")
     delivery_preference: Optional[str] = Field("standard", description="Delivery preference")
+    shipping_notes: Optional[str] = Field(None, max_length=2000, description="Shipping instructions")
+    purpose: Optional[str] = Field(None, max_length=500, description="Purpose of requisition")
+    account_code: Optional[str] = Field(None, max_length=50, description="Budget account code")
+    internal_notes: Optional[str] = Field(None, max_length=2000, description="Internal notes")
 
 
 class RequisitionResponse(BaseModel):
