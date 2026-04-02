@@ -107,6 +107,7 @@ async def get_products(
     category: Optional[str] = Query(None, max_length=MAX_CATEGORY_LENGTH, description="Filter by category"),
     vendor: Optional[str] = Query(None, max_length=MAX_VENDOR_LENGTH, description="Filter by vendor"),
     status: Optional[str] = Query(None, description="Filter by status (comma-separated: in-stock,low-stock,out-of-stock,discontinued)"),
+    bid_ids: Optional[str] = Query(None, description="Comma-separated CatalogId values to filter by bid/contract"),
     min_price: Optional[float] = Query(None, ge=0, le=1000000, description="Minimum price"),
     max_price: Optional[float] = Query(None, ge=0, le=1000000, description="Maximum price"),
     sort_by: Optional[str] = Query(None, description="Sort field: price, name"),
@@ -178,6 +179,15 @@ async def get_products(
                 conditions.append("v.Name LIKE ?")
                 params.append(f"%{safe_vendor}%")
 
+        # Bid/contract filter via CrossRefs table
+        bid_id_list = []
+        if bid_ids:
+            bid_id_list = [int(b.strip()) for b in bid_ids.split(",") if b.strip().isdigit()]
+            if bid_id_list:
+                placeholders = ",".join("?" for _ in bid_id_list)
+                conditions.append(f"i.ItemId IN (SELECT cr.ItemId FROM CrossRefs cr WHERE cr.CatalogId IN ({placeholders}) AND cr.Active = 1)")
+                params.extend(bid_id_list)
+
         if min_price is not None:
             conditions.append("i.ListPrice >= ?")
             params.append(min_price)
@@ -209,7 +219,7 @@ async def get_products(
             where_clause = " AND " + " AND ".join(conditions)
 
         # Count total — use cached lightweight count when no filters active
-        needs_join = category or vendor
+        needs_join = category or vendor or bid_id_list
         if not conditions or (len(conditions) == 2 and not needs_join):
             # No filters beyond the default price/description — use fast count
             cache = get_cache()

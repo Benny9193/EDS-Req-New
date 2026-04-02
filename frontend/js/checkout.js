@@ -114,22 +114,23 @@ function checkout() {
                 if (!sessionId) throw new Error('No session');
 
                 const payload = {
+                    session_id: sessionId,
                     items: this.cart.map(item => ({
-                        item_number: edsProduct.getId(item),
+                        item_id: String(edsProduct.getId(item)),
                         quantity: item.quantity || 1,
-                        price: edsProduct.getPrice(item),
+                        unit_price: edsProduct.getPrice(item),
                         description: edsProduct.getName(item)
                     })),
                     shipping_location: this.shipping.location,
                     attention_to: this.shipping.attentionTo,
-                    shipping_preference: this.shipping.preference,
+                    delivery_preference: this.shipping.preference,
                     shipping_notes: this.shipping.notes,
                     purpose: this.notes.purpose,
                     account_code: this.notes.accountCode,
                     internal_notes: this.notes.internalNotes
                 };
 
-                const response = await fetch(`${API_BASE}/api/requisitions`, {
+                const response = await fetch(`${API_BASE}/api/requisitions/submit`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

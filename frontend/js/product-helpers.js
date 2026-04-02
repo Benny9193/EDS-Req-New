@@ -75,7 +75,7 @@ const edsCart = {
         return fetch('/api/cart/' + encodeURIComponent(sid), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-Session-ID': sid },
-            body: JSON.stringify({ cart })
+            body: JSON.stringify({ session_id: sid, cart })
         }).catch((err) => {
             console.warn('Cart server sync failed:', err.message);
             if (typeof onSyncError === 'function') {
