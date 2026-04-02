@@ -8,7 +8,7 @@ Setting up a local development environment for the EDS Universal Requisition pro
 
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
-| Python | 3.12+ | API backend |
+| Python | 3.11+ | API backend |
 | ODBC Driver | 18 | SQL Server connectivity |
 | Git | 2.x | Version control |
 | Docker | 24+ | Containerization (optional) |
@@ -23,19 +23,16 @@ Setting up a local development environment for the EDS Universal Requisition pro
 git clone <repository-url>
 cd EDS
 
-# 2. Run setup script
-./scripts/dev-setup.sh
-
-# 3. Configure environment
+# 2. Configure environment
 cp .env.example .env
 # Edit .env with your database credentials
 
-# 4. Start API server
+# 3. Start API server
 source .venv/bin/activate
 uvicorn api.main:app --reload --port 8000
 
-# 5. Open frontend
-# Open universal-requisition.html in browser
+# 4. Open frontend
+# Open frontend/index.html in browser, or use Docker (see DEPLOYMENT.md)
 ```
 
 ---
@@ -138,7 +135,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 **Option 1: Direct file access**
 ```bash
 # Open in browser
-# Windows: file:///C:/EDS/universal-requisition.html
+# Windows: file:///C:/EDS/frontend/index.html
 # WSL: Configure API_CONFIG.baseUrl to WSL IP
 ```
 
@@ -147,7 +144,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 # Python HTTP server
 python -m http.server 3000
 
-# Access at http://localhost:3000/universal-requisition.html
+# Access at http://localhost:3000/frontend/index.html
 ```
 
 **Option 3: Docker**
@@ -193,7 +190,7 @@ EDS/
 ├── docker/               # Docker configurations
 ├── config/               # Environment configs
 │
-├── universal-requisition.html  # Main frontend
+├── frontend/index.html   # Main frontend entry point
 ├── docker-compose.yml    # Docker orchestration
 ├── pyproject.toml        # Python project config
 └── .env                  # Environment variables
@@ -371,7 +368,7 @@ python
 
 ### Add New Frontend Feature
 
-1. Add JavaScript component in `universal-requisition.html`
+1. Add JavaScript module in `frontend/js/`
 2. Initialize in `DOMContentLoaded`
 3. Add CSS styles if needed
 4. Update `docs/UNIVERSAL_REQUISITION.md`
@@ -446,7 +443,7 @@ Recommended extensions:
 - Pylance
 - SQLTools + SQL Server driver
 - REST Client
-- Tailwind CSS IntelliSense
+- CSS Variable Autocomplete
 
 **settings.json:**
 ```json

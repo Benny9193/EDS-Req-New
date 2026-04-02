@@ -34,7 +34,7 @@ We have **6 frontend concepts** for the next iteration of the OES (Online Entry 
 
 **Colors**: EDS Navy `#1c1a83` + Red accent `#b70c0d`
 **Fonts**: Inter
-**Tech**: Alpine.js + Tailwind CSS, 18 JS store modules, 20+ HTML pages
+**Tech**: Alpine.js + custom CSS design system, 18 JS modules, 4 HTML pages
 
 **Strengths**:
 - Most feature-complete: saved lists, bulk CSV import, recurring orders, AI chat sidebar, admin dashboard, product comparison, order history

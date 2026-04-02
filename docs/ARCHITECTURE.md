@@ -13,13 +13,13 @@ High-level architecture of the EDS Universal Requisition system.
 │                                                                            │
 │   ┌──────────────────────────────────────────────────────────────────┐    │
 │   │              Universal Requisition Frontend                       │    │
-│   │              (universal-requisition.html)                         │    │
+│   │              (frontend/index.html)                                │    │
 │   │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │    │
 │   │  │ Product  │ │  Search  │ │  Cart    │ │ Filters  │            │    │
 │   │  │  Grid    │ │Component │ │ Drawer   │ │Component │            │    │
 │   │  └──────────┘ └──────────┘ └──────────┘ └──────────┘            │    │
 │   │                                                                  │    │
-│   │  Tech: HTML5, Tailwind CSS, Alpine.js, Vanilla JavaScript       │    │
+│   │  Tech: HTML5, CSS custom properties, Alpine.js, Vanilla JS      │    │
 │   │  Storage: localStorage (cart, favorites, settings)               │    │
 │   └──────────────────────────────────────────────────────────────────┘    │
 │                                    │                                       │
@@ -84,7 +84,7 @@ High-level architecture of the EDS Universal Requisition system.
 
 ### Frontend (Client Layer)
 
-**File:** `universal-requisition.html`
+**File:** `frontend/index.html`
 
 | Component | Purpose |
 |-----------|---------|
@@ -103,7 +103,7 @@ High-level architecture of the EDS Universal Requisition system.
 
 **Technologies:**
 - HTML5 single-page application
-- Tailwind CSS (via CDN)
+- Custom CSS design system (`design-system.css`)
 - Alpine.js for reactivity
 - Vanilla JavaScript components
 - localStorage for state persistence
