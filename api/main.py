@@ -37,6 +37,7 @@ from .routes.search import router as search_router
 from .routes.dashboard import router as dashboard_router
 from .routes.reports import router as reports_router
 from .routes.saved_lists import router as saved_lists_router
+from .routes.agent_chat import router as agent_chat_router
 
 _logger = logging.getLogger(__name__)
 
@@ -126,6 +127,7 @@ app.include_router(search_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(saved_lists_router, prefix="/api")
+app.include_router(agent_chat_router, prefix="/api")
 
 # Serve frontend static files (JS, CSS, images)
 if FRONTEND_DIR.exists():
@@ -154,6 +156,8 @@ if FRONTEND_DIR.exists():
 _ROUTE_ALIASES = {
     "search": "search-results",
     "product": "product-detail",
+    "agent-chat": "agent",
+    "dba-agent": "agent",
 }
 
 # Default fallback page when a requested HTML file doesn't exist

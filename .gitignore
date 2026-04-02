@@ -39,7 +39,12 @@ htmlcov/
 .coverage
 docs/nul
 nul
-/agent
+
+
+# Runtime data (audit logs, sessions, vectordb)
+data/audit/
+data/sessions/
+data/memory/
 
 # Large data files
 *.pkl
