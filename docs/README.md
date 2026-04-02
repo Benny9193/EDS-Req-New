@@ -2,7 +2,7 @@
 
 > Comprehensive documentation for the EDS (Educational Data Services) system
 
-**Last updated:** March 27, 2026
+**Last updated:** April 2, 2026
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Document | Description |
 |----------|-------------|
-| [Data Dictionary](EDS_DATA_DICTIONARY.md) | Complete table and column reference (439 tables, 4,638 columns) |
+| [Data Dictionary](EDS_DATA_DICTIONARY.md) | Complete table and column reference (439 tables, 4,644 columns) |
 | [Stored Procedures](EDS_STORED_PROCEDURES.md) | All 396 procedures with source code |
 | [Views](EDS_VIEWS.md) | All 475 views with SQL definitions |
 | [ERD Diagrams](EDS_ERD.md) | Entity relationship diagrams (Mermaid) |
@@ -37,7 +37,7 @@
 | Document | Description |
 |----------|-------------|
 | [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md) | Complete frontend architecture guide (Alpine.js, modules, state, auth, CSS) |
-| [API_ROUTES.md](API_ROUTES.md) | Complete API routes reference (90+ endpoints across 14 route modules) |
+| [API_ROUTES.md](API_ROUTES.md) | Complete API routes reference (~72 endpoints across 16 route modules) |
 | [UNIVERSAL_REQUISITION.md](UNIVERSAL_REQUISITION.md) | Requisition interface user & developer guide |
 | [API_REFERENCE.md](API_REFERENCE.md) | Python monitoring tools API reference (db_utils, config, logging) |
 | [MONITORING_SCRIPTS_REFERENCE.md](MONITORING_SCRIPTS_REFERENCE.md) | Complete reference for all 58 monitoring scripts, CLI entry points, configuration, output files, and workflows |

@@ -10,6 +10,7 @@ Complete reference for all configuration options in the EDS Universal Requisitio
 |------|---------|--------|
 | `.env` | Environment-specific settings | KEY=value |
 | `config.yaml` | Application settings and thresholds | YAML |
+| `agent_config.yaml` | DBA Agent settings (LLM, RAG, security, tools) | YAML |
 | `config/dev.env` | Development environment template | KEY=value |
 | `config/prod.env.example` | Production environment template | KEY=value |
 
@@ -87,6 +88,36 @@ BUDGET_LIMIT=5000
 |----------|---------|-------------|
 | `FRONTEND_PORT` | `80` | Frontend server port (Docker) |
 | `BUDGET_LIMIT` | `5000` | Default budget limit for requisitions |
+
+### Elasticsearch
+
+```env
+ES_ENABLED=true
+ES_URL=http://20.122.81.233:9200
+ES_INDEX=pricing_consolidated_active
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ES_ENABLED` | `true` | Enable/disable Elasticsearch integration |
+| `ES_URL` | `http://20.122.81.233:9200` | Elasticsearch server URL |
+| `ES_INDEX` | `pricing_consolidated_active` | Alias pointing to active pricing index |
+
+> **Note:** Production runs ES 7.15.2. The `docker-compose.yml` local dev environment uses ES 8.17.0. Be aware of API differences between major versions.
+
+### AI / LLM Provider
+
+```env
+LLM_PROVIDER=ollama
+ANTHROPIC_API_KEY=your_key_here
+OLLAMA_HOST=http://localhost:11434
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LLM_PROVIDER` | (auto-detect) | AI backend: `claude`, `ollama`, or `openai` |
+| `ANTHROPIC_API_KEY` | - | Claude API key (required when `LLM_PROVIDER=claude`) |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
 
 ---
 
@@ -215,7 +246,7 @@ logging:
 
 ## Frontend Configuration
 
-The frontend configuration is embedded in `universal-requisition.html`.
+The frontend configuration lives in `frontend/js/config.js` (generated at container startup from `config.template.js` via environment variable substitution).
 
 ### API Configuration Object
 
@@ -458,6 +489,24 @@ cfg = get_config()
 print(cfg.database.name)
 print(cfg.thresholds.missing_index.critical)
 ```
+
+---
+
+## DBA Agent Configuration (agent_config.yaml)
+
+The `agent_config.yaml` file at the repository root configures the DBA Agent. Key sections:
+
+| Section | Purpose |
+|---------|---------|
+| `llm` | Provider settings for Claude (Sonnet 4), OpenAI (GPT-4o), and Ollama (Qwen 2.5) |
+| `rag` | Vector store (ChromaDB), embedding model, chunking, and retrieval settings |
+| `memory` | Session management, context window, and conversation history limits |
+| `security` | Read-only mode toggle, allowed databases, blocked SQL operations |
+| `tools` | Script execution, timeouts, and available tool configuration |
+| `audit` | Audit logging (JSONL format to `data/audit/`) |
+| `cli` | CLI interface settings (history, colors, prompt) |
+
+See [AGENT_TECHNICAL_REFERENCE.md](AGENT_TECHNICAL_REFERENCE.md) for full details.
 
 ---
 

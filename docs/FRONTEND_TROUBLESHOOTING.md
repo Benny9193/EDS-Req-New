@@ -53,7 +53,7 @@ fetch(API_CONFIG.baseUrl + '/status')
 
 2. **Wrong API URL:**
    ```javascript
-   // In universal-requisition.html, check API_CONFIG:
+   // In frontend/js/config.js, check API_CONFIG:
    const API_CONFIG = {
        baseUrl: 'http://localhost:8000/api',  // Verify this URL
        enabled: true,

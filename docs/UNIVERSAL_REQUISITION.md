@@ -8,7 +8,7 @@ User and Developer Guide for the EDS Universal Requisition interface.
 
 The Universal Requisition Screen is a modern, responsive web interface for browsing and ordering products from the EDS catalog. It connects to the FastAPI backend to fetch real-time product data from the SQL Server database.
 
-**File:** `/universal-requisition.html` (single-page application)
+**File:** `frontend/index.html` (single-page application)
 
 ---
 
@@ -199,9 +199,9 @@ const API_CONFIG = {
 ## Styling
 
 ### CSS Framework
-- **Tailwind CSS** - Utility-first CSS (via CDN)
+- **Custom design system** - Hand-written utility classes in `frontend/css/design-system.css` (no Tailwind)
 - **Font Awesome** - Icons (via CDN)
-- **Custom CSS** - EDS brand colors and components
+- **CSS custom properties** - EDS brand colors and component styles
 
 ### Brand Colors
 

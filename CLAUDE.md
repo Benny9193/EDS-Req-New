@@ -248,7 +248,7 @@ Format: `VendorId | Code | Name | PO Count | Total Spend`
 | 1711897 | 9942 | Haksav Vehaloshon | 1 | $15.00 |
 | 13959 | 2069 | SUPERIOR TEXT | 1 | $6.45 |
 
-> **Note**: 226 active vendors with POs Dec 2022–Nov 2025. To refresh this table, a scheduled task (`annual-vendor-table-refresh`) runs each December 15 and will regenerate the vendor query and update these rows. You can also trigger it manually from the Scheduled section in the sidebar. Last refreshed: 2026-03-27.
+> **Note**: 226 active vendors with POs Dec 2022–Nov 2025. Last refreshed: 2026-03-27.
 
 ### Vendors with Multiple VendorId Entries
 
@@ -555,7 +555,7 @@ All documentation lives in `/docs/`. See [`/docs/README.md`](/docs/README.md) fo
 
 ### Application Docs
 - [`FRONTEND_ARCHITECTURE.md`](/docs/FRONTEND_ARCHITECTURE.md) - Complete frontend architecture guide (Alpine.js, modules, state management, auth, CSS)
-- [`API_ROUTES.md`](/docs/API_ROUTES.md) - Complete API routes reference (~65 endpoints across 14 route modules)
+- [`API_ROUTES.md`](/docs/API_ROUTES.md) - Complete API routes reference (~72 endpoints across 16 route modules)
 - [`UNIVERSAL_REQUISITION.md`](/docs/UNIVERSAL_REQUISITION.md) - Requisition interface user & developer guide
 - [`API_REFERENCE.md`](/docs/API_REFERENCE.md) - Python monitoring tools API reference (db_utils, config, logging)
 - [`MONITORING_SCRIPTS_REFERENCE.md`](/docs/MONITORING_SCRIPTS_REFERENCE.md) - Complete reference for all 58 monitoring scripts, CLI entry points, configuration, output files, and workflows

@@ -50,11 +50,14 @@ docker-compose logs -f
 ```yaml
 # docker-compose.yml
 services:
-  frontend:    # Nginx serving static files
+  frontend:        # Nginx serving static files
     port: 80
 
-  api:         # FastAPI backend
+  api:             # FastAPI backend
     port: 8000
+
+  elasticsearch:   # Search engine (ES 8.17.0 local; production runs ES 7.15.2)
+    port: 9200
 ```
 
 ### Environment Variables
@@ -83,6 +86,16 @@ API_PORT=8000
 API_BASE_URL=/api
 BUDGET_LIMIT=5000
 LOG_LEVEL=INFO
+
+# Elasticsearch
+ES_ENABLED=true
+ES_URL=http://localhost:9200
+ES_INDEX=pricing_consolidated_active
+
+# AI/LLM (optional)
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://localhost:11434
+# ANTHROPIC_API_KEY=your_key_here
 ```
 
 ### Docker Commands
@@ -119,35 +132,51 @@ docker-compose down -v
 
 ### API Dockerfile (`docker/Dockerfile.api`)
 
-```dockerfile
-FROM python:3.12-slim
+Uses a multi-stage build for a smaller production image. Runs as a non-root `appuser` for security.
 
-# Install ODBC drivers for SQL Server
-RUN apt-get update && apt-get install -y \
-    curl gnupg2 unixodbc-dev \
+```dockerfile
+# Stage 1: Builder — install Python dependencies
+FROM python:3.11-slim as builder
+WORKDIR /build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl unixodbc-dev && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir ".[api]"
+
+# Stage 2: Production — copy packages, install ODBC driver
+FROM python:3.11-slim as production
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg2 unixodbc \
     && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
     && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
     && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql18
-
-WORKDIR /app
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 COPY api/ ./api/
-COPY pyproject.toml .
-RUN pip install -e ".[api]"
-
+RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid appuser appuser && chown -R appuser:appuser /app
+USER appuser
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8000/api/health || exit 1
 EXPOSE 8000
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ### Frontend Dockerfile (`docker/Dockerfile.frontend`)
 
+Copies the entire `frontend/` directory and supports runtime configuration via environment variable substitution into `config.js`.
+
 ```dockerfile
 FROM nginx:alpine
-
-COPY universal-requisition.html /usr/share/nginx/html/index.html
-COPY frontend/assets/ /usr/share/nginx/html/assets/
+RUN rm /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-
+COPY frontend/ /usr/share/nginx/html/
+# Runtime config: envsubst replaces variables in config.template.js → config.js
+RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-envsubst-config.sh && \
+    echo 'envsubst < /usr/share/nginx/html/js/config.template.js > /usr/share/nginx/html/js/config.js' >> /docker-entrypoint.d/40-envsubst-config.sh && \
+    chmod +x /docker-entrypoint.d/40-envsubst-config.sh
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD wget --spider http://localhost:80/ || exit 1
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
@@ -158,7 +187,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.11+
 - ODBC Driver 18 for SQL Server
 - Node.js (optional, for frontend dev)
 
@@ -182,7 +211,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 ### Frontend Setup
 
-For development, open `universal-requisition.html` directly in browser.
+For development, open `index.html` directly in browser.
 
 For production, serve via nginx or any static file server:
 
@@ -289,41 +318,16 @@ jobs:
 
 ## Deployment Script
 
-Use the provided deployment script:
+> **Note:** The `deploy.sh` and `dev-setup.sh` scripts referenced below are not yet implemented. Use the Docker Compose commands from [Quick Start](#quick-start-docker) directly.
 
 ```bash
-# Development deployment
-./scripts/dev-setup.sh
-
-# Production deployment
-./scripts/deploy.sh
-```
-
-### deploy.sh
-
-```bash
-#!/bin/bash
-set -e
-
-echo "=== EDS Deployment ==="
-
-# Pull latest code
-git pull origin main
-
-# Build containers
+# Build and deploy
 docker-compose build
-
-# Run database migrations (if any)
-# docker-compose run --rm api python manage.py migrate
-
-# Restart services with zero downtime
 docker-compose up -d --no-deps --build api
 docker-compose up -d --no-deps --build frontend
 
 # Cleanup old images
 docker image prune -f
-
-echo "=== Deployment Complete ==="
 ```
 
 ---
