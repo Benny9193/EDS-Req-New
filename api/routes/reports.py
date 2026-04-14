@@ -22,6 +22,7 @@ from fastapi import APIRouter, HTTPException, Query, Header
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from datetime import datetime, timedelta
+from decimal import Decimal
 import csv
 import io
 import logging
@@ -496,7 +497,8 @@ DISTRICT_ITEMS_SQL = """
       AND det.Active = 1
       AND r.DateEntered >= ?
       AND r.DateEntered <  ?
-      AND (r.StatusId IS NULL OR r.StatusId NOT IN (1, 2, 4))
+      AND r.StatusId IS NOT NULL
+      AND r.StatusId NOT IN (1, 2, 4)  -- On Hold, Pending Approval, Rejected
     ORDER BY
         COALESCE(det.VendorItemCode, i.ItemCode, ''),
         v.Name,
@@ -507,7 +509,8 @@ DISTRICT_ITEMS_SQL = """
 
 # 1-based column indexes used for Excel formatting
 _XLSX_DATE_COLS     = {2}        # Order Date
-_XLSX_INT_COLS      = {4, 11}    # User #, Qty
+_XLSX_ID_COLS       = {4}        # User # -- plain integer id, no thousands sep
+_XLSX_INT_COLS      = {11}       # Qty -- thousands-separated integer
 _XLSX_CURRENCY_COLS = {12, 13}   # Unit Price, Line Total
 
 # EDS brand styling (matches scripts/orleans_top_items_report.py)
@@ -516,7 +519,8 @@ _EDS_LIGHT = "4A4890"
 _EDS_RED = "B70C0D"
 _XLSX_ALT_ROW = "EBEBF5"
 _XLSX_MONEY_FMT = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
-_XLSX_QTY_FMT = "#,##0"
+_XLSX_QTY_FMT = "#,##0"          # quantities with thousands separator
+_XLSX_ID_FMT = "0"               # identifiers as plain integers
 _XLSX_DATE_FMT = "MM/DD/YYYY"
 
 _XLSX_COL_WIDTHS = {
@@ -586,8 +590,15 @@ def _build_district_items_xlsx(
     ws.row_dimensions[1].height = 22
 
     # --- Subtitle (total + timestamp) ---
+    # Sum line totals as Decimal so the displayed total matches cents
+    # exactly -- no float rounding drift. Wrap with Decimal(str(...)) so
+    # the helper also accepts fixture values that are plain floats in tests.
     line_total_key = "Line Total"
-    total_spend = sum(float(r.get(line_total_key) or 0) for r in rows)
+    total_spend = Decimal("0")
+    for r in rows:
+        v = r.get(line_total_key)
+        if v is not None:
+            total_spend += v if isinstance(v, Decimal) else Decimal(str(v))
 
     ws.merge_cells(f"A2:{last_col_letter}2")
     ws["A2"] = (
@@ -625,8 +636,14 @@ def _build_district_items_xlsx(
             if value is None:
                 cell.value = None
             elif c_idx in _XLSX_CURRENCY_COLS:
-                cell.value = float(value)
+                # Assign pyodbc's Decimal directly -- openpyxl supports it
+                # natively and avoids any float-precision drift on money.
+                cell.value = value
                 cell.number_format = _XLSX_MONEY_FMT
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+            elif c_idx in _XLSX_ID_COLS:
+                cell.value = int(value)
+                cell.number_format = _XLSX_ID_FMT
                 cell.alignment = Alignment(horizontal="right", vertical="center")
             elif c_idx in _XLSX_INT_COLS:
                 cell.value = int(value)

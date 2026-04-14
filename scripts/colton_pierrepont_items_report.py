@@ -14,11 +14,12 @@ To run the report for a different district or budget year, edit the
 constants in the "Report parameters" section below.
 
 Usage:
+    # Set DB creds in .env (DB_SERVER / DB_USERNAME / DB_PASSWORD), then:
     python scripts/colton_pierrepont_items_report.py
 
 Requirements:
-    pip install pyodbc openpyxl
-    ODBC Driver 17 for SQL Server
+    pip install pyodbc openpyxl python-dotenv
+    Microsoft ODBC Driver for SQL Server
 
 The output workbook is saved under `output/` relative to the project root.
 The header row has auto-filter and freeze-panes enabled so the district can
@@ -29,8 +30,12 @@ etc. without touching the data.
 import os
 import sys
 from datetime import datetime
+from decimal import Decimal
 
-import pyodbc
+# Reuse the shared secure DB helper (reads DB_SERVER/DB_USERNAME/DB_PASSWORD
+# from .env rather than hardcoding credentials in source control).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from db_utils import DatabaseConnection, DatabaseConnectionError  # noqa: E402
 
 try:
     from openpyxl import Workbook
@@ -52,21 +57,9 @@ BUDGET_YEAR_LABEL = "Dec 2024 - Nov 2025"
 
 # Status filter: exclude requisitions that never became actual orders.
 # StatusTable values: 1=On Hold, 2=Pending Approval, 4=Rejected.
-# Matches the pattern used in scripts/orleans_top_items_report.py.
+# NULL statuses are also excluded -- they indicate uninitialized/draft
+# requisitions that never reached an ordered state.
 EXCLUDED_STATUSES = (1, 2, 4)
-
-
-# ---------------------------------------------------------------------------
-# Database connection -- same pattern as the other tracked report scripts
-# ---------------------------------------------------------------------------
-CONNECTION_STRING = (
-    "DRIVER={ODBC Driver 17 for SQL Server};"
-    "SERVER=eds-sqlserver.eastus2.cloudapp.azure.com;"
-    "DATABASE=EDS;"
-    "UID=EDSAdmin;"
-    "PWD=Consultant~!;"
-    "Encrypt=yes;TrustServerCertificate=yes;"
-)
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +102,8 @@ ITEMS_SQL = """
       AND det.Active = 1
       AND r.DateEntered >= ?
       AND r.DateEntered <  ?
-      AND (r.StatusId IS NULL OR r.StatusId NOT IN ({excluded}))
+      AND r.StatusId IS NOT NULL
+      AND r.StatusId NOT IN ({excluded})
     ORDER BY
         COALESCE(det.VendorItemCode, i.ItemCode, ''),
         v.Name,
@@ -129,12 +123,14 @@ WHITE     = "FFFFFF"
 ALT_ROW   = "EBEBF5"    # light lavender zebra striping
 
 MONEY_FMT = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
-QTY_FMT   = "#,##0"
+QTY_FMT   = "#,##0"     # thousands-separated, for item quantities
+ID_FMT    = "0"         # plain integer, for identifiers like User # / CometId
 DATE_FMT  = "MM/DD/YYYY"
 
 # 1-based column indexes for formatting
 DATE_COLS     = {2}          # Order Date
-INT_COLS      = {4, 11}      # User #, Qty
+ID_COLS       = {4}          # User # (no thousands separator -- it's an id)
+INT_COLS      = {11}         # Qty (thousands-separated)
 CURRENCY_COLS = {12, 13}     # Unit Price, Line Total
 
 
@@ -164,26 +160,38 @@ def shade_alt_rows(ws, first_data_row, last_data_row, num_cols):
 
 
 def run_report():
-    print(f"Connecting to EDS...")
-    conn = pyodbc.connect(CONNECTION_STRING, timeout=60)
-    cur  = conn.cursor()
+    print("Connecting to EDS...")
 
-    # Confirm the district exists (helps catch a typo in DISTRICT_CODE).
-    cur.execute(
-        "SELECT DistrictId, DistrictCode, Name FROM dbo.District WHERE DistrictCode = ?",
-        DISTRICT_CODE,
-    )
-    drow = cur.fetchone()
-    if not drow:
-        conn.close()
-        raise SystemExit(f"District with code '{DISTRICT_CODE}' not found.")
-    print(f"  District: [{drow.DistrictCode}] {drow.Name}  (DistrictId={drow.DistrictId})")
+    # DatabaseConnection is a context manager -- it guarantees the
+    # connection is closed even if we raise mid-query or mid-workbook build.
+    try:
+        with DatabaseConnection(database="EDS") as db:
+            # Confirm the district exists (catches typos in DISTRICT_CODE).
+            district_rows = db.execute_query(
+                "SELECT DistrictId, DistrictCode, Name FROM dbo.District WHERE DistrictCode = ?",
+                params=(DISTRICT_CODE,),
+            )
+            if not district_rows:
+                raise SystemExit(f"District with code '{DISTRICT_CODE}' not found.")
+            drow = district_rows[0]
+            print(f"  District: [{drow.DistrictCode}] {drow.Name}  (DistrictId={drow.DistrictId})")
 
-    print(f"Querying line items {START_DATE} through {END_DATE} (exclusive)...")
-    cur.execute(ITEMS_SQL, DISTRICT_CODE, START_DATE, END_DATE)
-    rows      = cur.fetchall()
-    col_names = [desc[0] for desc in cur.description]
-    conn.close()
+            print(f"Querying line items {START_DATE} through {END_DATE} (exclusive)...")
+            # fetch_all=False returns a live cursor so we can read column names
+            # from its description, then pull rows.
+            cursor = db.execute_query(
+                ITEMS_SQL,
+                params=(DISTRICT_CODE, START_DATE, END_DATE),
+                fetch_all=False,
+            )
+            try:
+                col_names = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+            finally:
+                cursor.close()
+    except DatabaseConnectionError as exc:
+        raise SystemExit(f"Database connection failed: {exc}") from exc
+
     print(f"  Fetched {len(rows):,} line items.")
 
     # -----------------------------------------------------------------------
@@ -203,9 +211,13 @@ def run_report():
     ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
     ws.row_dimensions[1].height = 22
 
-    # Pre-compute aggregate totals for the subtitle (Line Total is col index 12, 0-based)
+    # Pre-compute aggregate totals for the subtitle using Decimal so the
+    # displayed total matches cents exactly (no float rounding drift).
     line_total_idx = col_names.index("Line Total")
-    total_spend = sum(float(r[line_total_idx] or 0) for r in rows)
+    total_spend: Decimal = sum(
+        (r[line_total_idx] for r in rows if r[line_total_idx] is not None),
+        start=Decimal("0"),
+    )
 
     ws.merge_cells(f"A2:{last_col_letter}2")
     ws["A2"] = (
@@ -238,8 +250,14 @@ def run_report():
             if value is None:
                 cell.value = None
             elif c_idx in CURRENCY_COLS:
-                cell.value = float(value)
+                # Assign Decimal directly -- openpyxl handles it and no
+                # Decimal->float rounding error is introduced.
+                cell.value = value
                 cell.number_format = MONEY_FMT
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+            elif c_idx in ID_COLS:
+                cell.value = int(value)
+                cell.number_format = ID_FMT
                 cell.alignment = Alignment(horizontal="right", vertical="center")
             elif c_idx in INT_COLS:
                 cell.value = int(value)
