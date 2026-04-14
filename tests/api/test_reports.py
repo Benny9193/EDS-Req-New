@@ -410,3 +410,158 @@ class TestDrillDown:
         assert "category" in data
         assert "items" in data
         assert isinstance(data["items"], list)
+
+
+class TestDistrictItemsExport:
+    """Test GET /api/reports/district-items — Excel export for one district."""
+
+    _FAKE_DISTRICT = {"DistrictId": 42, "DistrictCode": "7G", "Name": "Colton-Pierrepont"}
+
+    @staticmethod
+    def _fake_rows():
+        from datetime import date
+        return [
+            {
+                "Requisition": "R-12345",
+                "Order Date": date(2025, 3, 15),
+                "School": "Colton-Pierrepont Central",
+                "User #": 101,
+                "User Name": "Jane Teacher",
+                "Vendor Code": "0001",
+                "Vendor": "Pilot Corporation of America",
+                "Item #": "BPS-GP-F",
+                "EDS Item Code": "EDS001",
+                "Item Name": "Pilot G2 Gel Pen, Fine Point, Black",
+                "Qty": 12,
+                "Unit Price": 1.49,
+                "Line Total": 17.88,
+                "Status": "PO Printed",
+            },
+            {
+                "Requisition": "R-12346",
+                "Order Date": date(2025, 5, 10),
+                "School": "Colton-Pierrepont Central",
+                "User #": 102,
+                "User Name": "John Principal",
+                "Vendor Code": "0009",
+                "Vendor": "School Specialty, LLC",
+                "Item #": "SS-1234",
+                "EDS Item Code": "EDS002",
+                "Item Name": "Copy Paper, 500-sheet ream",
+                "Qty": 50,
+                "Unit Price": 4.99,
+                "Line Total": 249.50,
+                "Status": "Approved",
+            },
+        ]
+
+    def _patched(self):
+        """Build patchers that stub the two DB helpers the endpoint uses."""
+        district = self._FAKE_DISTRICT
+        rows = self._fake_rows()
+
+        def fake_execute_single(sql, params=None):
+            if "FROM dbo.District" in sql and params and params[0] == "7G":
+                return district
+            return None
+
+        def fake_execute_query(sql, params=None):
+            if "FROM dbo.Requisitions" in sql:
+                return list(rows)
+            return []
+
+        return (
+            patch("api.routes.reports.execute_single", side_effect=fake_execute_single),
+            patch("api.routes.reports.execute_query", side_effect=fake_execute_query),
+        )
+
+    def test_district_items_xlsx_happy_path(self, test_client):
+        """Demo session can download an Excel workbook for a district."""
+        import io
+        import openpyxl
+
+        p1, p2 = self._patched()
+        with p1, p2:
+            r = test_client.get(
+                "/api/reports/district-items",
+                params={"district_code": "7G"},
+                headers={"X-Session-ID": "demo"},
+            )
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        disp = r.headers.get("content-disposition", "")
+        assert "Colton-Pierrepont_7G_Items_Ordered_" in disp
+        assert disp.endswith('.xlsx"')
+
+        wb = openpyxl.load_workbook(io.BytesIO(r.content))
+        ws = wb.active
+        assert ws.title == "Items Ordered"
+
+        # Header row is row 4, data begins at row 5
+        headers = [ws.cell(row=4, column=c).value for c in range(1, 15)]
+        assert headers[0] == "Requisition"
+        assert headers[3] == "User #"
+        assert headers[7] == "Item #"
+        assert headers[9] == "Item Name"
+        assert headers[11] == "Unit Price"
+
+        row5 = [ws.cell(row=5, column=c).value for c in range(1, 15)]
+        assert row5[0] == "R-12345"
+        assert row5[3] == 101
+        assert row5[7] == "BPS-GP-F"
+        assert row5[11] == 1.49
+
+        # Freeze panes + auto-filter enable sort/filter in Excel
+        assert ws.freeze_panes == "A5"
+        assert ws.auto_filter.ref is not None and ws.auto_filter.ref.startswith("A4:")
+
+        # Totals row uses SUM formulas so Excel keeps them in sync with filters
+        total_row = 5 + len(self._fake_rows())
+        line_total_formula = ws.cell(row=total_row, column=13).value
+        assert isinstance(line_total_formula, str)
+        assert line_total_formula.startswith("=SUM(")
+
+    def test_district_items_requires_district_code(self, test_client):
+        r = test_client.get(
+            "/api/reports/district-items",
+            headers={"X-Session-ID": "demo"},
+        )
+        # FastAPI returns 422 for missing required query params
+        assert r.status_code == 422
+
+    def test_district_items_unknown_district_returns_404(self, test_client):
+        p1, p2 = self._patched()
+        with p1, p2:
+            r = test_client.get(
+                "/api/reports/district-items",
+                params={"district_code": "ZZ"},
+                headers={"X-Session-ID": "demo"},
+            )
+        assert r.status_code == 404
+
+    def test_district_items_rejects_bad_date_format(self, test_client):
+        p1, p2 = self._patched()
+        with p1, p2:
+            r = test_client.get(
+                "/api/reports/district-items",
+                params={"district_code": "7G", "date_start": "not-a-date", "date_end": "2025-11-30"},
+                headers={"X-Session-ID": "demo"},
+            )
+        assert r.status_code == 400
+
+    def test_district_items_custom_date_range_reflected_in_filename(self, test_client):
+        p1, p2 = self._patched()
+        with p1, p2:
+            r = test_client.get(
+                "/api/reports/district-items",
+                params={
+                    "district_code": "7G",
+                    "date_start": "2025-01-01",
+                    "date_end": "2025-03-31",
+                },
+                headers={"X-Session-ID": "demo"},
+            )
+        assert r.status_code == 200
+        assert "2025-01-01_to_2025-03-31.xlsx" in r.headers.get("content-disposition", "")

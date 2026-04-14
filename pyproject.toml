@@ -81,8 +81,9 @@ api = [
     "fastapi>=0.109.0",         # Web framework
     "uvicorn[standard]>=0.27.0", # ASGI server
     "pydantic>=2.0.0",          # Data validation
-    "ollama>=0.4.0",            # Ollama LLM provider (for AI chat without API key)
+    "ollama>=0.4.0",             # Ollama LLM provider (for AI chat without API key)
     "elasticsearch[async]>=8.12.0",  # Elasticsearch client for product search
+    "openpyxl>=3.0.0",           # Excel report exports (e.g. /reports/district-items)
 ]
 # Build dependencies
 build = [

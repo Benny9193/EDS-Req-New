@@ -21,7 +21,7 @@ Schema notes (actual EDS production schema):
 from fastapi import APIRouter, HTTPException, Query, Header
 from fastapi.responses import StreamingResponse
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 import io
 import logging
@@ -424,6 +424,383 @@ async def export_reports_pdf(
     return StreamingResponse(
         iter([pdf_bytes]),
         media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# ===========================================
+# DISTRICT ITEMS XLSX EXPORT
+# ===========================================
+#
+# One row per line item for a single district and date range, in an Excel
+# workbook with freeze panes + auto-filter so the district can sort/filter
+# by User #, Item #, Vendor, Price, etc. in Excel.
+#
+# Requested by Patrice Abate (EDS) for Colton-Pierrepont (7G): "I want to
+# identify an item (say a Pilot pen) and then sort to see who is ordering
+# that at what price."
+#
+# Default date range is the most recently completed EDS budget year
+# (Dec 1 - Nov 30), computed from the current date.
+
+
+def _default_budget_year_range() -> tuple[str, str, str]:
+    """Return (date_start, date_end_exclusive, label) for the most recently
+    completed EDS budget year, which runs Dec 1 through Nov 30.
+
+    If today is on or after Dec 1, the most recently completed year started
+    the *prior* Dec 1. Otherwise it started two Decembers ago.
+    """
+    now = datetime.now()
+    if now.month >= 12:
+        start_year = now.year - 1
+    else:
+        start_year = now.year - 2
+    # Inclusive start, exclusive end (one day past Nov 30)
+    return (
+        f"{start_year}-12-01",
+        f"{start_year + 1}-12-01",
+        f"Dec {start_year} - Nov {start_year + 1}",
+    )
+
+
+DISTRICT_ITEMS_SQL = """
+    SELECT
+        r.RequisitionNumber                                    AS Requisition,
+        CAST(r.DateEntered AS date)                            AS [Order Date],
+        sch.Name                                               AS School,
+        u.CometId                                              AS [User #],
+        LTRIM(RTRIM(
+            ISNULL(u.FirstName,'') + ' ' + ISNULL(u.LastName,'')
+        ))                                                     AS [User Name],
+        v.Code                                                 AS [Vendor Code],
+        COALESCE(v.Name, 'N/A')                                AS Vendor,
+        COALESCE(det.VendorItemCode, i.ItemCode, '')           AS [Item #],
+        COALESCE(det.ItemCode, i.ItemCode, '')                 AS [EDS Item Code],
+        COALESCE(det.Description, i.Description, '')           AS [Item Name],
+        CAST(det.Quantity AS INT)                              AS Qty,
+        COALESCE(det.BidPrice, det.CatalogPrice)               AS [Unit Price],
+        CAST(det.Quantity AS money)
+            * COALESCE(det.BidPrice, det.CatalogPrice)         AS [Line Total],
+        ISNULL(st.Name, 'On Hold')                             AS Status
+    FROM dbo.Requisitions r
+    INNER JOIN dbo.Detail      det ON det.RequisitionId = r.RequisitionId
+    INNER JOIN dbo.School      sch ON sch.SchoolId      = r.SchoolId
+    INNER JOIN dbo.District    d   ON d.DistrictId      = sch.DistrictId
+    LEFT  JOIN dbo.Users       u   ON u.UserId          = r.UserId
+    LEFT  JOIN dbo.Vendors     v   ON v.VendorId        = det.VendorId
+    LEFT  JOIN dbo.Items       i   ON i.ItemId          = det.ItemId
+    LEFT  JOIN dbo.StatusTable st  ON st.StatusId       = r.StatusId
+    WHERE d.DistrictCode = ?
+      AND r.Active   = 1
+      AND det.Active = 1
+      AND r.DateEntered >= ?
+      AND r.DateEntered <  ?
+      AND (r.StatusId IS NULL OR r.StatusId NOT IN (1, 2, 4))
+    ORDER BY
+        COALESCE(det.VendorItemCode, i.ItemCode, ''),
+        v.Name,
+        r.DateEntered,
+        u.LastName,
+        u.FirstName
+"""
+
+# 1-based column indexes used for Excel formatting
+_XLSX_DATE_COLS     = {2}        # Order Date
+_XLSX_INT_COLS      = {4, 11}    # User #, Qty
+_XLSX_CURRENCY_COLS = {12, 13}   # Unit Price, Line Total
+
+# EDS brand styling (matches scripts/orleans_top_items_report.py)
+_EDS_BLUE = "1C1A83"
+_EDS_LIGHT = "4A4890"
+_EDS_RED = "B70C0D"
+_XLSX_ALT_ROW = "EBEBF5"
+_XLSX_MONEY_FMT = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+_XLSX_QTY_FMT = "#,##0"
+_XLSX_DATE_FMT = "MM/DD/YYYY"
+
+_XLSX_COL_WIDTHS = {
+    "Requisition":     14,
+    "Order Date":      12,
+    "School":          28,
+    "User #":          10,
+    "User Name":       24,
+    "Vendor Code":     12,
+    "Vendor":          30,
+    "Item #":          18,
+    "EDS Item Code":   14,
+    "Item Name":       48,
+    "Qty":              8,
+    "Unit Price":      13,
+    "Line Total":      14,
+    "Status":          18,
+}
+
+
+def _build_district_items_xlsx(
+    rows: list[dict],
+    col_names: list[str],
+    district_code: str,
+    district_name: str,
+    date_start: str,
+    date_end_exclusive: str,
+    period_label: str,
+) -> bytes:
+    """Render the district items result set into an Excel workbook.
+
+    openpyxl is imported lazily so the API still starts on deployments that
+    don't have the [export] extra installed.
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "openpyxl is not installed on the API server. "
+                "Install with: pip install openpyxl"
+            ),
+        ) from exc
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Items Ordered"
+
+    num_cols = len(col_names)
+    last_col_letter = get_column_letter(num_cols)
+
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    hdr_font = Font(bold=True, color="FFFFFF", size=11, name="Calibri")
+    hdr_fill = PatternFill(start_color=_EDS_BLUE, end_color=_EDS_BLUE, fill_type="solid")
+    data_font = Font(size=10, name="Calibri")
+    alt_fill = PatternFill(start_color=_XLSX_ALT_ROW, end_color=_XLSX_ALT_ROW, fill_type="solid")
+
+    # --- Title ---
+    ws.merge_cells(f"A1:{last_col_letter}1")
+    ws["A1"] = f"{district_name} ({district_code}) -- Items Ordered -- {period_label}"
+    ws["A1"].font = Font(bold=True, size=14, color=_EDS_BLUE, name="Calibri")
+    ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[1].height = 22
+
+    # --- Subtitle (total + timestamp) ---
+    line_total_key = "Line Total"
+    total_spend = sum(float(r.get(line_total_key) or 0) for r in rows)
+
+    ws.merge_cells(f"A2:{last_col_letter}2")
+    ws["A2"] = (
+        f"{len(rows):,} line items   |   "
+        f"Total: ${total_spend:,.2f}   |   "
+        f"Generated {datetime.now().strftime('%B %d, %Y  %I:%M %p')}"
+    )
+    ws["A2"].font = Font(italic=True, size=10, color="666666", name="Calibri")
+
+    ws.merge_cells(f"A3:{last_col_letter}3")
+    ws["A3"] = "Click the filter arrows in row 4 to sort/filter by any column."
+    ws["A3"].font = Font(italic=True, size=10, color=_EDS_LIGHT, name="Calibri")
+
+    # --- Header row (row 4) ---
+    for col_idx, header in enumerate(col_names, start=1):
+        cell = ws.cell(row=4, column=col_idx, value=header)
+        cell.font = hdr_font
+        cell.fill = hdr_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        ws.column_dimensions[get_column_letter(col_idx)].width = _XLSX_COL_WIDTHS.get(header, 14)
+    ws.row_dimensions[4].height = 32
+
+    # --- Data rows ---
+    first_data_row = 5
+    for r_offset, row in enumerate(rows):
+        excel_row = first_data_row + r_offset
+        zebra = (r_offset % 2 == 1)
+        for c_idx, header in enumerate(col_names, start=1):
+            value = row.get(header)
+            cell = ws.cell(row=excel_row, column=c_idx)
+            cell.border = border
+            cell.font = data_font
+
+            if value is None:
+                cell.value = None
+            elif c_idx in _XLSX_CURRENCY_COLS:
+                cell.value = float(value)
+                cell.number_format = _XLSX_MONEY_FMT
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+            elif c_idx in _XLSX_INT_COLS:
+                cell.value = int(value)
+                cell.number_format = _XLSX_QTY_FMT
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+            elif c_idx in _XLSX_DATE_COLS:
+                cell.value = value
+                cell.number_format = _XLSX_DATE_FMT
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            else:
+                cell.value = value
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+
+            if zebra:
+                cell.fill = alt_fill
+
+    last_data_row = first_data_row + len(rows) - 1 if rows else 4
+
+    # --- Totals row (Qty + Line Total) ---
+    if rows:
+        totals_row = last_data_row + 1
+        label_cell = ws.cell(row=totals_row, column=1, value="TOTAL")
+        label_cell.font = Font(bold=True, size=11, color=_EDS_RED, name="Calibri")
+        label_cell.alignment = Alignment(horizontal="right")
+
+        qty_letter = get_column_letter(11)
+        total_letter = get_column_letter(13)
+
+        qty_sum = ws.cell(row=totals_row, column=11)
+        qty_sum.value = f"=SUM({qty_letter}{first_data_row}:{qty_letter}{last_data_row})"
+        qty_sum.number_format = _XLSX_QTY_FMT
+        qty_sum.font = Font(bold=True, size=11, name="Calibri")
+        qty_sum.alignment = Alignment(horizontal="right")
+        qty_sum.border = Border(top=Side(style="double"))
+
+        total_sum = ws.cell(row=totals_row, column=13)
+        total_sum.value = f"=SUM({total_letter}{first_data_row}:{total_letter}{last_data_row})"
+        total_sum.number_format = _XLSX_MONEY_FMT
+        total_sum.font = Font(bold=True, size=11, name="Calibri")
+        total_sum.alignment = Alignment(horizontal="right")
+        total_sum.border = Border(top=Side(style="double"))
+
+    # --- Freeze + auto-filter ---
+    ws.freeze_panes = f"A{first_data_row}"
+    ws.auto_filter.ref = f"A4:{last_col_letter}{last_data_row}"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+@router.get("/district-items")
+async def export_district_items_xlsx(
+    x_session_id: Optional[str] = Header(None, alias="X-Session-ID"),
+    x_demo_approval: Optional[int] = Header(None, alias="X-Demo-Approval-Level"),
+    district_code: str = Query(..., description="District code, e.g. '7G' for Colton-Pierrepont"),
+    date_start: Optional[str] = Query(None, description="Inclusive start date (YYYY-MM-DD). Defaults to most recently completed budget year."),
+    date_end: Optional[str] = Query(None, description="Inclusive end date (YYYY-MM-DD). Defaults to Nov 30 of the most recently completed budget year."),
+):
+    """
+    Download an Excel workbook with every line item ordered by a single
+    district over a date range.
+
+    One row per Detail line, sortable/filterable in Excel. Columns:
+    Requisition, Order Date, School, User #, User Name, Vendor Code,
+    Vendor, Item #, EDS Item Code, Item Name, Qty, Unit Price,
+    Line Total, Status.
+
+    Default date range is the most recently completed EDS budget year
+    (Dec 1 - Nov 30).
+
+    Access rules:
+    - Requires admin/approver/reports_viewer (same as the rest of /reports).
+    - A user's DistrictId must match the requested district, unless the
+      user has ApprovalLevel >= 8 (EDS Administration / System Admin),
+      which can pull any district.
+    """
+    demo_level = x_demo_approval if x_demo_approval is not None else 1
+    user = _get_session_user(x_session_id, demo_approval_level=demo_level)
+    require_reports_access(user)
+
+    district_code = (district_code or "").strip()
+    if not district_code:
+        raise HTTPException(status_code=400, detail="district_code is required")
+    if len(district_code) > 4:
+        raise HTTPException(status_code=400, detail="district_code must be 1-4 characters")
+
+    # --- Resolve district ---
+    district = execute_single(
+        "SELECT DistrictId, DistrictCode, Name FROM dbo.District WHERE DistrictCode = ?",
+        (district_code,),
+    )
+    if not district:
+        raise HTTPException(status_code=404, detail=f"District '{district_code}' not found")
+
+    requested_district_id = int(district["DistrictId"])
+    user_district_id = int(user.get("DistrictId") or 0)
+    user_level = int(user.get("ApprovalLevel") or 0)
+
+    # Cross-district access is gated to EDS-level admins.
+    if user_district_id and user_district_id != requested_district_id and user_level < 8:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have access to another district's data",
+        )
+
+    # --- Resolve date range ---
+    default_start, default_end_excl, default_label = _default_budget_year_range()
+
+    if date_start or date_end:
+        if not (date_start and date_end):
+            raise HTTPException(
+                status_code=400,
+                detail="Provide both date_start and date_end, or neither (to use the default budget year).",
+            )
+        try:
+            start_dt = datetime.strptime(date_start, "%Y-%m-%d")
+            end_dt = datetime.strptime(date_end, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Dates must be in YYYY-MM-DD format")
+        if start_dt > end_dt:
+            raise HTTPException(status_code=400, detail="date_start must be on or before date_end")
+
+        sql_start = date_start
+        # Upper bound is exclusive, so bump end date forward one day to make
+        # the user-supplied "inclusive" date_end actually inclusive.
+        sql_end_exclusive = (end_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        inclusive_end_label = date_end
+        period_label = f"{date_start} to {date_end}"
+    else:
+        sql_start = default_start
+        sql_end_exclusive = default_end_excl
+        inclusive_end_label = (
+            datetime.strptime(default_end_excl, "%Y-%m-%d") - timedelta(days=1)
+        ).strftime("%Y-%m-%d")
+        period_label = default_label
+
+    # --- Query ---
+    try:
+        rows = execute_query(
+            DISTRICT_ITEMS_SQL,
+            (district_code, sql_start, sql_end_exclusive),
+        )
+    except Exception as e:
+        logger.error("District items export query failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to run district items query")
+
+    # Column ordering (matches the SELECT list above)
+    col_names = [
+        "Requisition", "Order Date", "School", "User #", "User Name",
+        "Vendor Code", "Vendor", "Item #", "EDS Item Code", "Item Name",
+        "Qty", "Unit Price", "Line Total", "Status",
+    ]
+
+    xlsx_bytes = _build_district_items_xlsx(
+        rows=rows,
+        col_names=col_names,
+        district_code=district["DistrictCode"],
+        district_name=district["Name"] or district["DistrictCode"],
+        date_start=sql_start,
+        date_end_exclusive=sql_end_exclusive,
+        period_label=period_label,
+    )
+
+    safe_name = (district["Name"] or district_code).replace(" ", "_").replace("/", "_")
+    filename = (
+        f"{safe_name}_{district_code}_Items_Ordered_"
+        f"{sql_start}_to_{inclusive_end_label}.xlsx"
+    )
+
+    return StreamingResponse(
+        iter([xlsx_bytes]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
