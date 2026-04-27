@@ -106,6 +106,10 @@ jobs:
 
       - name: Validate JavaScript files
         run: |
+          # nullglob lets unmatched patterns expand to nothing, so optional
+          # subdirectories (e.g. frontend/js/stores/) that don't exist yet
+          # are silently skipped instead of being passed to node as a literal.
+          shopt -s nullglob
           for file in frontend/js/*.js frontend/js/stores/*.js; do
             echo "Checking $file..."
             node --check "$file"

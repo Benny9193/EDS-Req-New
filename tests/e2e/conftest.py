@@ -28,6 +28,16 @@ try:
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
+# Tell pytest to skip test modules whose top-level imports aren't available in
+# this environment. pytest imports every test module during collection even
+# when the user passes -m "not e2e", so a missing optional dep (Pillow,
+# playwright, etc.) would otherwise fail collection for the whole suite.
+collect_ignore: list[str] = []
+try:
+    import PIL  # noqa: F401 -- used by test_visual_regression.py via screenshot_utils
+except ImportError:
+    collect_ignore.append("test_visual_regression.py")
+
 
 # Frontend paths (for file:// fallback)
 FRONTEND_DIR = Path(__file__).parent.parent.parent / "frontend"
